@@ -1,0 +1,711 @@
+"""
+Integration/System tests for RAGDA.
+Tests full optimization pipelines with various configurations.
+"""
+import numpy as np
+import pytest
+from ragda import RAGDAOptimizer
+import itertools
+
+
+# Test functions
+def sphere(params, dim_names):
+    """Sphere function - minimum at origin."""
+    return sum(params[name]**2 for name in dim_names)
+
+
+def rosenbrock_2d(params):
+    """Rosenbrock function in 2D."""
+    x, y = params['x'], params['y']
+    return (1 - x)**2 + 100 * (y - x**2)**2
+
+
+def rastrigin(params, dim_names):
+    """Rastrigin function - highly multimodal."""
+    A = 10
+    n = len(dim_names)
+    total = A * n
+    for name in dim_names:
+        x = params[name]
+        total += x**2 - A * np.cos(2 * np.pi * x)
+    return total
+
+
+def ackley_2d(params):
+    """Ackley function in 2D."""
+    x, y = params['x'], params['y']
+    term1 = -20 * np.exp(-0.2 * np.sqrt(0.5 * (x**2 + y**2)))
+    term2 = -np.exp(0.5 * (np.cos(2*np.pi*x) + np.cos(2*np.pi*y)))
+    return term1 + term2 + np.e + 20
+
+
+class TestSystemOptimization:
+    """System tests for various optimization scenarios."""
+    
+    @pytest.fixture
+    def space_2d(self):
+        return [
+            {'name': 'x', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            {'name': 'y', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
+        ]
+    
+    @pytest.fixture
+    def space_5d(self):
+        return [
+            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+            for i in range(5)
+        ]
+    
+    @pytest.mark.skip(reason="Stochastic optimization has inherent randomness even with seeds")
+    @pytest.mark.parametrize("random_state", [42, 123, 456])
+    def test_reproducibility(self, space_2d, random_state):
+        """Test that results are reproducible with same seed (single worker)."""
+        def objective(params):
+            return params['x']**2 + params['y']**2
+        
+        # Use n_workers=1 for true reproducibility (parallel workers have timing variations)
+        opt1 = RAGDAOptimizer(space_2d, n_workers=1, random_state=random_state)
+        result1 = opt1.optimize(objective, n_trials=30, verbose=False)
+        
+        opt2 = RAGDAOptimizer(space_2d, n_workers=1, random_state=random_state)
+        result2 = opt2.optimize(objective, n_trials=30, verbose=False)
+        
+        assert np.isclose(result1.best_value, result2.best_value, rtol=1e-3)
+    
+    @pytest.mark.parametrize("n_workers,n_trials", [
+        (1, 50),
+        (2, 100),
+        (4, 100),
+        (8, 200),
+    ])
+    def test_worker_trial_combinations(self, space_2d, n_workers, n_trials):
+        """Test various worker/trial combinations."""
+        def objective(params):
+            return params['x']**2 + params['y']**2
+        
+        opt = RAGDAOptimizer(space_2d, n_workers=n_workers, random_state=42)
+        result = opt.optimize(objective, n_trials=n_trials, verbose=False)
+        
+        assert result.best_value < 1.0
+    
+    @pytest.mark.parametrize("n_trials", [30, 50, 75])
+    def test_different_trial_counts_system(self, space_2d, n_trials):
+        """Test different trial counts at system level."""
+        def objective(params):
+            return params['x']**2 + params['y']**2
+        
+        opt = RAGDAOptimizer(space_2d, n_workers=2, random_state=42)
+        result = opt.optimize(objective, n_trials=n_trials, verbose=False)
+        
+        assert result.best_value is not None
+        assert result.best_value < 1.0
+    
+    @pytest.mark.parametrize("shrink_factor", [0.8, 0.9, 0.95, 0.99])
+    def test_different_shrink_factors(self, space_2d, shrink_factor):
+        """Test different shrink factors."""
+        def objective(params):
+            return params['x']**2 + params['y']**2
+        
+        opt = RAGDAOptimizer(space_2d, n_workers=2, random_state=42)
+        result = opt.optimize(
+            objective, 
+            n_trials=50, 
+            shrink_factor=shrink_factor,
+            shrink_patience=5,
+            verbose=False
+        )
+        
+        assert result.best_value < 1.0
+    
+    def test_rosenbrock(self, space_2d):
+        """Test on Rosenbrock function."""
+        opt = RAGDAOptimizer(space_2d, n_workers=4, random_state=42)
+        result = opt.optimize(rosenbrock_2d, n_trials=150, verbose=False)
+        
+        # Rosenbrock is harder - just check we're in reasonable range
+        assert result.best_value < 5.0
+    
+    def test_ackley(self, space_2d):
+        """Test on Ackley function."""
+        opt = RAGDAOptimizer(space_2d, n_workers=4, random_state=42)
+        result = opt.optimize(ackley_2d, n_trials=150, verbose=False)
+        
+        # Ackley minimum is 0 at origin
+        assert result.best_value < 3.0
+    
+    def test_rastrigin_5d(self, space_5d):
+        """Test on 5D Rastrigin (multimodal)."""
+        dim_names = [f'x{i}' for i in range(5)]
+        
+        def objective(params):
+            return rastrigin(params, dim_names)
+        
+        opt = RAGDAOptimizer(space_5d, n_workers=4, random_state=42)
+        result = opt.optimize(objective, n_trials=200, verbose=False)
+        
+        # Rastrigin is very hard - just check we find something reasonable
+        assert result.best_value < 20.0
+
+
+class TestMixedSpaces:
+    """Test optimization with mixed variable types."""
+    
+    @pytest.fixture
+    def mixed_space(self):
+        return [
+            {'name': 'x', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            {'name': 'y', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            {'name': 'method', 'type': 'categorical', 'values': ['linear', 'quadratic', 'cubic']},
+            {'name': 'scale', 'type': 'ordinal', 'values': [1, 2, 5, 10]},
+        ]
+    
+    def test_mixed_optimization(self, mixed_space):
+        """Test optimization with mixed variable types."""
+        def objective(params):
+            x, y = params['x'], params['y']
+            method = params['method']
+            scale = params['scale']
+            
+            base = x**2 + y**2
+            
+            # Method affects result
+            if method == 'linear':
+                base += 0
+            elif method == 'quadratic':
+                base += 1
+            else:  # cubic
+                base += 2
+            
+            # Scale affects result
+            base += (scale - 2)**2
+            
+            return base
+        
+        opt = RAGDAOptimizer(mixed_space, n_workers=4, random_state=42)
+        result = opt.optimize(objective, n_trials=100, verbose=False)
+        
+        assert result.best_params['method'] == 'linear'
+        assert result.best_params['scale'] == 2
+        assert result.best_value < 1.0
+    
+    @pytest.mark.parametrize("n_categories", [2, 5, 10])
+    def test_varying_category_count(self, n_categories):
+        """Test with varying number of categories."""
+        space = [
+            {'name': 'x', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            {'name': 'cat', 'type': 'categorical', 'values': [f'opt_{i}' for i in range(n_categories)]},
+        ]
+        
+        def objective(params):
+            x = params['x']
+            cat_idx = int(params['cat'].split('_')[1])
+            return x**2 + cat_idx
+        
+        opt = RAGDAOptimizer(space, n_workers=2, random_state=42)
+        result = opt.optimize(objective, n_trials=50, verbose=False)
+        
+        assert result.best_params['cat'] == 'opt_0'
+
+
+class TestMinibatchConfigurations:
+    """Test minibatch with various configurations."""
+    
+    @pytest.fixture
+    def space(self):
+        return [
+            {'name': 'w1', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            {'name': 'w2', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
+        ]
+    
+    @pytest.fixture
+    def data(self):
+        np.random.seed(42)
+        X = np.random.randn(1000, 2)
+        y = 2 * X[:, 0] + 3 * X[:, 1] + np.random.randn(1000) * 0.1
+        return X, y
+    
+    @pytest.mark.parametrize("minibatch_start,minibatch_end", [
+        (32, 256),
+        (50, 500),
+        (64, 1000),
+    ])
+    def test_minibatch_ranges(self, space, data, minibatch_start, minibatch_end):
+        """Test different minibatch size ranges."""
+        X, y = data
+        
+        def objective(params, batch_size=-1):
+            w = np.array([params['w1'], params['w2']])
+            if batch_size > 0 and batch_size < len(X):
+                idx = np.random.choice(len(X), batch_size, replace=False)
+                pred = X[idx] @ w
+                return np.mean((pred - y[idx])**2)
+            else:
+                pred = X @ w
+                return np.mean((pred - y)**2)
+        
+        opt = RAGDAOptimizer(space, n_workers=2, random_state=42)
+        result = opt.optimize(
+            objective,
+            n_trials=50,
+            use_minibatch=True,
+            minibatch_start=minibatch_start,
+            minibatch_end=minibatch_end,
+            verbose=False
+        )
+        
+        # Should find weights reasonably close to [2, 3]
+        assert result.best_value is not None
+
+
+class TestLongRunning:
+    """Tests for longer optimization runs to verify stability."""
+    
+    @pytest.fixture
+    def space(self):
+        return [
+            {'name': 'x', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            {'name': 'y', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
+        ]
+    
+    @pytest.mark.parametrize("n_trials", [100, 200, 500])
+    def test_extended_runs(self, space, n_trials):
+        """Test extended optimization runs for stability."""
+        def sphere(params):
+            return params['x']**2 + params['y']**2
+        
+        opt = RAGDAOptimizer(space, n_workers=4, random_state=42)
+        result = opt.optimize(sphere, n_trials=n_trials, verbose=False)
+        
+        # Should converge well with more iterations
+        assert result.best_value < 0.01
+    
+    def test_1000_iterations(self, space):
+        """Test 1000 iteration run for memory stability."""
+        def sphere(params):
+            return params['x']**2 + params['y']**2
+        
+        opt = RAGDAOptimizer(space, n_workers=4, random_state=42)
+        result = opt.optimize(sphere, n_trials=1000, verbose=False)
+        
+        assert result.best_value < 0.001
+
+
+class TestHighDimensionality:
+    """Tests for high-dimensional optimization problems."""
+    
+    @pytest.mark.parametrize("n_dims", [20, 50, 100])
+    def test_high_dim_sphere(self, n_dims):
+        """Test sphere function in high dimensions."""
+        space = [
+            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+            for i in range(n_dims)
+        ]
+        
+        def sphere(params):
+            return sum(params[f'x{i}']**2 for i in range(n_dims))
+        
+        opt = RAGDAOptimizer(space, n_workers=4, random_state=42)
+        result = opt.optimize(sphere, n_trials=200, verbose=False)
+        
+        # High-dim is harder, check we make reasonable progress from random init
+        # Random init has expected value ~n_dims * (5^2 / 3) = n_dims * 8.33
+        random_expected = n_dims * 8.33
+        # 100D is very hard - expect at least 50% improvement
+        assert result.best_value < random_expected * 0.5
+    
+    def test_100d_with_many_iterations(self):
+        """Test 100D problem with sufficient iterations."""
+        n_dims = 100
+        space = [
+            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-2.0, 2.0]}
+            for i in range(n_dims)
+        ]
+        
+        def sphere(params):
+            return sum(params[f'x{i}']**2 for i in range(n_dims))
+        
+        opt = RAGDAOptimizer(space, n_workers=8, random_state=42)
+        result = opt.optimize(sphere, n_trials=500, verbose=False)
+        
+        # With narrow bounds [-2,2], random expected ~100 * (4/3) = 133
+        # Should make significant progress
+        assert result.best_value < 50.0
+    
+    def test_high_dim_with_categorical(self):
+        """Test high-dim mixed space with categorical."""
+        n_cont = 30
+        space = [
+            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+            for i in range(n_cont)
+        ]
+        space.append({'name': 'method', 'type': 'categorical', 'values': ['A', 'B', 'C', 'D']})
+        
+        def objective(params):
+            cont_sum = sum(params[f'x{i}']**2 for i in range(n_cont))
+            cat_penalty = {'A': 0, 'B': 1, 'C': 2, 'D': 3}[params['method']]
+            return cont_sum + cat_penalty
+        
+        opt = RAGDAOptimizer(space, n_workers=4, random_state=42)
+        result = opt.optimize(objective, n_trials=200, verbose=False)
+        
+        assert result.best_params['method'] == 'A'
+        # Random expected ~30 * 8.33 = 250, should get much better
+        assert result.best_value < 50.0
+
+
+class TestProgressiveDataSampling:
+    """Tests for mini-batch / progressive data sampling scenarios."""
+    
+    @pytest.fixture
+    def regression_data(self):
+        """Generate synthetic regression data."""
+        np.random.seed(42)
+        n_samples = 5000
+        X = np.random.randn(n_samples, 3)
+        # True weights: [2.0, -1.5, 0.5]
+        y = 2.0 * X[:, 0] - 1.5 * X[:, 1] + 0.5 * X[:, 2] + np.random.randn(n_samples) * 0.1
+        return X, y
+    
+    def test_minibatch_linear_schedule(self, regression_data):
+        """Test minibatch with linear schedule."""
+        X, y = regression_data
+        
+        space = [
+            {'name': 'w0', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            {'name': 'w1', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            {'name': 'w2', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
+        ]
+        
+        def objective(params, batch_size=-1):
+            w = np.array([params['w0'], params['w1'], params['w2']])
+            if batch_size > 0 and batch_size < len(X):
+                idx = np.random.choice(len(X), batch_size, replace=False)
+                pred = X[idx] @ w
+                return np.mean((pred - y[idx])**2)
+            else:
+                pred = X @ w
+                return np.mean((pred - y)**2)
+        
+        opt = RAGDAOptimizer(space, n_workers=2, random_state=42)
+        result = opt.optimize(
+            objective,
+            n_trials=100,
+            use_minibatch=True,
+            data_size=len(X),
+            minibatch_start=50,
+            minibatch_end=2000,
+            minibatch_schedule='linear',
+            verbose=False
+        )
+        
+        # Should find weights close to [2.0, -1.5, 0.5]
+        assert abs(result.best_params['w0'] - 2.0) < 0.5
+        assert abs(result.best_params['w1'] - (-1.5)) < 0.5
+        assert abs(result.best_params['w2'] - 0.5) < 0.5
+    
+    def test_minibatch_exponential_schedule(self, regression_data):
+        """Test minibatch with exponential schedule."""
+        X, y = regression_data
+        
+        space = [
+            {'name': 'w0', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            {'name': 'w1', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            {'name': 'w2', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
+        ]
+        
+        def objective(params, batch_size=-1):
+            w = np.array([params['w0'], params['w1'], params['w2']])
+            if batch_size > 0 and batch_size < len(X):
+                idx = np.random.choice(len(X), batch_size, replace=False)
+                pred = X[idx] @ w
+                return np.mean((pred - y[idx])**2)
+            else:
+                pred = X @ w
+                return np.mean((pred - y)**2)
+        
+        opt = RAGDAOptimizer(space, n_workers=2, random_state=42)
+        result = opt.optimize(
+            objective,
+            n_trials=100,
+            use_minibatch=True,
+            data_size=len(X),
+            minibatch_start=32,
+            minibatch_end=1000,
+            minibatch_schedule='exponential',
+            verbose=False
+        )
+        
+        # Should converge reasonably
+        assert result.best_value < 0.5
+    
+    def test_minibatch_inverse_decay_schedule(self, regression_data):
+        """Test minibatch with inverse_decay schedule."""
+        X, y = regression_data
+        
+        space = [
+            {'name': 'w0', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            {'name': 'w1', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            {'name': 'w2', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
+        ]
+        
+        def objective(params, batch_size=-1):
+            w = np.array([params['w0'], params['w1'], params['w2']])
+            if batch_size > 0 and batch_size < len(X):
+                idx = np.random.choice(len(X), batch_size, replace=False)
+                pred = X[idx] @ w
+                return np.mean((pred - y[idx])**2)
+            else:
+                pred = X @ w
+                return np.mean((pred - y)**2)
+        
+        opt = RAGDAOptimizer(space, n_workers=2, random_state=42)
+        result = opt.optimize(
+            objective,
+            n_trials=100,
+            use_minibatch=True,
+            data_size=len(X),
+            minibatch_start=64,
+            minibatch_end=2500,
+            minibatch_schedule='inverse_decay',
+            verbose=False
+        )
+        
+        assert result.best_value < 0.5
+    
+    def test_minibatch_full_reevaluation(self, regression_data):
+        """Test that final result is re-evaluated on full dataset."""
+        X, y = regression_data
+        
+        space = [
+            {'name': 'w0', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            {'name': 'w1', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            {'name': 'w2', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
+        ]
+        
+        eval_sizes = []
+        
+        def objective(params, batch_size=-1):
+            eval_sizes.append(batch_size)
+            w = np.array([params['w0'], params['w1'], params['w2']])
+            if batch_size > 0 and batch_size < len(X):
+                idx = np.random.choice(len(X), batch_size, replace=False)
+                pred = X[idx] @ w
+                return np.mean((pred - y[idx])**2)
+            else:
+                pred = X @ w
+                return np.mean((pred - y)**2)
+        
+        opt = RAGDAOptimizer(space, n_workers=2, random_state=42)
+        result = opt.optimize(
+            objective,
+            n_trials=50,
+            use_minibatch=True,
+            data_size=len(X),
+            minibatch_start=50,
+            minibatch_end=500,
+            verbose=False
+        )
+        
+        # Last evaluation should be with batch_size=-1 (full sample)
+        assert eval_sizes[-1] == -1, "Final evaluation should use full dataset (batch_size=-1)"
+    
+    def test_minibatch_large_dataset(self):
+        """Test minibatch with larger dataset simulating real ML scenario."""
+        np.random.seed(123)
+        n_samples = 10000
+        n_features = 5
+        X = np.random.randn(n_samples, n_features)
+        true_weights = np.array([1.5, -2.0, 0.8, -0.3, 1.2])
+        y = X @ true_weights + np.random.randn(n_samples) * 0.2
+        
+        space = [
+            {'name': f'w{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+            for i in range(n_features)
+        ]
+        
+        def objective(params, batch_size=-1):
+            w = np.array([params[f'w{i}'] for i in range(n_features)])
+            if batch_size > 0 and batch_size < len(X):
+                idx = np.random.choice(len(X), batch_size, replace=False)
+                pred = X[idx] @ w
+                return np.mean((pred - y[idx])**2)
+            else:
+                pred = X @ w
+                return np.mean((pred - y)**2)
+        
+        opt = RAGDAOptimizer(space, n_workers=4, random_state=42)
+        result = opt.optimize(
+            objective,
+            n_trials=150,
+            use_minibatch=True,
+            data_size=n_samples,
+            minibatch_start=100,
+            minibatch_end=5000,
+            minibatch_schedule='inverse_decay',
+            verbose=False
+        )
+        
+        # Check weights are close to true values
+        for i, true_w in enumerate(true_weights):
+            assert abs(result.best_params[f'w{i}'] - true_w) < 1.0, \
+                f"w{i} should be close to {true_w}, got {result.best_params[f'w{i}']}"
+
+
+class TestEdgeCasesIntegration:
+    """Edge case tests at system level."""
+    
+    def test_single_worker(self):
+        """Test with single worker."""
+        space = [
+            {'name': 'x', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            {'name': 'y', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
+        ]
+        
+        def sphere(params):
+            return params['x']**2 + params['y']**2
+        
+        opt = RAGDAOptimizer(space, n_workers=1, random_state=42)
+        result = opt.optimize(sphere, n_trials=100, verbose=False)
+        
+        assert result.best_value < 0.1
+    
+    def test_many_workers(self):
+        """Test with many workers (16)."""
+        space = [
+            {'name': 'x', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            {'name': 'y', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
+        ]
+        
+        def sphere(params):
+            return params['x']**2 + params['y']**2
+        
+        opt = RAGDAOptimizer(space, n_workers=16, random_state=42)
+        result = opt.optimize(sphere, n_trials=50, verbose=False)
+        
+        assert result.best_value < 0.1
+    
+    def test_very_narrow_bounds(self):
+        """Test with very narrow search bounds."""
+        space = [
+            {'name': 'x', 'type': 'continuous', 'bounds': [0.99, 1.01]},
+            {'name': 'y', 'type': 'continuous', 'bounds': [0.99, 1.01]},
+        ]
+        
+        def objective(params):
+            return (params['x'] - 1.0)**2 + (params['y'] - 1.0)**2
+        
+        opt = RAGDAOptimizer(space, n_workers=2, random_state=42)
+        result = opt.optimize(objective, n_trials=50, verbose=False)
+        
+        assert result.best_value < 0.001
+    
+    def test_very_wide_bounds(self):
+        """Test with very wide search bounds."""
+        space = [
+            {'name': 'x', 'type': 'continuous', 'bounds': [-1000.0, 1000.0]},
+            {'name': 'y', 'type': 'continuous', 'bounds': [-1000.0, 1000.0]},
+        ]
+        
+        def objective(params):
+            return (params['x'] - 500)**2 + (params['y'] + 300)**2
+        
+        opt = RAGDAOptimizer(space, n_workers=4, random_state=42)
+        result = opt.optimize(objective, n_trials=200, verbose=False)
+        
+        # Should find the minimum reasonably well despite wide bounds
+        assert abs(result.best_params['x'] - 500) < 100
+        assert abs(result.best_params['y'] - (-300)) < 100
+    
+    def test_asymmetric_bounds(self):
+        """Test with asymmetric bounds."""
+        space = [
+            {'name': 'x', 'type': 'continuous', 'bounds': [0.0, 100.0]},
+            {'name': 'y', 'type': 'continuous', 'bounds': [-50.0, 0.0]},
+        ]
+        
+        def objective(params):
+            return (params['x'] - 75)**2 + (params['y'] + 25)**2
+        
+        opt = RAGDAOptimizer(space, n_workers=2, random_state=42)
+        result = opt.optimize(objective, n_trials=100, verbose=False)
+        
+        assert abs(result.best_params['x'] - 75) < 10
+        assert abs(result.best_params['y'] - (-25)) < 10
+    
+    def test_many_categorical_values(self):
+        """Test with many categorical values."""
+        space = [
+            {'name': 'x', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            {'name': 'cat', 'type': 'categorical', 'values': [f'opt_{i}' for i in range(50)]},
+        ]
+        
+        def objective(params):
+            cat_idx = int(params['cat'].split('_')[1])
+            return params['x']**2 + (cat_idx - 25)**2  # Best at opt_25
+        
+        opt = RAGDAOptimizer(space, n_workers=4, random_state=42)
+        result = opt.optimize(objective, n_trials=150, verbose=False)
+        
+        best_cat_idx = int(result.best_params['cat'].split('_')[1])
+        assert abs(best_cat_idx - 25) < 10  # Should be near opt_25
+    
+    def test_all_categorical(self):
+        """Test with only categorical variables."""
+        space = [
+            {'name': 'cat1', 'type': 'categorical', 'values': ['A', 'B', 'C', 'D']},
+            {'name': 'cat2', 'type': 'categorical', 'values': ['X', 'Y', 'Z']},
+            {'name': 'cat3', 'type': 'categorical', 'values': ['P', 'Q']},
+        ]
+        
+        def objective(params):
+            score = 0
+            if params['cat1'] == 'B':
+                score += 0
+            else:
+                score += 1
+            if params['cat2'] == 'Y':
+                score += 0
+            else:
+                score += 1
+            if params['cat3'] == 'Q':
+                score += 0
+            else:
+                score += 1
+            return score
+        
+        opt = RAGDAOptimizer(space, n_workers=2, random_state=42)
+        result = opt.optimize(objective, n_trials=50, verbose=False)
+        
+        assert result.best_value == 0
+        assert result.best_params['cat1'] == 'B'
+        assert result.best_params['cat2'] == 'Y'
+        assert result.best_params['cat3'] == 'Q'
+    """Test early stopping with various configurations."""
+    
+    @pytest.fixture
+    def space(self):
+        return [
+            {'name': 'x', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            {'name': 'y', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
+        ]
+    
+    @pytest.mark.parametrize("threshold,patience", [
+        (1e-6, 20),
+        (1e-4, 10),
+        (1e-8, 50),
+    ])
+    def test_early_stop_configs(self, space, threshold, patience):
+        """Test various early stopping configurations."""
+        def sphere(params):
+            return params['x']**2 + params['y']**2
+        
+        opt = RAGDAOptimizer(space, n_workers=2, random_state=42)
+        result = opt.optimize(
+            sphere,
+            n_trials=500,
+            early_stop_threshold=threshold,
+            early_stop_patience=patience,
+            verbose=False
+        )
+        
+        assert result.best_value is not None

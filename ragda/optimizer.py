@@ -650,6 +650,31 @@ class RAGDAOptimizer:
         x_best = best_worker['best_params']
         f_best = best_worker['f_best']
         
+        # Re-evaluate final best with FULL sample (no minibatch) for accurate final loss
+        # This is critical for curriculum learning / minibatch scenarios
+        if use_minibatch:
+            try:
+                # Check if objective supports batch_size parameter
+                sig = inspect.signature(objective)
+                if 'batch_size' in sig.parameters:
+                    # Call with batch_size=-1 or None to use full sample
+                    f_best_full = objective(x_best, batch_size=-1)
+                else:
+                    f_best_full = objective(x_best)
+                
+                if self.direction == 'maximize':
+                    f_best_full = -f_best_full
+                else:
+                    f_best_full = float(f_best_full)
+                
+                if verbose:
+                    print(f"\nFinal re-evaluation (full sample): {f_best_full:.6f} (was {f_best:.6f} with minibatch)")
+                
+                f_best = f_best_full
+            except Exception as e:
+                if verbose:
+                    print(f"\nWarning: Could not re-evaluate with full sample: {e}")
+        
         if self.direction == 'maximize':
             f_best = -f_best
         
