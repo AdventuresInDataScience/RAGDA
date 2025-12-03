@@ -57,7 +57,7 @@ cython_directives = {
     "profile": False,
 }
 
-# Build extension
+# Build extensions
 ext_modules = cythonize(
     [
         Extension(
@@ -70,7 +70,18 @@ ext_modules = cythonize(
             ],
             extra_compile_args=extra_compile_args,
             extra_link_args=extra_link_args,
-        )
+        ),
+        Extension(
+            "ragda.highdim_core",
+            sources=["ragda/highdim_core.pyx"],
+            include_dirs=[np.get_include()],
+            define_macros=[
+                ("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION"),
+                ("CYTHON_WITHOUT_ASSERTIONS", "1"),
+            ],
+            extra_compile_args=extra_compile_args,
+            extra_link_args=extra_link_args,
+        ),
     ],
     compiler_directives=cython_directives,
     annotate=False,  # Set True to generate HTML annotation
@@ -78,7 +89,7 @@ ext_modules = cythonize(
 
 setup(
     name="ragda",
-    version="2.0.0",
+    version="2.1.0",
     author="RAGDA Team",
     author_email="",
     description="RAGDA - High-Performance Derivative-Free Optimizer (Pure Cython/C)",
@@ -91,6 +102,7 @@ setup(
     install_requires=[
         "numpy>=1.20.0",
         "cython>=0.29.0",
+        "loky>=3.0.0",
     ],
     extras_require={
         "full": [

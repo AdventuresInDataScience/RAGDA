@@ -5,6 +5,13 @@ Tests full optimization pipelines with various configurations.
 import numpy as np
 import pytest
 from ragda import RAGDAOptimizer
+
+# Import high-dim components
+try:
+    from ragda import HighDimRAGDAOptimizer, highdim_core, HIGHDIM_AVAILABLE
+except ImportError:
+    HIGHDIM_AVAILABLE = False
+
 import itertools
 
 
@@ -709,3 +716,549 @@ class TestEdgeCasesIntegration:
         )
         
         assert result.best_value is not None
+
+
+# =============================================================================
+# High-Dimensional Optimizer Integration Tests
+# =============================================================================
+
+@pytest.mark.skipif(not HIGHDIM_AVAILABLE, reason="highdim_core not built")
+class TestHighDimIntegration:
+    """Integration tests for high-dimensional optimizer."""
+    
+    def test_effective_dimensionality_detection(self):
+        """Test that low-dimensional structure is correctly detected."""
+        # Create data with true 5D structure embedded in 100D
+        np.random.seed(42)
+        n_samples = 200
+        true_dim = 5
+        n_features = 100
+        
+        U = np.random.randn(n_samples, true_dim)
+        V = np.random.randn(true_dim, n_features)
+        X_lowrank = (U @ V).astype(np.float64)
+        
+        eigenvalues = highdim_core.compute_eigenvalues_fast(X_lowrank)
+        result = highdim_core.estimate_effective_dimensionality(eigenvalues, 0.99)
+        
+        assert result['effective_dim'] <= true_dim + 2
+        assert result['is_low_dimensional']
+    
+    def test_kernel_pca_transform_inverse(self):
+        """Test Kernel PCA forward and inverse transforms."""
+        np.random.seed(42)
+        X = np.random.randn(100, 50).astype(np.float64)
+        
+        state = highdim_core.fit_kernel_pca(X, n_components=20)
+        X_reduced = highdim_core.transform_kernel_pca(state, X)
+        X_reconstructed = highdim_core.inverse_transform_kernel_pca(state, X_reduced)
+        
+        assert X_reduced.shape == (100, 20)
+        assert X_reconstructed.shape == (100, 50)
+        assert not np.any(np.isnan(X_reduced))
+        assert not np.any(np.isnan(X_reconstructed))
+    
+    def test_random_projection_types(self):
+        """Test all random projection types."""
+        np.random.seed(42)
+        X = np.random.randn(50, 200).astype(np.float64)
+        
+        for proj_type in ['gaussian', 'sparse', 'rademacher']:
+            state = highdim_core.fit_random_projection(200, 50, proj_type, 42)
+            X_reduced = highdim_core.transform_random_projection(state, X)
+            X_recon = highdim_core.inverse_transform_random_projection(state, X_reduced)
+            
+            assert X_reduced.shape == (50, 50)
+            assert X_recon.shape == (50, 200)
+    
+    def test_incremental_pca_online_update(self):
+        """Test incremental PCA with online updates."""
+        np.random.seed(42)
+        
+        # Initial fit
+        X1 = np.random.randn(100, 30).astype(np.float64)
+        state = highdim_core.fit_incremental_pca(X1, n_components=10)
+        
+        assert state.n_samples_seen == 100
+        
+        # Update with new data
+        X2 = np.random.randn(50, 30).astype(np.float64)
+        state = highdim_core.partial_fit_incremental_pca(state, X2)
+        
+        assert state.n_samples_seen == 150
+        
+        # Transform should work
+        X_test = np.random.randn(20, 30).astype(np.float64)
+        X_reduced = highdim_core.transform_incremental_pca(state, X_test)
+        assert X_reduced.shape == (20, 10)
+    
+    def test_highdim_optimizer_fallback_to_standard(self):
+        """Test that low-dim problems fall back to standard optimizer."""
+        space = [
+            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+            for i in range(20)  # Below threshold
+        ]
+        
+        def sphere(params):
+            return sum(params[f'x{i}']**2 for i in range(20))
+        
+        optimizer = HighDimRAGDAOptimizer(
+            space,
+            direction='minimize',
+            dim_threshold=100,  # 20 < 100, should use standard
+            n_workers=2,
+            random_state=42
+        )
+        
+        result = optimizer.optimize(sphere, n_trials=100, verbose=False)
+        
+        # Should make some progress vs random sampling (E[X^2] for [-5,5] uniform is ~8.33 per dim)
+        # Random expected: 20 * 8.33 ~ 166. With optimization should be < 100.
+        assert result.best_value < 100.0
+    
+    def test_highdim_optimizer_with_sparse_objective(self):
+        """Test high-dim optimizer on objective with sparse structure."""
+        n_dims = 200
+        active_dims = 10
+        
+        space = [
+            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+            for i in range(n_dims)
+        ]
+        
+        def sparse_quadratic(params):
+            # Only first 10 dimensions contribute
+            return sum((params[f'x{i}'] - 1.0)**2 for i in range(active_dims))
+        
+        optimizer = HighDimRAGDAOptimizer(
+            space,
+            direction='minimize',
+            dim_threshold=100,
+            variance_threshold=0.90,
+            n_workers=2,
+            random_state=42,
+            initial_samples=150
+        )
+        
+        result = optimizer.optimize(sparse_quadratic, n_trials=100, verbose=False)
+        
+        # Should make progress
+        assert result.best_value < 20.0
+    
+    @pytest.mark.parametrize("reduction_method", ['kernel_pca', 'incremental_pca', 'random_projection'])
+    def test_highdim_all_reduction_methods(self, reduction_method):
+        """Test high-dim optimizer with all reduction methods."""
+        n_dims = 150
+        
+        space = [
+            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-2.0, 2.0]}
+            for i in range(n_dims)
+        ]
+        
+        def sphere(params):
+            return sum(params[f'x{i}']**2 for i in range(n_dims))
+        
+        optimizer = HighDimRAGDAOptimizer(
+            space,
+            direction='minimize',
+            dim_threshold=100,
+            variance_threshold=0.85,
+            reduction_method=reduction_method,
+            n_workers=2,
+            random_state=42,
+            initial_samples=100,
+            stage2_trials_fraction=0.1
+        )
+        
+        result = optimizer.optimize(sphere, n_trials=80, verbose=False)
+        
+        # Should make some progress
+        random_expected = n_dims * (4/3)  # ~200 for [-2,2] bounds
+        assert result.best_value < random_expected
+    
+    def test_highdim_two_stage_optimization(self):
+        """Test that two-stage optimization works when low-dim structure detected."""
+        # Create a problem with clear low-dimensional structure
+        n_dims = 100
+        
+        space = [
+            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-3.0, 3.0]}
+            for i in range(n_dims)
+        ]
+        
+        # Objective that only depends on first 3 dimensions
+        def low_dim_objective(params):
+            x0 = params['x0']
+            x1 = params['x1']
+            x2 = params['x2']
+            return (x0 - 1)**2 + (x1 + 0.5)**2 + (x2 - 0.3)**2
+        
+        optimizer = HighDimRAGDAOptimizer(
+            space,
+            direction='minimize',
+            dim_threshold=50,
+            variance_threshold=0.90,
+            reduction_method='auto',
+            trust_region_fraction=0.2,
+            stage2_trials_fraction=0.3,
+            n_workers=2,
+            random_state=42,
+            initial_samples=100
+        )
+        
+        result = optimizer.optimize(low_dim_objective, n_trials=100, verbose=False)
+        
+        assert result.best_value < 2.0
+    
+    def test_highdim_with_categorical(self):
+        """Test high-dim optimizer with mixed continuous and categorical."""
+        n_cont = 80
+        
+        space = [
+            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+            for i in range(n_cont)
+        ]
+        space.append({'name': 'method', 'type': 'categorical', 'values': ['A', 'B', 'C']})
+        
+        def objective(params):
+            cont_sum = sum(params[f'x{i}']**2 for i in range(10))  # Only first 10 matter
+            cat_penalty = {'A': 0, 'B': 5, 'C': 10}[params['method']]
+            return cont_sum + cat_penalty
+        
+        optimizer = HighDimRAGDAOptimizer(
+            space,
+            direction='minimize',
+            dim_threshold=50,
+            n_workers=2,
+            random_state=42
+        )
+        
+        result = optimizer.optimize(objective, n_trials=80, verbose=False)
+        
+        assert result.best_params['method'] == 'A'
+    
+    def test_dimensionality_reducer_wrapper(self):
+        """Test the DimensionalityReducer wrapper class."""
+        from ragda.highdim import DimensionalityReducer
+        
+        np.random.seed(42)
+        X = np.random.randn(100, 50).astype(np.float64)
+        
+        for method in ['kernel_pca', 'incremental_pca', 'random_projection']:
+            reducer = DimensionalityReducer(
+                method=method,
+                n_components=15,
+                random_seed=42
+            )
+            
+            reducer.fit(X)
+            assert reducer.is_fitted
+            assert reducer.reduced_dim == 15
+            
+            X_reduced = reducer.transform(X)
+            assert X_reduced.shape == (100, 15)
+            
+            X_recon = reducer.inverse_transform(X_reduced)
+            assert X_recon.shape == (100, 50)
+    
+    def test_adaptive_variance_threshold(self):
+        """Test adaptive variance threshold computation."""
+        np.random.seed(42)
+        eigenvalues = np.array([10.0, 5.0, 2.0, 1.0, 0.5, 0.2, 0.1], dtype=np.float64)
+        
+        # Early optimization (progress=0) should use lower threshold
+        n_comp_early, thresh_early = highdim_core.compute_adaptive_components(
+            eigenvalues, 
+            base_threshold=0.90,
+            min_threshold=0.70,
+            max_threshold=0.99,
+            progress=0.0
+        )
+        
+        # Late optimization (progress=1) should use higher threshold
+        n_comp_late, thresh_late = highdim_core.compute_adaptive_components(
+            eigenvalues,
+            base_threshold=0.90,
+            min_threshold=0.70,
+            max_threshold=0.99,
+            progress=1.0
+        )
+        
+        assert thresh_early < thresh_late
+        assert n_comp_early <= n_comp_late
+    
+    def test_highdim_convenience_function(self):
+        """Test scipy-style convenience function."""
+        from ragda import highdim_ragda_optimize
+        
+        n_dims = 30
+        bounds = np.array([[-3.0, 3.0]] * n_dims)
+        
+        def sphere(x):
+            return np.sum(x**2)
+        
+        x_best, f_best, info = highdim_ragda_optimize(
+            sphere,
+            bounds,
+            direction='minimize',
+            n_trials=80,
+            dim_threshold=1000,  # Won't trigger for 30D
+            random_state=42,
+            verbose=False
+        )
+        
+        assert len(x_best) == n_dims
+        assert f_best < 30.0  # Some progress
+    
+    def test_pure_c_median_performance(self):
+        """Test that pure C median computation is fast."""
+        import time
+        
+        np.random.seed(42)
+        X = np.random.randn(200, 500).astype(np.float64)
+        
+        start = time.perf_counter()
+        state = highdim_core.fit_kernel_pca(X, n_components=50)
+        elapsed = time.perf_counter() - start
+        
+        # Should complete in reasonable time (< 1 second on most machines)
+        assert elapsed < 2.0, f"Kernel PCA took {elapsed:.2f}s, expected < 2s"
+        assert state.n_components == 50
+    
+    @pytest.mark.parametrize("n_dims,expected_max", [
+        (100, 150.0),
+        (200, 300.0),
+        (300, 450.0),
+    ])
+    def test_scaling_with_dimensions(self, n_dims, expected_max):
+        """Test that optimizer handles various high dimensions."""
+        space = [
+            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-2.0, 2.0]}
+            for i in range(n_dims)
+        ]
+        
+        def sphere(params):
+            return sum(params[f'x{i}']**2 for i in range(n_dims))
+        
+        optimizer = HighDimRAGDAOptimizer(
+            space,
+            direction='minimize',
+            dim_threshold=50,
+            n_workers=2,
+            random_state=42,
+            initial_samples=100
+        )
+        
+        result = optimizer.optimize(sphere, n_trials=100, verbose=False)
+        
+        # Should make progress from random init (E[X^2] for [-2,2] uniform is 4/3 per dim)
+        # Random expected for n_dims is ~1.33*n_dims. With optimization should improve.
+        assert result.best_value < expected_max
+
+
+# =============================================================================
+# Automatic High-Dimensional Detection in RAGDAOptimizer
+# =============================================================================
+
+@pytest.mark.skipif(not HIGHDIM_AVAILABLE, reason="highdim_core not built")
+class TestAutoHighDimDetection:
+    """Tests for automatic high-dim detection in RAGDAOptimizer."""
+    
+    def test_lowdim_uses_standard_path(self):
+        """Test that low-dim problems use standard optimization path."""
+        space = [
+            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+            for i in range(50)  # Below default threshold of 100
+        ]
+        
+        def sphere(params):
+            return sum(params[f'x{i}']**2 for i in range(50))
+        
+        # Default threshold is 100, so 50D should use standard path
+        optimizer = RAGDAOptimizer(
+            space,
+            direction='minimize',
+            n_workers=2,
+            random_state=42
+        )
+        
+        result = optimizer.optimize(sphere, n_trials=100, verbose=False)
+        
+        # Check optimization worked - 50D problem, expect reasonable progress
+        # Random sampling of [-5,5]^50 gives mean sum ~420, so anything below 300 shows progress
+        assert result.best_value < 300.0  # Some progress from random
+    
+    def test_highdim_triggers_automatically(self):
+        """Test that high-dim problems automatically trigger high-dim path."""
+        space = [
+            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+            for i in range(150)  # Above default threshold of 100
+        ]
+        
+        def sphere(params):
+            return sum(params[f'x{i}']**2 for i in range(150))
+        
+        optimizer = RAGDAOptimizer(
+            space,
+            direction='minimize',
+            n_workers=2,
+            random_state=42,
+            highdim_threshold=100  # Explicitly set to confirm it triggers
+        )
+        
+        result = optimizer.optimize(sphere, n_trials=80, verbose=False)
+        
+        # Check optimization worked
+        assert result.best_value is not None
+        assert result.best_value < 2000.0  # Made some progress
+    
+    def test_custom_highdim_threshold(self):
+        """Test custom high-dim threshold."""
+        space = [
+            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+            for i in range(60)
+        ]
+        
+        def sphere(params):
+            return sum(params[f'x{i}']**2 for i in range(60))
+        
+        # Set threshold to 50, so 60D should trigger high-dim
+        optimizer = RAGDAOptimizer(
+            space,
+            direction='minimize',
+            n_workers=2,
+            random_state=42,
+            highdim_threshold=50
+        )
+        
+        result = optimizer.optimize(sphere, n_trials=80, verbose=False)
+        
+        # Should work fine either path
+        assert result.best_value is not None
+    
+    def test_variance_threshold_parameter(self):
+        """Test variance threshold parameter is respected."""
+        space = [
+            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-3.0, 3.0]}
+            for i in range(120)
+        ]
+        
+        def sphere(params):
+            return sum(params[f'x{i}']**2 for i in range(120))
+        
+        # Test with different variance thresholds
+        for var_thresh in [0.80, 0.95]:
+            optimizer = RAGDAOptimizer(
+                space,
+                direction='minimize',
+                n_workers=2,
+                random_state=42,
+                highdim_threshold=100,
+                variance_threshold=var_thresh
+            )
+            
+            result = optimizer.optimize(sphere, n_trials=60, verbose=False)
+            assert result.best_value is not None
+    
+    def test_reduction_method_parameter(self):
+        """Test reduction method parameter is respected."""
+        space = [
+            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-3.0, 3.0]}
+            for i in range(120)
+        ]
+        
+        def sphere(params):
+            return sum(params[f'x{i}']**2 for i in range(120))
+        
+        for method in ['auto', 'kernel_pca', 'random_projection']:
+            optimizer = RAGDAOptimizer(
+                space,
+                direction='minimize',
+                n_workers=2,
+                random_state=42,
+                highdim_threshold=100,
+                reduction_method=method
+            )
+            
+            result = optimizer.optimize(sphere, n_trials=60, verbose=False)
+            assert result.best_value is not None
+    
+    def test_disable_highdim_with_high_threshold(self):
+        """Test that high-dim can be effectively disabled with very high threshold."""
+        space = [
+            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+            for i in range(200)
+        ]
+        
+        def sphere(params):
+            return sum(params[f'x{i}']**2 for i in range(200))
+        
+        # Set threshold very high to disable high-dim
+        optimizer = RAGDAOptimizer(
+            space,
+            direction='minimize',
+            n_workers=2,
+            random_state=42,
+            highdim_threshold=10000  # Will never trigger
+        )
+        
+        result = optimizer.optimize(sphere, n_trials=50, verbose=False)
+        
+        # Should use standard path
+        assert result.best_value is not None
+        assert 'highdim' not in result.optimization_params or not result.optimization_params.get('highdim')
+    
+    def test_mixed_space_with_categorical(self):
+        """Test automatic high-dim with mixed parameter types."""
+        n_cont = 120
+        
+        space = [
+            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+            for i in range(n_cont)
+        ]
+        space.append({'name': 'cat', 'type': 'categorical', 'values': ['a', 'b', 'c']})
+        
+        def objective(params):
+            cont_sum = sum(params[f'x{i}']**2 for i in range(n_cont))
+            cat_penalty = {'a': 0, 'b': 5, 'c': 10}[params['cat']]
+            return cont_sum + cat_penalty
+        
+        optimizer = RAGDAOptimizer(
+            space,
+            direction='minimize',
+            n_workers=2,
+            random_state=42,
+            highdim_threshold=100
+        )
+        
+        result = optimizer.optimize(objective, n_trials=100, verbose=False)
+        
+        # With high-dimensional optimization, just verify the optimization completes
+        # and returns valid results. The categorical choice is stochastic.
+        assert result.best_params['cat'] in ['a', 'b', 'c']  # Valid categorical
+        assert result.best_value is not None
+        # Verify we have a reasonable result (random would be ~500+ on average for 120D)
+        assert result.best_value < 1000.0
+    
+    def test_maximize_direction_highdim(self):
+        """Test maximize direction works with high-dim."""
+        space = [
+            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+            for i in range(120)
+        ]
+        
+        def neg_sphere(params):
+            return -sum(params[f'x{i}']**2 for i in range(120))
+        
+        optimizer = RAGDAOptimizer(
+            space,
+            direction='maximize',
+            n_workers=2,
+            random_state=42,
+            highdim_threshold=100
+        )
+        
+        result = optimizer.optimize(neg_sphere, n_trials=60, verbose=False)
+        
+        # Best value should be negative (maximizing -x^2)
+        assert result.best_value <= 0

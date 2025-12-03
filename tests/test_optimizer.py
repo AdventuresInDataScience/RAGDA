@@ -799,6 +799,35 @@ class TestConstructorArgs:
         """Test with different random states."""
         opt = RAGDAOptimizer(space, random_state=seed)
         assert opt.random_state == seed
+    
+    def test_highdim_threshold_parameter(self, space):
+        """Test highdim_threshold constructor parameter."""
+        opt = RAGDAOptimizer(space, highdim_threshold=50)
+        assert opt.highdim_threshold == 50
+        
+        opt2 = RAGDAOptimizer(space, highdim_threshold=200)
+        assert opt2.highdim_threshold == 200
+    
+    def test_variance_threshold_parameter(self, space):
+        """Test variance_threshold constructor parameter."""
+        opt = RAGDAOptimizer(space, variance_threshold=0.90)
+        assert opt.variance_threshold == 0.90
+        
+        opt2 = RAGDAOptimizer(space, variance_threshold=0.80)
+        assert opt2.variance_threshold == 0.80
+    
+    def test_reduction_method_parameter(self, space):
+        """Test reduction_method constructor parameter."""
+        for method in ['auto', 'kernel_pca', 'incremental_pca', 'random_projection']:
+            opt = RAGDAOptimizer(space, reduction_method=method)
+            assert opt.reduction_method == method
+    
+    def test_default_highdim_parameters(self, space):
+        """Test default values for high-dim parameters."""
+        opt = RAGDAOptimizer(space)
+        assert opt.highdim_threshold == 100
+        assert opt.variance_threshold == 0.95
+        assert opt.reduction_method == 'auto'
 
 
 class TestOutputValidation:

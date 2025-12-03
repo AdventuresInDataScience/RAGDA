@@ -1,3 +1,46 @@
+Metadata-Version: 2.4
+Name: ragda
+Version: 2.1.0
+Summary: RAGDA - High-Performance Derivative-Free Optimizer with High-Dimensional Support
+Home-page: https://github.com/AdventuresInDataScience/RAGDA
+Author: RAGDA Team
+Author-email: 
+License-Expression: MIT
+Project-URL: Homepage, https://github.com/AdventuresInDataScience/RAGDA
+Project-URL: Repository, https://github.com/AdventuresInDataScience/RAGDA
+Project-URL: Issues, https://github.com/AdventuresInDataScience/RAGDA/issues
+Keywords: optimization,derivative-free,hyperparameter-tuning,machine-learning,cython
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Science/Research
+Classifier: Intended Audience :: Developers
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Cython
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Topic :: Scientific/Engineering :: Mathematics
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: numpy>=1.20.0
+Requires-Dist: pandas>=1.3.0
+Requires-Dist: scipy>=1.7.0
+Requires-Dist: loky>=3.0.0
+Provides-Extra: dev
+Requires-Dist: cython>=0.29.0; extra == "dev"
+Requires-Dist: pytest>=6.0; extra == "dev"
+Requires-Dist: pytest-cov; extra == "dev"
+Requires-Dist: matplotlib>=3.0; extra == "dev"
+Provides-Extra: docs
+Requires-Dist: sphinx; extra == "docs"
+Requires-Dist: sphinx-rtd-theme; extra == "docs"
+Dynamic: home-page
+Dynamic: requires-python
+
 # RAGDA - Robust ADAM Gradient Descent Approximator
 
 A **pure Cython/C** derivative-free optimization library for hyperparameter tuning and black-box optimization. RAGDA uses ADAM-based gradient approximation with parallel workers for fast, robust optimization.
@@ -12,7 +55,7 @@ A **pure Cython/C** derivative-free optimization library for hyperparameter tuni
 - 🛑 **Early stopping** - Convergence detection per worker
 - 🔗 **Worker synchronization** - Share best solutions across workers
 - 📈 **ADAM optimizer** - Momentum-based gradient approximation
-- 🔬 **Automatic high-dim optimization** - Seamlessly handles 100+ dimensions with Kernel PCA, random projections, and adaptive dimensionality reduction - just use `RAGDAOptimizer`!
+- 🔬 **High-dimensional optimization** - Kernel PCA, random projections, and adaptive dimensionality reduction
 
 ## Installation
 
@@ -63,8 +106,7 @@ def objective(params):
     # Return the metric to minimize (e.g., validation loss)
     return some_loss
 
-# Optimize - works for ANY number of dimensions!
-# High-dimensional optimization (100+ dims) is AUTOMATIC
+# Optimize
 optimizer = RAGDAOptimizer(space, n_workers=4, random_state=42)
 result = optimizer.optimize(objective, n_trials=100)
 
@@ -92,42 +134,7 @@ print(f"Best f: {f_best}")
 
 ### High-Dimensional Optimization
 
-**High-dimensional optimization is AUTOMATIC!** Just use `RAGDAOptimizer` - it detects when you have 100+ continuous dimensions and automatically applies dimensionality reduction techniques:
-
-```python
-from ragda import RAGDAOptimizer
-import numpy as np
-
-# Define a 500-dimensional search space
-n_dims = 500
-space = [
-    {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
-    for i in range(n_dims)
-]
-
-def high_dim_objective(params):
-    # Only first 10 dimensions matter (common in practice)
-    return sum((params[f'x{i}'] - 1.0)**2 for i in range(10))
-
-# Just use RAGDAOptimizer - high-dim handling is automatic!
-optimizer = RAGDAOptimizer(
-    space,
-    direction='minimize',
-    n_workers=4,
-    random_state=42,
-    # Optional: customize high-dim behavior
-    highdim_threshold=100,      # Trigger high-dim mode at 100+ dims (default)
-    variance_threshold=0.95,    # Capture 95% of variance (default)
-    reduction_method='auto',    # Auto-select best method (default)
-)
-
-result = optimizer.optimize(high_dim_objective, n_trials=200)
-print(f"Best value: {result.best_value}")
-```
-
-#### Advanced: Using HighDimRAGDAOptimizer Directly
-
-For more control over high-dimensional optimization, you can use the specialized class:
+For problems with 100+ dimensions, RAGDA provides specialized tools that exploit low-dimensional structure:
 
 ```python
 from ragda import HighDimRAGDAOptimizer
@@ -141,6 +148,7 @@ space = [
 ]
 
 def high_dim_objective(params):
+    # Only first 10 dimensions matter (common in practice)
     return sum((params[f'x{i}'] - 1.0)**2 for i in range(10))
 
 optimizer = HighDimRAGDAOptimizer(
@@ -256,19 +264,12 @@ print(f"Best value: {result.best_value}")
 
 ### RAGDAOptimizer
 
-The main optimizer class - handles both standard and high-dimensional problems automatically:
-
 ```python
 RAGDAOptimizer(
     space: List[Dict],              # Search space definition
     direction: str = 'minimize',    # 'minimize' or 'maximize'
     n_workers: int = None,          # Number of parallel workers (default: CPU count)
     random_state: int = None,       # Random seed for reproducibility
-    
-    # High-dimensional settings (automatic when dims >= threshold)
-    highdim_threshold: int = 100,   # Trigger high-dim mode at this many continuous dims
-    variance_threshold: float = 0.95,  # Variance to capture in reduced space
-    reduction_method: str = 'auto',    # 'auto', 'kernel_pca', 'incremental_pca', 'random_projection'
 )
 ```
 
@@ -314,7 +315,7 @@ result.direction      # 'minimize' or 'maximize'
 
 ### HighDimRAGDAOptimizer
 
-For advanced control over high-dimensional optimization (typically you don't need this - use `RAGDAOptimizer` instead):
+For high-dimensional problems (100+ dimensions):
 
 ```python
 HighDimRAGDAOptimizer(
@@ -408,8 +409,8 @@ python -m pytest tests/ -v -m "not slow"
 2. **Enable mini-batch** for expensive objectives with large datasets
 3. **Tune shrink_patience** - lower for fast convergence, higher for exploration
 4. **Set sync_frequency** - more frequent syncing helps on unimodal problems
-5. **High-dim is automatic** - `RAGDAOptimizer` detects 100+ dimensions and uses reduction
-6. **Customize reduction** - use `reduction_method='kernel_pca'` for smooth objectives, `'random_projection'` for speed
+5. **For high-dim problems** - use `HighDimRAGDAOptimizer` when dimensions > 100
+6. **Choose reduction method** - `kernel_pca` for smooth objectives, `random_projection` for speed
 
 ## Verifying Installation
 
@@ -438,15 +439,12 @@ else:
 ## Changelog
 
 ### v2.1.0
-- **Automatic high-dimensional optimization** - `RAGDAOptimizer` now automatically detects and handles 100+ dimension problems
-- New constructor parameters: `highdim_threshold`, `variance_threshold`, `reduction_method`
-- Kernel PCA, random projections, and incremental PCA for dimensionality reduction
+- **High-dimensional optimization** with Kernel PCA, random projections, and incremental PCA
 - Two-stage optimization: reduced space exploration + trust region refinement
 - Adaptive variance threshold that increases during optimization
 - Pure C implementations for all distance/kernel computations (no scipy dependency in hot paths)
 - Quickselect-based O(n) median for RBF kernel gamma estimation
-- `HighDimRAGDAOptimizer` class for advanced control (optional)
-- `highdim_ragda_optimize` convenience function
+- `HighDimRAGDAOptimizer` class and `highdim_ragda_optimize` convenience function
 - `DimensionalityReducer` wrapper for standalone dimensionality reduction
 - 31 new tests for high-dimensional functionality
 
