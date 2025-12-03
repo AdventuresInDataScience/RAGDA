@@ -1,0 +1,76 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "cython>=0.29", "numpy>=1.20"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ragda"
+version = "0.1.0"
+description = "Roughly Approximated Gradient Descent Algorithm - A derivative-free optimizer for mixed variable types"
+readme = "Readme.md"
+requires-python = ">=3.8"
+license = "MIT"
+authors = [
+    {name = "RAGDA Team"}
+]
+keywords = ["optimization", "derivative-free", "hyperparameter-tuning", "machine-learning", "cython"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Cython",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+dependencies = [
+    "numpy>=1.20.0",
+    "pandas>=1.3.0",
+    "scipy>=1.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "cython>=0.29.0",
+    "pytest>=6.0",
+    "pytest-cov",
+    "matplotlib>=3.0",
+]
+docs = [
+    "sphinx",
+    "sphinx-rtd-theme",
+]
+
+[project.urls]
+Homepage = "https://github.com/AdventuresInDataScience/RAGDA"
+Repository = "https://github.com/AdventuresInDataScience/RAGDA"
+Issues = "https://github.com/AdventuresInDataScience/RAGDA/issues"
+
+[tool.setuptools]
+packages = ["ragda"]
+zip-safe = false
+
+[tool.setuptools.package-data]
+ragda = ["*.pyx", "*.pxd"]
+
+[tool.pytest.ini_options]
+testpaths = ["."]
+python_files = ["test_*.py"]
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["ragda"]
+omit = ["*/tests/*", "setup.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+]
