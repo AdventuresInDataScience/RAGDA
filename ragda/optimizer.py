@@ -7,6 +7,7 @@ Pure Cython/C implementation with:
 - Mixed variable types (continuous, ordinal, categorical)
 - Mini-batch evaluation for data-driven objectives
 - Early stopping and convergence detection
+- Automatic high-dimensional optimization via dimensionality reduction
 """
 
 import numpy as np
@@ -21,6 +22,13 @@ from loky import get_reusable_executor
 from .space import SearchSpace
 from .result import OptimizationResult, Trial
 from . import core  # Pure Cython - no fallback
+
+# Try to import high-dim core (may not be built yet)
+try:
+    from . import highdim_core
+    HIGHDIM_AVAILABLE = True
+except ImportError:
+    HIGHDIM_AVAILABLE = False
 
 
 # =============================================================================
@@ -228,14 +236,19 @@ class RAGDAOptimizer:
         >>> print(f"Best: {result.best_params} = {result.best_value}")
     """
     
-    __slots__ = ('space', 'direction', 'random_state', 'n_workers')
+    __slots__ = ('space', 'direction', 'random_state', 'n_workers',
+                 'highdim_threshold', 'variance_threshold', 'reduction_method')
     
     def __init__(
         self,
         space: List[Dict[str, Any]],
         direction: Literal['minimize', 'maximize'] = 'minimize',
         n_workers: Optional[int] = None,
-        random_state: Optional[int] = None
+        random_state: Optional[int] = None,
+        # High-dimensional settings (automatic)
+        highdim_threshold: int = 100,
+        variance_threshold: float = 0.95,
+        reduction_method: Literal['auto', 'kernel_pca', 'incremental_pca', 'random_projection'] = 'auto'
     ):
         """
         Initialize RAGDA optimizer.
@@ -255,6 +268,12 @@ class RAGDAOptimizer:
             Number of parallel workers. Default: CPU_count // 2
         random_state : int, optional
             Random seed for reproducibility
+        highdim_threshold : int
+            Use high-dimensional methods when continuous dims >= this (default: 100)
+        variance_threshold : float
+            Fraction of variance to capture in dimensionality reduction (default: 0.95)
+        reduction_method : str
+            'auto', 'kernel_pca', 'incremental_pca', or 'random_projection'
         """
         if len(space) == 0:
             raise ValueError("Search space cannot be empty")
@@ -270,6 +289,11 @@ class RAGDAOptimizer:
             raise ValueError(f"n_workers must be positive, got {n_workers}")
         
         self.n_workers = n_workers
+        
+        # High-dimensional settings
+        self.highdim_threshold = highdim_threshold
+        self.variance_threshold = variance_threshold
+        self.reduction_method = reduction_method
         
         if random_state is not None:
             np.random.seed(random_state)
@@ -554,6 +578,434 @@ class RAGDAOptimizer:
         if not callable(objective):
             raise ValueError("objective must be callable")
         
+        # Check if high-dimensional optimization should be used
+        use_highdim = (
+            HIGHDIM_AVAILABLE and 
+            self.space.n_continuous >= self.highdim_threshold
+        )
+        
+        if use_highdim:
+            return self._optimize_highdim(
+                objective=objective,
+                n_trials=n_trials,
+                x0=x0,
+                lambda_start=lambda_start,
+                lambda_end=lambda_end,
+                lambda_decay_rate=lambda_decay_rate,
+                sigma_init=sigma_init,
+                sigma_final_fraction=sigma_final_fraction,
+                sigma_decay_schedule=sigma_decay_schedule,
+                shrink_factor=shrink_factor,
+                shrink_patience=shrink_patience,
+                shrink_threshold=shrink_threshold,
+                use_improvement_weights=use_improvement_weights,
+                top_n_min=top_n_min,
+                top_n_max=top_n_max,
+                weight_decay=weight_decay,
+                sync_frequency=sync_frequency,
+                use_minibatch=use_minibatch,
+                data_size=data_size,
+                minibatch_start=minibatch_start,
+                minibatch_end=minibatch_end,
+                minibatch_schedule=minibatch_schedule,
+                adam_learning_rate=adam_learning_rate,
+                adam_beta1=adam_beta1,
+                adam_beta2=adam_beta2,
+                adam_epsilon=adam_epsilon,
+                early_stop_threshold=early_stop_threshold,
+                early_stop_patience=early_stop_patience,
+                verbose=verbose
+            )
+        
+        # Standard optimization path
+        return self._optimize_standard(
+            objective=objective,
+            n_trials=n_trials,
+            x0=x0,
+            lambda_start=lambda_start,
+            lambda_end=lambda_end,
+            lambda_decay_rate=lambda_decay_rate,
+            sigma_init=sigma_init,
+            sigma_final_fraction=sigma_final_fraction,
+            sigma_decay_schedule=sigma_decay_schedule,
+            shrink_factor=shrink_factor,
+            shrink_patience=shrink_patience,
+            shrink_threshold=shrink_threshold,
+            use_improvement_weights=use_improvement_weights,
+            top_n_min=top_n_min,
+            top_n_max=top_n_max,
+            weight_decay=weight_decay,
+            sync_frequency=sync_frequency,
+            use_minibatch=use_minibatch,
+            data_size=data_size,
+            minibatch_start=minibatch_start,
+            minibatch_end=minibatch_end,
+            minibatch_schedule=minibatch_schedule,
+            adam_learning_rate=adam_learning_rate,
+            adam_beta1=adam_beta1,
+            adam_beta2=adam_beta2,
+            adam_epsilon=adam_epsilon,
+            early_stop_threshold=early_stop_threshold,
+            early_stop_patience=early_stop_patience,
+            verbose=verbose
+        )
+    
+    def _optimize_highdim(
+        self,
+        objective: Callable,
+        n_trials: int,
+        x0: Optional[Union[Dict, List[Dict]]],
+        verbose: bool,
+        **kwargs
+    ) -> OptimizationResult:
+        """
+        High-dimensional optimization using dimensionality reduction.
+        
+        Two-stage approach:
+        1. Sample space, analyze effective dimensionality
+        2. If low-dim structure detected: optimize in reduced space + trust region refinement
+        3. Otherwise: fall back to standard optimization
+        """
+        if verbose:
+            print(f"{'='*70}")
+            print(f"RAGDA High-Dimensional Optimization")
+            print(f"{'='*70}")
+            print(f"Continuous dimensions: {self.space.n_continuous} (threshold: {self.highdim_threshold})")
+            print(f"Reduction method: {self.reduction_method}")
+            print(f"Variance threshold: {self.variance_threshold:.1%}")
+        
+        # Stage 0: Sample initial points for dimensionality analysis
+        initial_samples = min(max(100, self.space.n_continuous), n_trials // 2)
+        
+        if verbose:
+            print(f"Sampling {initial_samples} points for dimensionality analysis...")
+        
+        # Sample points and evaluate
+        sample_points = self.space.sample(n=initial_samples, method='lhs')
+        X_samples = np.zeros((initial_samples, self.space.n_continuous), dtype=np.float64)
+        f_samples = np.zeros(initial_samples, dtype=np.float64)
+        
+        sign = -1.0 if self.direction == 'maximize' else 1.0
+        
+        for i, params in enumerate(sample_points):
+            x_cont, _, _ = self.space.to_split_vectors(params)
+            X_samples[i] = x_cont
+            try:
+                f_samples[i] = sign * objective(params)
+            except Exception:
+                f_samples[i] = 1e10
+        
+        # Analyze effective dimensionality
+        eigenvalues = highdim_core.compute_eigenvalues_fast(X_samples)
+        dim_result = highdim_core.estimate_effective_dimensionality(
+            eigenvalues, self.variance_threshold
+        )
+        
+        effective_dim = dim_result['effective_dim']
+        is_low_dim = dim_result['is_low_dimensional']
+        
+        if verbose:
+            print(f"Effective dimensionality: {effective_dim} / {self.space.n_continuous}")
+            print(f"Low-dimensional structure: {'Yes' if is_low_dim else 'No'}")
+        
+        # If no low-dimensional structure, fall back to standard optimization
+        if not is_low_dim or effective_dim >= self.space.n_continuous * 0.8:
+            if verbose:
+                print("Falling back to standard optimization...")
+                print(f"{'='*70}\n")
+            
+            # Use standard path but pass through highdim detection info
+            return self._optimize_standard(
+                objective=objective,
+                n_trials=n_trials,
+                x0=x0,
+                verbose=verbose,
+                highdim_info={'detected': False, 'effective_dim': effective_dim},
+                **kwargs
+            )
+        
+        # Select reduction method
+        if self.reduction_method == 'auto':
+            if self.space.n_continuous > 500:
+                method = 'random_projection'
+            elif initial_samples < self.space.n_continuous:
+                method = 'kernel_pca'
+            else:
+                method = 'incremental_pca'
+        else:
+            method = self.reduction_method
+        
+        if verbose:
+            print(f"Using reduction method: {method}")
+        
+        # Fit dimensionality reducer
+        n_components = min(effective_dim + 5, self.space.n_continuous // 2)
+        
+        if method == 'kernel_pca':
+            reducer_state = highdim_core.fit_kernel_pca(X_samples, n_components=n_components)
+        elif method == 'incremental_pca':
+            reducer_state = highdim_core.fit_incremental_pca(X_samples, n_components=n_components)
+        else:  # random_projection
+            reducer_state = highdim_core.fit_random_projection(
+                self.space.n_continuous, n_components,
+                'gaussian', self.random_state or 42
+            )
+        
+        # Stage 1: Optimize in reduced space
+        stage1_trials = int(n_trials * 0.7)
+        
+        if verbose:
+            print(f"\nStage 1: Optimizing in {n_components}D reduced space ({stage1_trials} trials)...")
+        
+        # Create reduced space
+        reduced_space = [
+            {'name': f'z{i}', 'type': 'continuous', 'bounds': [-3.0, 3.0]}
+            for i in range(n_components)
+        ]
+        
+        # Add categorical parameters unchanged
+        for param in self.space.parameters:
+            if param.type == 'categorical':
+                reduced_space.append({
+                    'name': param.name,
+                    'type': 'categorical',
+                    'values': list(param.values)
+                })
+        
+        # Create objective in reduced space
+        def reduced_objective(reduced_params):
+            # Extract reduced coordinates
+            z = np.array([reduced_params[f'z{i}'] for i in range(n_components)], dtype=np.float64)
+            z = z.reshape(1, -1)
+            
+            # Inverse transform to full space
+            if method == 'kernel_pca':
+                x_full = highdim_core.inverse_transform_kernel_pca(reducer_state, z)
+            elif method == 'incremental_pca':
+                x_full = highdim_core.inverse_transform_incremental_pca(reducer_state, z)
+            else:
+                x_full = highdim_core.inverse_transform_random_projection(reducer_state, z)
+            
+            x_full = x_full.flatten()
+            
+            # Clip to bounds
+            bounds = self.space.get_bounds_array()
+            x_full = np.clip(x_full, bounds[:, 0], bounds[:, 1])
+            
+            # Build full params dict
+            full_params = {}
+            cont_idx = 0
+            for param in self.space.parameters:
+                if param.type == 'categorical':
+                    full_params[param.name] = reduced_params[param.name]
+                else:
+                    full_params[param.name] = float(x_full[cont_idx])
+                    cont_idx += 1
+            
+            return objective(full_params)
+        
+        # Create reduced optimizer
+        reduced_optimizer = RAGDAOptimizer(
+            reduced_space,
+            direction=self.direction,
+            n_workers=self.n_workers,
+            random_state=self.random_state,
+            highdim_threshold=1000000  # Disable recursive highdim
+        )
+        
+        # Run Stage 1 optimization
+        stage1_result = reduced_optimizer.optimize(
+            reduced_objective,
+            n_trials=stage1_trials,
+            verbose=False,
+            **{k: v for k, v in kwargs.items() if k not in ['x0']}
+        )
+        
+        # Get best point from Stage 1
+        best_reduced = stage1_result.best_params
+        z_best = np.array([best_reduced[f'z{i}'] for i in range(n_components)], dtype=np.float64)
+        z_best = z_best.reshape(1, -1)
+        
+        if method == 'kernel_pca':
+            x_best_full = highdim_core.inverse_transform_kernel_pca(reducer_state, z_best)
+        elif method == 'incremental_pca':
+            x_best_full = highdim_core.inverse_transform_incremental_pca(reducer_state, z_best)
+        else:
+            x_best_full = highdim_core.inverse_transform_random_projection(reducer_state, z_best)
+        
+        x_best_full = x_best_full.flatten()
+        bounds = self.space.get_bounds_array()
+        x_best_full = np.clip(x_best_full, bounds[:, 0], bounds[:, 1])
+        
+        # Build Stage 1 best params
+        stage1_best_params = {}
+        cont_idx = 0
+        for param in self.space.parameters:
+            if param.type == 'categorical':
+                stage1_best_params[param.name] = best_reduced[param.name]
+            else:
+                stage1_best_params[param.name] = float(x_best_full[cont_idx])
+                cont_idx += 1
+        
+        if verbose:
+            print(f"Stage 1 best: {stage1_result.best_value:.6f}")
+        
+        # Stage 2: Trust region refinement in full space
+        stage2_trials = n_trials - stage1_trials
+        
+        if stage2_trials > 20:
+            if verbose:
+                print(f"\nStage 2: Trust region refinement ({stage2_trials} trials)...")
+            
+            # Create tight trust region around Stage 1 solution
+            trust_fraction = 0.1
+            trust_space = []
+            
+            for param in self.space.parameters:
+                if param.type == 'categorical':
+                    trust_space.append({
+                        'name': param.name,
+                        'type': 'categorical',
+                        'values': list(param.values)
+                    })
+                else:
+                    center = stage1_best_params[param.name]
+                    full_range = param.bounds[1] - param.bounds[0]
+                    half_width = full_range * trust_fraction / 2
+                    
+                    new_lower = max(param.bounds[0], center - half_width)
+                    new_upper = min(param.bounds[1], center + half_width)
+                    
+                    trust_space.append({
+                        'name': param.name,
+                        'type': 'continuous',
+                        'bounds': [new_lower, new_upper]
+                    })
+            
+            # Run Stage 2 optimization
+            trust_optimizer = RAGDAOptimizer(
+                trust_space,
+                direction=self.direction,
+                n_workers=self.n_workers,
+                random_state=(self.random_state + 1000) if self.random_state else None,
+                highdim_threshold=1000000  # Disable recursive highdim
+            )
+            
+            stage2_result = trust_optimizer.optimize(
+                objective,
+                n_trials=stage2_trials,
+                x0=stage1_best_params,
+                verbose=False,
+                **{k: v for k, v in kwargs.items() if k not in ['x0']}
+            )
+            
+            if verbose:
+                print(f"Stage 2 best: {stage2_result.best_value:.6f}")
+            
+            # Use better of Stage 1 or Stage 2
+            if self.direction == 'minimize':
+                if stage2_result.best_value < stage1_result.best_value:
+                    final_best_params = stage2_result.best_params
+                    final_best_value = stage2_result.best_value
+                else:
+                    final_best_params = stage1_best_params
+                    final_best_value = stage1_result.best_value
+            else:
+                if stage2_result.best_value > stage1_result.best_value:
+                    final_best_params = stage2_result.best_params
+                    final_best_value = stage2_result.best_value
+                else:
+                    final_best_params = stage1_best_params
+                    final_best_value = stage1_result.best_value
+        else:
+            final_best_params = stage1_best_params
+            final_best_value = stage1_result.best_value
+        
+        if verbose:
+            print(f"\n{'='*70}")
+            print(f"High-Dim Optimization Complete")
+            print(f"{'='*70}")
+            print(f"Effective dim: {effective_dim} / {self.space.n_continuous}")
+            print(f"Method: {method}")
+            print(f"Final {self.direction}: {final_best_value:.6f}")
+            print(f"{'='*70}")
+        
+        # Build result
+        best_trial = Trial(
+            trial_id=0,
+            worker_id=0,
+            iteration=n_trials - 1,
+            params=final_best_params,
+            value=final_best_value,
+            batch_size=-1
+        )
+        
+        result = OptimizationResult(
+            best_params=final_best_params,
+            best_value=final_best_value,
+            best_trial=best_trial,
+            best_worker_id=0,
+            best_concentration=1.0,
+            trials=[best_trial],
+            n_trials=n_trials,
+            n_workers=self.n_workers,
+            direction=self.direction,
+            space=self.space,
+            optimization_params={
+                'n_trials': n_trials,
+                'highdim': True,
+                'effective_dim': effective_dim,
+                'reduction_method': method,
+                'n_components': n_components,
+            }
+        )
+        
+        return result
+    
+    def _optimize_standard(
+        self,
+        objective: Callable,
+        n_trials: int,
+        x0: Optional[Union[Dict, List[Dict]]],
+        verbose: bool,
+        highdim_info: Optional[Dict] = None,
+        **kwargs
+    ) -> OptimizationResult:
+        """Standard optimization path (extracted for reuse)."""
+        # Get kwargs with defaults
+        lambda_start = kwargs.get('lambda_start', 50)
+        lambda_end = kwargs.get('lambda_end', 10)
+        lambda_decay_rate = kwargs.get('lambda_decay_rate', 5.0)
+        sigma_init = kwargs.get('sigma_init', 0.3)
+        sigma_final_fraction = kwargs.get('sigma_final_fraction', 0.2)
+        sigma_decay_schedule = kwargs.get('sigma_decay_schedule', 'exponential')
+        shrink_factor = kwargs.get('shrink_factor', 0.9)
+        shrink_patience = kwargs.get('shrink_patience', 10)
+        shrink_threshold = kwargs.get('shrink_threshold', 1e-6)
+        use_improvement_weights = kwargs.get('use_improvement_weights', True)
+        top_n_min = kwargs.get('top_n_min', 0.2)
+        top_n_max = kwargs.get('top_n_max', 1.0)
+        weight_decay = kwargs.get('weight_decay', 0.95)
+        sync_frequency = kwargs.get('sync_frequency', 100)
+        use_minibatch = kwargs.get('use_minibatch', False)
+        data_size = kwargs.get('data_size', None)
+        minibatch_start = kwargs.get('minibatch_start', None)
+        minibatch_end = kwargs.get('minibatch_end', None)
+        minibatch_schedule = kwargs.get('minibatch_schedule', 'inverse_decay')
+        adam_learning_rate = kwargs.get('adam_learning_rate', 0.001)
+        adam_beta1 = kwargs.get('adam_beta1', 0.9)
+        adam_beta2 = kwargs.get('adam_beta2', 0.999)
+        adam_epsilon = kwargs.get('adam_epsilon', 1e-8)
+        early_stop_threshold = kwargs.get('early_stop_threshold', 1e-12)
+        early_stop_patience = kwargs.get('early_stop_patience', 50)
+        
+        # Auto-calculate mini-batch schedule
+        if use_minibatch and data_size is not None:
+            if minibatch_start is None:
+                minibatch_start = max(32, data_size // 20)
+            if minibatch_end is None:
+                minibatch_end = int(data_size * 0.8)
+        
         # Initialize
         x0_list = self._initialize_starting_points(x0)
         
@@ -604,7 +1056,7 @@ class RAGDAOptimizer:
             weight_decay, early_stop_threshold, early_stop_patience, verbose
         )
         
-        # Process results
+        # Process results (same as original optimize method)
         all_trials = []
         worker_summaries = []
         trial_id = 0
@@ -650,14 +1102,11 @@ class RAGDAOptimizer:
         x_best = best_worker['best_params']
         f_best = best_worker['f_best']
         
-        # Re-evaluate final best with FULL sample (no minibatch) for accurate final loss
-        # This is critical for curriculum learning / minibatch scenarios
+        # Re-evaluate final best with FULL sample for mini-batch mode
         if use_minibatch:
             try:
-                # Check if objective supports batch_size parameter
                 sig = inspect.signature(objective)
                 if 'batch_size' in sig.parameters:
-                    # Call with batch_size=-1 or None to use full sample
                     f_best_full = objective(x_best, batch_size=-1)
                 else:
                     f_best_full = objective(x_best)
@@ -687,6 +1136,18 @@ class RAGDAOptimizer:
             batch_size=-1
         )
         
+        opt_params = {
+            'n_trials': n_trials,
+            'lambda_start': lambda_start,
+            'lambda_end': lambda_end,
+            'sigma_init': sigma_init,
+            'use_minibatch': use_minibatch,
+            'sync_frequency': sync_frequency,
+            'adam_learning_rate': adam_learning_rate,
+        }
+        if highdim_info:
+            opt_params['highdim_info'] = highdim_info
+        
         result = OptimizationResult(
             best_params=x_best,
             best_value=f_best,
@@ -698,15 +1159,7 @@ class RAGDAOptimizer:
             n_workers=self.n_workers,
             direction=self.direction,
             space=self.space,
-            optimization_params={
-                'n_trials': n_trials,
-                'lambda_start': lambda_start,
-                'lambda_end': lambda_end,
-                'sigma_init': sigma_init,
-                'use_minibatch': use_minibatch,
-                'sync_frequency': sync_frequency,
-                'adam_learning_rate': adam_learning_rate,
-            }
+            optimization_params=opt_params
         )
         
         result._worker_summaries = worker_summaries

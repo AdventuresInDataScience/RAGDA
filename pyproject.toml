@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ragda"
-version = "0.1.0"
-description = "Roughly Approximated Gradient Descent Algorithm - A derivative-free optimizer for mixed variable types"
+version = "2.1.0"
+description = "RAGDA - High-Performance Derivative-Free Optimizer with High-Dimensional Support"
 readme = "Readme.md"
 requires-python = ">=3.8"
 license = "MIT"
@@ -33,6 +33,7 @@ dependencies = [
     "numpy>=1.20.0",
     "pandas>=1.3.0",
     "scipy>=1.7.0",
+    "loky>=3.0.0",
 ]
 
 [project.optional-dependencies]
