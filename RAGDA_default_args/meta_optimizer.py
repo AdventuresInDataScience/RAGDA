@@ -147,7 +147,6 @@ def load_all_problems(use_cache: bool = True) -> Dict[str, List[dict]]:
     from benchmark_functions import get_all_functions
     from benchmark_ml_problems import get_all_ml_problems
     from benchmark_realworld_problems import get_all_genuine_problems
-    from fill_benchmark_gaps import GAP_FILLING_PROBLEMS
     from problem_classifier import classify_problem, DimClass, CostLevel, RuggednessLevel
     
     # Load classification cache
@@ -216,31 +215,6 @@ def load_all_problems(use_cache: bool = True) -> Dict[str, List[dict]]:
             'source': 'realworld',
         })
     
-    # Load gap-filling problems (to ensure 5+ problems per category)
-    for gap_problem in GAP_FILLING_PROBLEMS:
-        # Create space in RAGDA format
-        space = [
-            {'name': f'x{i}', 'type': 'continuous', 'bounds': list(gap_problem['bounds'][i])}
-            for i in range(gap_problem['dim'])
-        ]
-        
-        # Create wrapper that takes dict params
-        def make_dict_wrapper3(orig_func, dim):
-            def wrapper(params):
-                x = np.array([params[f'x{i}'] for i in range(dim)])
-                return orig_func(x)
-            return wrapper
-        
-        all_problems.append({
-            'name': gap_problem['name'],
-            'func': make_dict_wrapper3(gap_problem['func'], gap_problem['dim']),
-            'space': space,
-            'bounds': np.array(gap_problem['bounds']),
-            'dim': gap_problem['dim'],
-            'source': 'gap_filler',
-            'expected_category': gap_problem.get('expected_category'),  # Pre-known category
-        })
-    
     # Classify each problem (using cache when available)
     print(f"Classifying {len(all_problems)} problems...")
     sys.stdout.flush()
@@ -255,23 +229,6 @@ def load_all_problems(use_cache: bool = True) -> Dict[str, List[dict]]:
                 cached = cache[p['name']]
                 key = cached['category_key']
                 cache_hits += 1
-            # Use pre-known category for gap-filling problems
-            elif p.get('expected_category'):
-                key = p['expected_category']
-                # Cache this classification
-                cache[p['name']] = {
-                    'category_key': key,
-                    'dim_class': key.split('_')[0],
-                    'cost_level': key.split('_')[1],
-                    'ruggedness_level': key.split('_')[2],
-                    'dim': p['dim'],
-                    'source': p['source'],
-                }
-                try:
-                    save_classification_cache(cache)
-                except Exception as e:
-                    print(f"  Warning: Could not save cache after {p['name']}: {e}")
-                cache_hits += 1  # Count as hit since we know the category
             else:
                 # Need to classify - Use bounds if available, else extract from space
                 if p['bounds'] is not None:
