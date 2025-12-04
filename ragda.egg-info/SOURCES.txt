@@ -20,6 +20,7 @@ ragda.egg-info/not-zip-safe
 ragda.egg-info/requires.txt
 ragda.egg-info/top_level.txt
 tests/test_core.py
+tests/test_dynamic_workers.py
 tests/test_highdim.py
 tests/test_integration.py
 tests/test_optimizer.py

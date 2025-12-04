@@ -687,7 +687,446 @@ class TestEdgeCasesIntegration:
         assert result.best_params['cat1'] == 'B'
         assert result.best_params['cat2'] == 'Y'
         assert result.best_params['cat3'] == 'Q'
-    """Test early stopping with various configurations."""
+
+
+# =============================================================================
+# Dynamic Worker Strategy Integration Tests
+# =============================================================================
+
+class TestWorkerStrategyIntegration:
+    """Integration tests for greedy vs dynamic worker strategies."""
+    
+    @pytest.fixture
+    def space_2d(self):
+        return [
+            {'name': 'x', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            {'name': 'y', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
+        ]
+    
+    @pytest.fixture
+    def space_5d(self):
+        return [
+            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+            for i in range(5)
+        ]
+    
+    @pytest.fixture
+    def mixed_space(self):
+        return [
+            {'name': 'x', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            {'name': 'y', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            {'name': 'method', 'type': 'categorical', 'values': ['A', 'B', 'C']},
+        ]
+    
+    # -------------------------------------------------------------------------
+    # Basic Greedy vs Dynamic Tests
+    # -------------------------------------------------------------------------
+    
+    def test_greedy_strategy_basic(self, space_2d):
+        """Test greedy strategy works correctly."""
+        def sphere(params):
+            return params['x']**2 + params['y']**2
+        
+        opt = RAGDAOptimizer(space_2d, n_workers=4, random_state=42)
+        result = opt.optimize(
+            sphere,
+            n_trials=50,
+            worker_strategy='greedy',
+            verbose=False
+        )
+        
+        assert result.best_value < 1.0
+        assert 'x' in result.best_params
+        assert 'y' in result.best_params
+    
+    def test_dynamic_strategy_basic(self, space_2d):
+        """Test dynamic strategy works correctly."""
+        def sphere(params):
+            return params['x']**2 + params['y']**2
+        
+        opt = RAGDAOptimizer(space_2d, n_workers=4, random_state=42)
+        result = opt.optimize(
+            sphere,
+            n_trials=50,
+            worker_strategy='dynamic',
+            verbose=False
+        )
+        
+        assert result.best_value < 1.0
+        assert 'x' in result.best_params
+        assert 'y' in result.best_params
+    
+    def test_default_strategy_is_greedy(self, space_2d):
+        """Test that default worker_strategy is 'greedy'."""
+        def sphere(params):
+            return params['x']**2 + params['y']**2
+        
+        opt = RAGDAOptimizer(space_2d, n_workers=4, random_state=42)
+        result = opt.optimize(sphere, n_trials=50, verbose=False)
+        
+        # Should work with default (greedy)
+        assert result.best_value < 1.0
+    
+    # -------------------------------------------------------------------------
+    # Worker Strategy with Different Worker Counts
+    # -------------------------------------------------------------------------
+    
+    @pytest.mark.parametrize("n_workers", [1, 2, 4, 8, 12])
+    def test_greedy_varying_workers(self, space_2d, n_workers):
+        """Test greedy strategy with different worker counts."""
+        def sphere(params):
+            return params['x']**2 + params['y']**2
+        
+        opt = RAGDAOptimizer(space_2d, n_workers=n_workers, random_state=42)
+        result = opt.optimize(
+            sphere,
+            n_trials=max(30, n_workers * 5),
+            worker_strategy='greedy',
+            verbose=False
+        )
+        
+        assert result.best_value < 5.0
+    
+    @pytest.mark.parametrize("n_workers", [1, 2, 4, 8, 12])
+    def test_dynamic_varying_workers(self, space_2d, n_workers):
+        """Test dynamic strategy with different worker counts."""
+        def sphere(params):
+            return params['x']**2 + params['y']**2
+        
+        opt = RAGDAOptimizer(space_2d, n_workers=n_workers, random_state=42)
+        result = opt.optimize(
+            sphere,
+            n_trials=max(30, n_workers * 5),
+            worker_strategy='dynamic',
+            verbose=False
+        )
+        
+        assert result.best_value < 5.0
+    
+    # -------------------------------------------------------------------------
+    # Elite Fraction Tests
+    # -------------------------------------------------------------------------
+    
+    @pytest.mark.parametrize("elite_fraction", [0.1, 0.3, 0.5, 0.8, 1.0])
+    def test_dynamic_elite_fractions(self, space_2d, elite_fraction):
+        """Test dynamic strategy with various elite fractions."""
+        def sphere(params):
+            return params['x']**2 + params['y']**2
+        
+        opt = RAGDAOptimizer(space_2d, n_workers=8, random_state=42)
+        result = opt.optimize(
+            sphere,
+            n_trials=40,
+            worker_strategy='dynamic',
+            elite_fraction=elite_fraction,
+            verbose=False
+        )
+        
+        assert result.best_value is not None
+        assert result.best_value < 10.0
+    
+    # -------------------------------------------------------------------------
+    # Restart Mode Tests
+    # -------------------------------------------------------------------------
+    
+    @pytest.mark.parametrize("restart_mode", ['elite', 'random', 'adaptive'])
+    def test_dynamic_restart_modes(self, space_2d, restart_mode):
+        """Test dynamic strategy with different restart modes."""
+        def sphere(params):
+            return params['x']**2 + params['y']**2
+        
+        opt = RAGDAOptimizer(space_2d, n_workers=6, random_state=42)
+        result = opt.optimize(
+            sphere,
+            n_trials=30,
+            worker_strategy='dynamic',
+            restart_mode=restart_mode,
+            verbose=False
+        )
+        
+        assert result.best_value is not None
+        assert result.best_value < 10.0
+    
+    def test_adaptive_restart_probability_config(self, space_2d):
+        """Test adaptive restart with custom probability settings."""
+        def sphere(params):
+            return params['x']**2 + params['y']**2
+        
+        opt = RAGDAOptimizer(space_2d, n_workers=6, random_state=42)
+        result = opt.optimize(
+            sphere,
+            n_trials=40,
+            worker_strategy='dynamic',
+            restart_mode='adaptive',
+            restart_elite_prob_start=0.8,
+            restart_elite_prob_end=0.2,
+            verbose=False
+        )
+        
+        assert result.best_value < 5.0
+    
+    # -------------------------------------------------------------------------
+    # Worker Decay Tests
+    # -------------------------------------------------------------------------
+    
+    def test_dynamic_with_worker_decay_enabled(self, space_2d):
+        """Test dynamic strategy with worker decay enabled."""
+        def sphere(params):
+            return params['x']**2 + params['y']**2
+        
+        opt = RAGDAOptimizer(space_2d, n_workers=8, random_state=42)
+        result = opt.optimize(
+            sphere,
+            n_trials=50,
+            worker_strategy='dynamic',
+            enable_worker_decay=True,
+            worker_decay_rate=0.5,
+            min_workers=2,
+            verbose=False
+        )
+        
+        assert result.best_value < 5.0
+    
+    @pytest.mark.parametrize("decay_rate,min_workers", [
+        (0.2, 1),
+        (0.5, 2),
+        (0.8, 3),
+    ])
+    def test_dynamic_decay_configurations(self, space_2d, decay_rate, min_workers):
+        """Test dynamic strategy with various decay configurations."""
+        def sphere(params):
+            return params['x']**2 + params['y']**2
+        
+        opt = RAGDAOptimizer(space_2d, n_workers=10, random_state=42)
+        result = opt.optimize(
+            sphere,
+            n_trials=50,
+            worker_strategy='dynamic',
+            enable_worker_decay=True,
+            worker_decay_rate=decay_rate,
+            min_workers=min_workers,
+            verbose=False
+        )
+        
+        assert result.best_value is not None
+    
+    # -------------------------------------------------------------------------
+    # Full Configuration Tests
+    # -------------------------------------------------------------------------
+    
+    def test_dynamic_full_configuration(self, space_5d):
+        """Test dynamic strategy with all options configured."""
+        def sphere(params):
+            return sum(params[f'x{i}']**2 for i in range(5))
+        
+        opt = RAGDAOptimizer(space_5d, n_workers=10, random_state=42)
+        result = opt.optimize(
+            sphere,
+            n_trials=80,
+            worker_strategy='dynamic',
+            elite_fraction=0.3,
+            restart_mode='adaptive',
+            restart_elite_prob_start=0.7,
+            restart_elite_prob_end=0.3,
+            enable_worker_decay=True,
+            worker_decay_rate=0.4,
+            min_workers=3,
+            sync_frequency=10,
+            verbose=False
+        )
+        
+        assert result.best_value < 20.0
+        assert len(result.best_params) == 5
+    
+    def test_greedy_with_sync_frequency(self, space_2d):
+        """Test greedy strategy respects sync_frequency."""
+        def sphere(params):
+            return params['x']**2 + params['y']**2
+        
+        for sync_freq in [5, 10, 50]:
+            opt = RAGDAOptimizer(space_2d, n_workers=4, random_state=42)
+            result = opt.optimize(
+                sphere,
+                n_trials=50,
+                worker_strategy='greedy',
+                sync_frequency=sync_freq,
+                verbose=False
+            )
+            
+            assert result.best_value < 5.0
+    
+    # -------------------------------------------------------------------------
+    # Mixed Space Tests
+    # -------------------------------------------------------------------------
+    
+    def test_greedy_mixed_space(self, mixed_space):
+        """Test greedy strategy with mixed variable types."""
+        def objective(params):
+            penalty = {'A': 0, 'B': 1, 'C': 2}[params['method']]
+            return params['x']**2 + params['y']**2 + penalty
+        
+        opt = RAGDAOptimizer(mixed_space, n_workers=4, random_state=42)
+        result = opt.optimize(
+            objective,
+            n_trials=60,
+            worker_strategy='greedy',
+            verbose=False
+        )
+        
+        assert result.best_params['method'] == 'A'
+        assert result.best_value < 2.0
+    
+    def test_dynamic_mixed_space(self, mixed_space):
+        """Test dynamic strategy with mixed variable types."""
+        def objective(params):
+            penalty = {'A': 0, 'B': 1, 'C': 2}[params['method']]
+            return params['x']**2 + params['y']**2 + penalty
+        
+        opt = RAGDAOptimizer(mixed_space, n_workers=6, random_state=42)
+        result = opt.optimize(
+            objective,
+            n_trials=60,
+            worker_strategy='dynamic',
+            elite_fraction=0.4,
+            restart_mode='adaptive',
+            verbose=False
+        )
+        
+        assert result.best_params['method'] == 'A'
+        assert result.best_value < 2.0
+    
+    # -------------------------------------------------------------------------
+    # Multimodal Function Tests
+    # -------------------------------------------------------------------------
+    
+    def test_greedy_rastrigin(self, space_2d):
+        """Test greedy strategy on multimodal Rastrigin function."""
+        def rastrigin(params):
+            A = 10
+            x, y = params['x'], params['y']
+            return A * 2 + (x**2 - A * np.cos(2 * np.pi * x)) + (y**2 - A * np.cos(2 * np.pi * y))
+        
+        opt = RAGDAOptimizer(space_2d, n_workers=8, random_state=42)
+        result = opt.optimize(
+            rastrigin,
+            n_trials=100,
+            worker_strategy='greedy',
+            verbose=False
+        )
+        
+        assert result.best_value < 10.0
+    
+    def test_dynamic_rastrigin(self, space_2d):
+        """Test dynamic strategy on multimodal Rastrigin function."""
+        def rastrigin(params):
+            A = 10
+            x, y = params['x'], params['y']
+            return A * 2 + (x**2 - A * np.cos(2 * np.pi * x)) + (y**2 - A * np.cos(2 * np.pi * y))
+        
+        opt = RAGDAOptimizer(space_2d, n_workers=8, random_state=42)
+        result = opt.optimize(
+            rastrigin,
+            n_trials=100,
+            worker_strategy='dynamic',
+            elite_fraction=0.3,
+            restart_mode='random',  # More exploration for multimodal
+            verbose=False
+        )
+        
+        assert result.best_value < 10.0
+    
+    # -------------------------------------------------------------------------
+    # Comparison Tests
+    # -------------------------------------------------------------------------
+    
+    def test_both_strategies_produce_valid_results(self, space_2d):
+        """Test that both strategies produce valid optimization results."""
+        def sphere(params):
+            return params['x']**2 + params['y']**2
+        
+        for strategy in ['greedy', 'dynamic']:
+            opt = RAGDAOptimizer(space_2d, n_workers=4, random_state=42)
+            result = opt.optimize(
+                sphere,
+                n_trials=50,
+                worker_strategy=strategy,
+                verbose=False
+            )
+            
+            assert result.best_value is not None
+            assert result.best_value >= 0
+            assert -5.0 <= result.best_params['x'] <= 5.0
+            assert -5.0 <= result.best_params['y'] <= 5.0
+    
+    def test_strategies_on_rosenbrock(self, space_2d):
+        """Test both strategies on Rosenbrock function."""
+        def rosenbrock(params):
+            x, y = params['x'], params['y']
+            return (1 - x)**2 + 100 * (y - x**2)**2
+        
+        for strategy in ['greedy', 'dynamic']:
+            opt = RAGDAOptimizer(space_2d, n_workers=6, random_state=42)
+            result = opt.optimize(
+                rosenbrock,
+                n_trials=100,
+                worker_strategy=strategy,
+                verbose=False
+            )
+            
+            assert result.best_value < 10.0
+    
+    # -------------------------------------------------------------------------
+    # Edge Cases
+    # -------------------------------------------------------------------------
+    
+    def test_dynamic_trials_less_than_workers(self, space_2d):
+        """Test dynamic strategy when n_trials < n_workers."""
+        def sphere(params):
+            return params['x']**2 + params['y']**2
+        
+        opt = RAGDAOptimizer(space_2d, n_workers=10, random_state=42)
+        result = opt.optimize(
+            sphere,
+            n_trials=5,  # Less than workers
+            worker_strategy='dynamic',
+            verbose=False
+        )
+        
+        assert result.best_value is not None
+    
+    def test_dynamic_odd_trial_numbers(self, space_2d):
+        """Test dynamic strategy with odd trial numbers."""
+        def sphere(params):
+            return params['x']**2 + params['y']**2
+        
+        for n_trials in [7, 13, 23, 31]:
+            opt = RAGDAOptimizer(space_2d, n_workers=5, random_state=42)
+            result = opt.optimize(
+                sphere,
+                n_trials=n_trials,
+                worker_strategy='dynamic',
+                verbose=False
+            )
+            
+            assert result.best_value is not None
+    
+    def test_dynamic_single_worker(self, space_2d):
+        """Test dynamic strategy with single worker."""
+        def sphere(params):
+            return params['x']**2 + params['y']**2
+        
+        opt = RAGDAOptimizer(space_2d, n_workers=1, random_state=42)
+        result = opt.optimize(
+            sphere,
+            n_trials=30,
+            worker_strategy='dynamic',
+            verbose=False
+        )
+        
+        assert result.best_value < 5.0
+
+
+class TestEarlyStopping:
     
     @pytest.fixture
     def space(self):

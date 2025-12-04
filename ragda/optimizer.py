@@ -8,6 +8,7 @@ Pure Cython/C implementation with:
 - Mini-batch evaluation for data-driven objectives
 - Early stopping and convergence detection
 - Automatic high-dimensional optimization via dimensionality reduction
+- Dynamic worker management with elite selection and adaptive restarts
 """
 
 import numpy as np
@@ -15,6 +16,7 @@ from typing import Callable, Optional, Dict, Any, List, Union, Tuple, Literal
 from multiprocessing import cpu_count
 import warnings
 import inspect
+import math
 
 # Use loky for robust Windows multiprocessing (handles cloudpickle)
 from loky import get_reusable_executor
@@ -209,6 +211,7 @@ class RAGDAOptimizer:
     - Mini-batch evaluation for data-driven objectives (ML, portfolios)
     - Adaptive step-size shrinking on stagnation
     - Early stopping on convergence
+    - Dynamic worker management with elite selection (optional)
     
     Algorithm:
     1. W workers initialized with different top_n fractions
@@ -217,7 +220,9 @@ class RAGDAOptimizer:
     4. Gradient = weighted sum of directions to improving samples
     5. Weight decay applied by rank (best = 1.0, rank i = decay^i)
     6. ADAM update determines step size
-    7. Every sync_frequency iters, ALL workers reset to global best
+    7. Worker synchronization based on strategy:
+       - 'greedy': ALL workers reset to global best (original behavior)
+       - 'dynamic': Top % elite workers survive, others restart adaptively
     8. Categorical: weighted mode of top improving samples
     
     Example:
@@ -234,9 +239,17 @@ class RAGDAOptimizer:
         >>> optimizer = RAGDAOptimizer(space, direction='minimize')
         >>> result = optimizer.optimize(objective, n_trials=100)
         >>> print(f"Best: {result.best_params} = {result.best_value}")
+        
+        # With dynamic worker strategy for multi-modal problems:
+        >>> result = optimizer.optimize(
+        ...     objective, n_trials=100,
+        ...     worker_strategy='dynamic',
+        ...     elite_fraction=0.5,
+        ...     enable_worker_decay=True
+        ... )
     """
     
-    __slots__ = ('space', 'direction', 'random_state', 'n_workers',
+    __slots__ = ('space', 'direction', 'random_state', 'n_workers', 'max_parallel_workers',
                  'highdim_threshold', 'variance_threshold', 'reduction_method')
     
     def __init__(
@@ -244,6 +257,7 @@ class RAGDAOptimizer:
         space: List[Dict[str, Any]],
         direction: Literal['minimize', 'maximize'] = 'minimize',
         n_workers: Optional[int] = None,
+        max_parallel_workers: Optional[int] = None,
         random_state: Optional[int] = None,
         # High-dimensional settings (automatic)
         highdim_threshold: int = 100,
@@ -265,7 +279,11 @@ class RAGDAOptimizer:
         direction : str
             'minimize' or 'maximize'
         n_workers : int, optional
-            Number of parallel workers. Default: CPU_count // 2
+            Number of logical workers. Can exceed CPU count for noisy objectives.
+            Default: CPU_count // 2
+        max_parallel_workers : int, optional
+            Maximum workers to run simultaneously. Default: CPU_count.
+            If n_workers > max_parallel_workers, workers run in waves.
         random_state : int, optional
             Random seed for reproducibility
         highdim_threshold : int
@@ -289,6 +307,11 @@ class RAGDAOptimizer:
             raise ValueError(f"n_workers must be positive, got {n_workers}")
         
         self.n_workers = n_workers
+        
+        # Max parallel workers (for wave-based execution when n_workers > cores)
+        if max_parallel_workers is None:
+            max_parallel_workers = cpu_count()
+        self.max_parallel_workers = max(1, min(max_parallel_workers, n_workers))
         
         # High-dimensional settings
         self.highdim_threshold = highdim_threshold
@@ -479,6 +502,18 @@ class RAGDAOptimizer:
         # Worker Synchronization
         sync_frequency: int = 100,
         
+        # Worker Strategy (NEW)
+        worker_strategy: Literal['greedy', 'dynamic'] = 'greedy',
+        
+        # Dynamic Worker Strategy Settings (NEW - only used when worker_strategy='dynamic')
+        elite_fraction: float = 0.5,
+        restart_mode: Literal['elite', 'random', 'adaptive'] = 'adaptive',
+        restart_elite_prob_start: float = 0.3,
+        restart_elite_prob_end: float = 0.8,
+        enable_worker_decay: bool = False,
+        min_workers: int = 2,
+        worker_decay_rate: float = 0.5,
+        
         # Mini-batch for Data-Driven Objectives
         use_minibatch: bool = False,
         data_size: Optional[int] = None,
@@ -535,7 +570,27 @@ class RAGDAOptimizer:
         weight_decay : float
             Exponential decay for rank-based weights
         sync_frequency : int
-            How often workers sync to global best (0 = never)
+            How often workers sync (0 = never)
+        worker_strategy : str
+            'greedy': All workers reset to global best at sync (original behavior)
+            'dynamic': Top elite_fraction workers survive, others restart adaptively
+        elite_fraction : float
+            Fraction of top workers to keep (only for worker_strategy='dynamic')
+        restart_mode : str
+            How to restart non-elite workers (only for worker_strategy='dynamic'):
+            - 'elite': Sample from elite worker positions with perturbation
+            - 'random': Random restart from search space
+            - 'adaptive': Mix that increases elite probability over time
+        restart_elite_prob_start : float
+            Initial probability of restarting from elite (for restart_mode='adaptive')
+        restart_elite_prob_end : float
+            Final probability of restarting from elite (for restart_mode='adaptive')
+        enable_worker_decay : bool
+            Reduce number of active workers over time (only for worker_strategy='dynamic')
+        min_workers : int
+            Minimum workers to keep when using worker decay
+        worker_decay_rate : float
+            How aggressively to decay workers (0.0-1.0). 0.5 = reduce to 50% by end
         use_minibatch : bool
             Enable mini-batch evaluation
         data_size : int, optional
@@ -575,6 +630,24 @@ class RAGDAOptimizer:
             use_minibatch, minibatch_start, minibatch_end
         )
         
+        # Validate dynamic worker strategy parameters
+        if worker_strategy not in ('greedy', 'dynamic'):
+            raise ValueError(f"worker_strategy must be 'greedy' or 'dynamic', got {worker_strategy}")
+        
+        if worker_strategy == 'dynamic':
+            if not (0 < elite_fraction <= 1.0):
+                raise ValueError(f"elite_fraction must be in (0, 1], got {elite_fraction}")
+            if restart_mode not in ('elite', 'random', 'adaptive'):
+                raise ValueError(f"restart_mode must be 'elite', 'random', or 'adaptive', got {restart_mode}")
+            if not (0 <= restart_elite_prob_start <= 1.0):
+                raise ValueError(f"restart_elite_prob_start must be in [0, 1], got {restart_elite_prob_start}")
+            if not (0 <= restart_elite_prob_end <= 1.0):
+                raise ValueError(f"restart_elite_prob_end must be in [0, 1], got {restart_elite_prob_end}")
+            if min_workers < 1:
+                raise ValueError(f"min_workers must be >= 1, got {min_workers}")
+            if not (0 <= worker_decay_rate <= 1.0):
+                raise ValueError(f"worker_decay_rate must be in [0, 1], got {worker_decay_rate}")
+        
         if not callable(objective):
             raise ValueError("objective must be callable")
         
@@ -603,6 +676,14 @@ class RAGDAOptimizer:
                 top_n_max=top_n_max,
                 weight_decay=weight_decay,
                 sync_frequency=sync_frequency,
+                worker_strategy=worker_strategy,
+                elite_fraction=elite_fraction,
+                restart_mode=restart_mode,
+                restart_elite_prob_start=restart_elite_prob_start,
+                restart_elite_prob_end=restart_elite_prob_end,
+                enable_worker_decay=enable_worker_decay,
+                min_workers=min_workers,
+                worker_decay_rate=worker_decay_rate,
                 use_minibatch=use_minibatch,
                 data_size=data_size,
                 minibatch_start=minibatch_start,
@@ -636,6 +717,14 @@ class RAGDAOptimizer:
             top_n_max=top_n_max,
             weight_decay=weight_decay,
             sync_frequency=sync_frequency,
+            worker_strategy=worker_strategy,
+            elite_fraction=elite_fraction,
+            restart_mode=restart_mode,
+            restart_elite_prob_start=restart_elite_prob_start,
+            restart_elite_prob_end=restart_elite_prob_end,
+            enable_worker_decay=enable_worker_decay,
+            min_workers=min_workers,
+            worker_decay_rate=worker_decay_rate,
             use_minibatch=use_minibatch,
             data_size=data_size,
             minibatch_start=minibatch_start,
@@ -999,6 +1088,16 @@ class RAGDAOptimizer:
         early_stop_threshold = kwargs.get('early_stop_threshold', 1e-12)
         early_stop_patience = kwargs.get('early_stop_patience', 50)
         
+        # Dynamic worker strategy parameters
+        worker_strategy = kwargs.get('worker_strategy', 'greedy')
+        elite_fraction = kwargs.get('elite_fraction', 0.5)
+        restart_mode = kwargs.get('restart_mode', 'adaptive')
+        restart_elite_prob_start = kwargs.get('restart_elite_prob_start', 0.3)
+        restart_elite_prob_end = kwargs.get('restart_elite_prob_end', 0.8)
+        enable_worker_decay = kwargs.get('enable_worker_decay', False)
+        min_workers = kwargs.get('min_workers', 2)
+        worker_decay_rate = kwargs.get('worker_decay_rate', 0.5)
+        
         # Auto-calculate mini-batch schedule
         if use_minibatch and data_size is not None:
             if minibatch_start is None:
@@ -1023,6 +1122,12 @@ class RAGDAOptimizer:
             warnings.warn("use_minibatch=True but objective lacks 'batch_size' parameter. Disabling.")
             use_minibatch = False
         
+        # Calculate sync points for dynamic strategy
+        if sync_frequency > 0:
+            n_syncs = n_trials // sync_frequency
+        else:
+            n_syncs = 0
+        
         # Print config
         if verbose:
             print(f"{'='*70}")
@@ -1032,7 +1137,8 @@ class RAGDAOptimizer:
             print(f"  - Continuous/Ordinal: {self.space.n_continuous}")
             print(f"  - Categorical: {self.space.n_categorical}")
             print(f"Direction: {self.direction}")
-            print(f"Workers: {self.n_workers} (top_n: {top_n_max:.0%} -> {top_n_min:.0%})")
+            print(f"Workers: {self.n_workers} (max parallel: {self.max_parallel_workers})")
+            print(f"  top_n: {top_n_max:.0%} -> {top_n_min:.0%}")
             print(f"Iterations per worker: {n_trials}")
             print(f"Total evaluations: ~{n_trials * self.n_workers * (lambda_start + lambda_end) // 2:,}")
             print(f"Batch size: lambda = {lambda_start} -> {lambda_end}")
@@ -1040,21 +1146,47 @@ class RAGDAOptimizer:
             print(f"Shrinking: factor={shrink_factor}, patience={shrink_patience}")
             print(f"Weighting: only_improving={use_improvement_weights}, weight_decay={weight_decay}")
             print(f"Early stopping: threshold={early_stop_threshold}, patience={early_stop_patience}")
+            print(f"Worker strategy: {worker_strategy}")
+            if worker_strategy == 'dynamic':
+                print(f"  Elite fraction: {elite_fraction:.0%}")
+                print(f"  Restart mode: {restart_mode}")
+                if restart_mode == 'adaptive':
+                    print(f"  Elite restart prob: {restart_elite_prob_start:.0%} -> {restart_elite_prob_end:.0%}")
+                if enable_worker_decay:
+                    print(f"  Worker decay: enabled (min={min_workers}, rate={worker_decay_rate:.0%})")
             if sync_frequency > 0:
-                print(f"Sync: every {sync_frequency} iters (all workers reset to best)")
+                if worker_strategy == 'greedy':
+                    print(f"Sync: every {sync_frequency} iters (all workers reset to best)")
+                else:
+                    print(f"Sync: every {sync_frequency} iters (elite selection + adaptive restart)")
             if use_minibatch:
                 print(f"Mini-batch: {minibatch_start} -> {minibatch_end} ({minibatch_schedule})")
             print(f"ADAM: lr={adam_learning_rate}, beta1={adam_beta1}, beta2={adam_beta2}")
             print(f"{'='*70}\n")
         
-        # Run workers
-        worker_results = self._run_parallel(
-            x0_list, objective_wrapper, schedules, worker_strategies,
-            n_trials, shrink_factor, shrink_patience, shrink_threshold,
-            use_improvement_weights, use_minibatch,
-            adam_learning_rate, adam_beta1, adam_beta2, adam_epsilon,
-            weight_decay, early_stop_threshold, early_stop_patience, verbose
-        )
+        # Run workers based on strategy
+        if worker_strategy == 'greedy':
+            # Original greedy strategy - run all workers in parallel
+            worker_results = self._run_parallel(
+                x0_list, objective_wrapper, schedules, worker_strategies,
+                n_trials, shrink_factor, shrink_patience, shrink_threshold,
+                use_improvement_weights, use_minibatch,
+                adam_learning_rate, adam_beta1, adam_beta2, adam_epsilon,
+                weight_decay, early_stop_threshold, early_stop_patience, verbose
+            )
+        else:
+            # Dynamic strategy with elite selection and adaptive restarts
+            worker_results = self._run_dynamic_strategy(
+                x0_list, objective_wrapper, schedules, worker_strategies,
+                n_trials, shrink_factor, shrink_patience, shrink_threshold,
+                use_improvement_weights, use_minibatch,
+                adam_learning_rate, adam_beta1, adam_beta2, adam_epsilon,
+                weight_decay, early_stop_threshold, early_stop_patience,
+                sync_frequency, elite_fraction, restart_mode,
+                restart_elite_prob_start, restart_elite_prob_end,
+                enable_worker_decay, min_workers, worker_decay_rate,
+                sigma_init, verbose
+            )
         
         # Process results (same as original optimize method)
         all_trials = []
@@ -1144,7 +1276,14 @@ class RAGDAOptimizer:
             'use_minibatch': use_minibatch,
             'sync_frequency': sync_frequency,
             'adam_learning_rate': adam_learning_rate,
+            'worker_strategy': worker_strategy,
         }
+        if worker_strategy == 'dynamic':
+            opt_params.update({
+                'elite_fraction': elite_fraction,
+                'restart_mode': restart_mode,
+                'enable_worker_decay': enable_worker_decay,
+            })
         if highdim_info:
             opt_params['highdim_info'] = highdim_info
         
@@ -1187,7 +1326,10 @@ class RAGDAOptimizer:
         adam_lr, adam_beta1, adam_beta2, adam_epsilon,
         weight_decay, early_stop_threshold, early_stop_patience, verbose
     ):
-        """Run workers in parallel using loky (robust Windows multiprocessing)."""
+        """Run workers in parallel using loky (robust Windows multiprocessing).
+        
+        Supports wave-based execution when n_workers > max_parallel_workers.
+        """
         
         # Build task arguments for each worker
         tasks = []
@@ -1235,16 +1377,326 @@ class RAGDAOptimizer:
             )
             tasks.append(task)
         
-        # Use loky for robust parallel execution (handles cloudpickle)
-        executor = get_reusable_executor(max_workers=self.n_workers)
-        futures = [executor.submit(_run_worker_task_loky, task) for task in tasks]
-        
-        # Collect results
+        # Run in waves if n_workers > max_parallel_workers
         results = []
-        for future in futures:
-            results.append(future.result(timeout=3600))  # 1 hour timeout
+        n_waves = math.ceil(len(tasks) / self.max_parallel_workers)
+        
+        for wave_idx in range(n_waves):
+            wave_start = wave_idx * self.max_parallel_workers
+            wave_end = min(wave_start + self.max_parallel_workers, len(tasks))
+            wave_tasks = tasks[wave_start:wave_end]
+            
+            # Use loky for robust parallel execution (handles cloudpickle)
+            executor = get_reusable_executor(max_workers=len(wave_tasks))
+            futures = [executor.submit(_run_worker_task_loky, task) for task in wave_tasks]
+            
+            # Collect results from this wave
+            for future in futures:
+                results.append(future.result(timeout=3600))  # 1 hour timeout
         
         return results
+    
+    def _run_dynamic_strategy(
+        self,
+        x0_list, objective_wrapper, schedules, worker_strategies,
+        max_iter, shrink_factor, shrink_patience, shrink_threshold,
+        use_improvement_weights, use_minibatch,
+        adam_lr, adam_beta1, adam_beta2, adam_epsilon,
+        weight_decay, early_stop_threshold, early_stop_patience,
+        sync_frequency, elite_fraction, restart_mode,
+        restart_elite_prob_start, restart_elite_prob_end,
+        enable_worker_decay, min_workers, worker_decay_rate,
+        sigma_init, verbose
+    ):
+        """Run workers with dynamic elite selection and adaptive restarts.
+        
+        This method runs optimization in phases, with synchronization points where:
+        1. Top elite_fraction of workers survive unchanged
+        2. Non-elite workers are restarted based on restart_mode
+        3. Optionally, workers are decayed (dropped) over time
+        """
+        
+        if sync_frequency <= 0:
+            # No sync points, fall back to parallel run
+            return self._run_parallel(
+                x0_list, objective_wrapper, schedules, worker_strategies,
+                max_iter, shrink_factor, shrink_patience, shrink_threshold,
+                use_improvement_weights, use_minibatch,
+                adam_lr, adam_beta1, adam_beta2, adam_epsilon,
+                weight_decay, early_stop_threshold, early_stop_patience, verbose
+            )
+        
+        # Calculate phase structure
+        n_phases = max(1, max_iter // sync_frequency)
+        iters_per_phase = sync_frequency
+        
+        # Track active workers and their states
+        n_active_workers = self.n_workers
+        active_worker_ids = list(range(self.n_workers))
+        
+        # Current positions for all workers
+        current_positions = [x0.copy() for x0 in x0_list]
+        
+        # Accumulated results
+        all_phase_results = []
+        global_best_value = float('inf')
+        global_best_params = None
+        global_best_worker = 0
+        
+        # Track worker history for final result
+        worker_histories = {i: {'phases': [], 'active': True, 'retired_at': None} 
+                          for i in range(self.n_workers)}
+        
+        for phase_idx in range(n_phases):
+            phase_progress = phase_idx / n_phases
+            phase_start_iter = phase_idx * iters_per_phase
+            phase_end_iter = min((phase_idx + 1) * iters_per_phase, max_iter)
+            phase_iters = phase_end_iter - phase_start_iter
+            
+            if phase_iters <= 0:
+                break
+            
+            # Calculate number of active workers for this phase (worker decay)
+            if enable_worker_decay:
+                # Linear decay from n_workers to min_workers
+                decay_progress = phase_progress ** (1.0 / (1.0 - worker_decay_rate + 0.01))
+                target_workers = int(self.n_workers - (self.n_workers - min_workers) * decay_progress)
+                n_active_workers = max(min_workers, min(target_workers, len(active_worker_ids)))
+            else:
+                n_active_workers = len(active_worker_ids)
+            
+            # Slice schedules for this phase
+            phase_schedules = {
+                'lambda': schedules['lambda'][phase_start_iter:phase_end_iter].copy(),
+                'mu': schedules['mu'][phase_start_iter:phase_end_iter].copy(),
+                'sigma': schedules['sigma'][phase_start_iter:phase_end_iter].copy(),
+                'minibatch': schedules['minibatch'][phase_start_iter:phase_end_iter].copy(),
+            }
+            
+            # Build tasks for active workers only
+            tasks = []
+            task_worker_map = []  # Maps task index to worker_id
+            
+            for i, worker_id in enumerate(active_worker_ids[:n_active_workers]):
+                x0_dict = current_positions[worker_id]
+                x0_cont, x0_cat, cat_n_values = self.space.to_split_vectors(x0_dict)
+                
+                task = _WorkerTask(
+                    x0_cont=x0_cont,
+                    x0_cat=x0_cat,
+                    cat_n_values=cat_n_values,
+                    bounds=self.space.get_bounds_array(),
+                    max_iter=phase_iters,
+                    lambda_schedule=phase_schedules['lambda'],
+                    mu_schedule=phase_schedules['mu'],
+                    sigma_schedule=phase_schedules['sigma'],
+                    minibatch_schedule=phase_schedules['minibatch'],
+                    use_minibatch=use_minibatch,
+                    top_n_fraction=worker_strategies[worker_id]['top_n_fraction'],
+                    adam_lr=adam_lr,
+                    adam_beta1=adam_beta1,
+                    adam_beta2=adam_beta2,
+                    adam_epsilon=adam_epsilon,
+                    shrink_factor=shrink_factor,
+                    shrink_patience=shrink_patience,
+                    shrink_threshold=shrink_threshold,
+                    use_improvement_weights=use_improvement_weights,
+                    random_seed=(self.random_state + worker_id + phase_idx * 1000) if self.random_state else (worker_id + phase_idx * 1000),
+                    worker_id=worker_id,
+                    weight_decay=weight_decay,
+                    early_stop_threshold=early_stop_threshold,
+                    early_stop_patience=early_stop_patience,
+                    objective=objective_wrapper.objective,
+                    space_params=[
+                        {
+                            'name': p.name,
+                            'type': p.type,
+                            'bounds': list(p.bounds) if p.bounds else None,
+                            'values': list(p.values) if p.values else None,
+                            'log': p.log
+                        }
+                        for p in self.space.parameters
+                    ],
+                    direction=self.direction
+                )
+                tasks.append(task)
+                task_worker_map.append(worker_id)
+            
+            # Run this phase in waves if needed
+            phase_results = []
+            n_waves = math.ceil(len(tasks) / self.max_parallel_workers)
+            
+            for wave_idx in range(n_waves):
+                wave_start = wave_idx * self.max_parallel_workers
+                wave_end = min(wave_start + self.max_parallel_workers, len(tasks))
+                wave_tasks = tasks[wave_start:wave_end]
+                
+                executor = get_reusable_executor(max_workers=len(wave_tasks))
+                futures = [executor.submit(_run_worker_task_loky, task) for task in wave_tasks]
+                
+                for future in futures:
+                    phase_results.append(future.result(timeout=3600))
+            
+            # Process phase results
+            worker_results_this_phase = []
+            for task_idx, result in enumerate(phase_results):
+                x_best_cont, x_best_cat, f_best, history = result
+                worker_id = task_worker_map[task_idx]
+                
+                best_params = self.space.from_split_vectors(x_best_cont, x_best_cat)
+                
+                worker_results_this_phase.append({
+                    'worker_id': worker_id,
+                    'f_best': f_best,
+                    'best_params': best_params,
+                    'x_best_cont': x_best_cont,
+                    'x_best_cat': x_best_cat,
+                    'history': history,
+                })
+                
+                # Update current position to best found
+                current_positions[worker_id] = best_params.copy()
+                
+                # Track in worker history
+                worker_histories[worker_id]['phases'].append({
+                    'phase': phase_idx,
+                    'f_best': f_best,
+                    'history': history,
+                })
+                
+                # Update global best
+                if f_best < global_best_value:
+                    global_best_value = f_best
+                    global_best_params = best_params.copy()
+                    global_best_worker = worker_id
+            
+            all_phase_results.extend(worker_results_this_phase)
+            
+            # Print phase summary if verbose
+            if verbose:
+                phase_best = min(worker_results_this_phase, key=lambda x: x['f_best'])
+                print(f"Phase {phase_idx + 1}/{n_phases}: "
+                      f"workers={len(worker_results_this_phase)}, "
+                      f"phase_best={phase_best['f_best']:.6f} (worker {phase_best['worker_id']}), "
+                      f"global_best={global_best_value:.6f}")
+            
+            # Skip elite selection on last phase
+            if phase_idx >= n_phases - 1:
+                break
+            
+            # Elite selection and restart
+            sorted_workers = sorted(worker_results_this_phase, key=lambda x: x['f_best'])
+            n_elite = max(1, int(len(sorted_workers) * elite_fraction))
+            
+            elite_workers = sorted_workers[:n_elite]
+            non_elite_workers = sorted_workers[n_elite:]
+            
+            # Determine restart probability based on mode and progress
+            if restart_mode == 'elite':
+                restart_from_elite_prob = 1.0
+            elif restart_mode == 'random':
+                restart_from_elite_prob = 0.0
+            else:  # adaptive
+                restart_from_elite_prob = (restart_elite_prob_start + 
+                    (restart_elite_prob_end - restart_elite_prob_start) * phase_progress)
+            
+            # Get current sigma for perturbation
+            current_sigma = schedules['sigma'][min(phase_end_iter, len(schedules['sigma']) - 1)]
+            
+            # Restart non-elite workers
+            for worker_info in non_elite_workers:
+                worker_id = worker_info['worker_id']
+                
+                if np.random.random() < restart_from_elite_prob:
+                    # Restart from elite position with perturbation
+                    donor = np.random.choice(elite_workers)
+                    donor_params = donor['best_params'].copy()
+                    
+                    # Add perturbation
+                    new_params = {}
+                    for param in self.space.parameters:
+                        if param.type == 'categorical':
+                            # Occasionally mutate categorical
+                            if np.random.random() < 0.1:
+                                new_params[param.name] = np.random.choice(param.values)
+                            else:
+                                new_params[param.name] = donor_params[param.name]
+                        else:
+                            # Add Gaussian noise
+                            unit_val = param.transform_to_unit(donor_params[param.name])
+                            noise = np.random.randn() * current_sigma * 0.5
+                            noisy_unit = np.clip(unit_val + noise, 0, 1)
+                            new_params[param.name] = param.transform_from_unit(noisy_unit)
+                    
+                    current_positions[worker_id] = new_params
+                else:
+                    # Random restart
+                    current_positions[worker_id] = self.space.sample(n=1, method='random')[0]
+            
+            # Handle worker decay - update active worker list
+            if enable_worker_decay and n_active_workers < len(active_worker_ids):
+                # Keep only the top n_active_workers
+                active_worker_ids = [w['worker_id'] for w in sorted_workers[:n_active_workers]]
+                
+                # Mark retired workers
+                for worker_info in sorted_workers[n_active_workers:]:
+                    worker_id = worker_info['worker_id']
+                    worker_histories[worker_id]['active'] = False
+                    worker_histories[worker_id]['retired_at'] = phase_idx
+        
+        # Build final results in the format expected by the caller
+        # Combine all phase results into worker-centric view
+        final_results = []
+        
+        for worker_id in range(self.n_workers):
+            if not worker_histories[worker_id]['phases']:
+                continue
+            
+            # Get the last phase result for this worker
+            last_phase = worker_histories[worker_id]['phases'][-1]
+            
+            # Combine histories from all phases
+            combined_history = {
+                'fitness': [],
+                'sigma': [],
+                'shrink_events': [],
+                'sync_events': [],
+                'batch_sizes': [],
+                'params_history': [],
+                'worker_id': worker_id,
+                'converged': last_phase['history'].get('converged', False),
+                'final_iteration': 0,
+            }
+            
+            iter_offset = 0
+            for phase_data in worker_histories[worker_id]['phases']:
+                hist = phase_data['history']
+                combined_history['fitness'].extend(hist.get('fitness', []))
+                combined_history['sigma'].extend(hist.get('sigma', []))
+                combined_history['shrink_events'].extend([e + iter_offset for e in hist.get('shrink_events', [])])
+                combined_history['sync_events'].extend([e + iter_offset for e in hist.get('sync_events', [])])
+                combined_history['batch_sizes'].extend(hist.get('batch_sizes', []))
+                combined_history['params_history'].extend(hist.get('params_history', []))
+                iter_offset += len(hist.get('fitness', []))
+            
+            combined_history['final_iteration'] = iter_offset - 1 if iter_offset > 0 else 0
+            
+            # Get best result for this worker across all phases
+            best_phase = min(worker_histories[worker_id]['phases'], 
+                           key=lambda p: p['f_best'])
+            
+            x_best_cont, x_best_cat, _ = self.space.to_split_vectors(
+                current_positions[worker_id]
+            )
+            
+            final_results.append((
+                x_best_cont,
+                x_best_cat,
+                best_phase['f_best'],
+                combined_history
+            ))
+        
+        return final_results
 
 
 # =============================================================================

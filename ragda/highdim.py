@@ -836,7 +836,38 @@ class HighDimRAGDAOptimizer:
         
         return final_result
     
-    def _run_standard_optimization(self, objective, n_trials, x0, *args, **kwargs):
+    def _run_standard_optimization(
+        self, 
+        objective, 
+        n_trials, 
+        x0,
+        lambda_start,
+        lambda_end,
+        lambda_decay_rate,
+        sigma_init,
+        sigma_final_fraction,
+        sigma_decay_schedule,
+        shrink_factor,
+        shrink_patience,
+        shrink_threshold,
+        use_improvement_weights,
+        top_n_min,
+        top_n_max,
+        weight_decay,
+        sync_frequency,
+        use_minibatch,
+        data_size,
+        minibatch_start,
+        minibatch_end,
+        minibatch_schedule,
+        adam_learning_rate,
+        adam_beta1,
+        adam_beta2,
+        adam_epsilon,
+        early_stop_threshold,
+        early_stop_patience,
+        verbose
+    ):
         """Run standard RAGDA optimization without dimensionality reduction."""
         optimizer = RAGDAOptimizer(
             [{'name': p.name, 'type': p.type, 'bounds': p.bounds, 'values': p.values, 'log': p.log}
@@ -845,7 +876,37 @@ class HighDimRAGDAOptimizer:
             n_workers=self.n_workers,
             random_state=self.random_state
         )
-        return optimizer.optimize(objective, n_trials, x0, *args, **kwargs)
+        return optimizer.optimize(
+            objective,
+            n_trials=n_trials,
+            x0=x0,
+            lambda_start=lambda_start,
+            lambda_end=lambda_end,
+            lambda_decay_rate=lambda_decay_rate,
+            sigma_init=sigma_init,
+            sigma_final_fraction=sigma_final_fraction,
+            sigma_decay_schedule=sigma_decay_schedule,
+            shrink_factor=shrink_factor,
+            shrink_patience=shrink_patience,
+            shrink_threshold=shrink_threshold,
+            use_improvement_weights=use_improvement_weights,
+            top_n_min=top_n_min,
+            top_n_max=top_n_max,
+            weight_decay=weight_decay,
+            sync_frequency=sync_frequency,
+            use_minibatch=use_minibatch,
+            data_size=data_size,
+            minibatch_start=minibatch_start,
+            minibatch_end=minibatch_end,
+            minibatch_schedule=minibatch_schedule,
+            adam_learning_rate=adam_learning_rate,
+            adam_beta1=adam_beta1,
+            adam_beta2=adam_beta2,
+            adam_epsilon=adam_epsilon,
+            early_stop_threshold=early_stop_threshold,
+            early_stop_patience=early_stop_patience,
+            verbose=verbose
+        )
     
     def _create_reduced_space(self, n_components: int) -> List[Dict[str, Any]]:
         """Create a search space for the reduced dimensions."""

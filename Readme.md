@@ -252,6 +252,91 @@ print(f"Best params: {result.best_params}")
 print(f"Best value: {result.best_value}")
 ```
 
+### Dynamic Worker Strategy (Multi-Modal Optimization)
+
+For problems with many local minima, the **dynamic worker strategy** preserves exploration diversity by using elite selection instead of resetting all workers to the global best:
+
+```python
+from ragda import RAGDAOptimizer
+import numpy as np
+
+# Rastrigin function - highly multi-modal with many local minima
+def rastrigin(params):
+    x = np.array([params[f'x{i}'] for i in range(10)])
+    return 10 * len(x) + np.sum(x**2 - 10 * np.cos(2 * np.pi * x))
+
+space = [
+    {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.12, 5.12]}
+    for i in range(10)
+]
+
+optimizer = RAGDAOptimizer(
+    space, 
+    n_workers=8,
+    random_state=42
+)
+
+result = optimizer.optimize(
+    rastrigin,
+    n_trials=500,
+    
+    # Use dynamic worker strategy (default is 'greedy')
+    worker_strategy='dynamic',
+    
+    # Elite selection: keep top 50% of workers based on their best values
+    elite_fraction=0.5,
+    
+    # How non-elite workers restart after sync
+    restart_mode='adaptive',           # 'elite', 'random', or 'adaptive'
+    restart_elite_prob_start=0.3,      # Early: 30% restart from elite, 70% random
+    restart_elite_prob_end=0.8,        # Late: 80% restart from elite, 20% random
+    
+    # Optional: gradually reduce active workers for faster convergence
+    enable_worker_decay=True,
+    min_workers=2,                     # Never go below 2 workers
+    worker_decay_rate=0.5,             # Reduce to ~50% of initial workers
+    
+    sync_frequency=50,                 # Sync and apply elite selection every 50 iterations
+)
+
+print(f"Best value: {result.best_value}")
+```
+
+#### Worker Strategy Comparison
+
+| Strategy | Behavior at Sync | Best For |
+|----------|-----------------|----------|
+| `'greedy'` (default) | All workers reset to global best | Unimodal functions, fast convergence |
+| `'dynamic'` | Top workers survive, others restart | Multi-modal landscapes, avoiding local minima |
+
+#### Restart Modes (for `worker_strategy='dynamic'`)
+
+| Mode | Behavior | When to Use |
+|------|----------|-------------|
+| `'elite'` | Non-elite restart from elite positions with perturbation | Exploitation-focused, rugged landscapes |
+| `'random'` | Non-elite restart randomly in search space | Exploration-focused, many local minima |
+| `'adaptive'` | Transitions from mostly random → mostly elite | Balanced exploration/exploitation (recommended) |
+
+#### Worker Decay
+
+When `enable_worker_decay=True`, the number of active workers gradually decreases over the optimization run:
+- Focuses compute on the most promising search directions
+- Reduces overhead as the search converges
+- `worker_decay_rate=0.5` means ~50% of workers remain by the end
+- `min_workers` ensures you never go below a minimum (default: 2)
+
+#### When to Use Dynamic vs Greedy
+
+**Use `worker_strategy='greedy'` when:**
+- Your objective is unimodal (single optimum)
+- Fast convergence is the priority
+- The search space is relatively smooth
+
+**Use `worker_strategy='dynamic'` when:**
+- Your objective has multiple local minima (Rastrigin, Ackley, etc.)
+- You want to avoid premature convergence
+- Exploration diversity matters more than speed
+
 ## API Reference
 
 ### RAGDAOptimizer
@@ -262,7 +347,7 @@ The main optimizer class - handles both standard and high-dimensional problems a
 RAGDAOptimizer(
     space: List[Dict],              # Search space definition
     direction: str = 'minimize',    # 'minimize' or 'maximize'
-    n_workers: int = None,          # Number of parallel workers (default: CPU count)
+    n_workers: int = None,          # Number of parallel workers (default: CPU count // 2)
     random_state: int = None,       # Random seed for reproducibility
     
     # High-dimensional settings (automatic when dims >= threshold)
@@ -281,24 +366,55 @@ result = optimizer.optimize(
     x0: Dict = None,               # Starting point
     verbose: bool = True,          # Print progress
     
+    # Population & Sampling
+    lambda_start: int = 50,        # Initial samples per iteration
+    lambda_end: int = 10,          # Final samples per iteration
+    lambda_decay_rate: float = 5.0,  # Decay rate for sample count
+    
+    # Sample Space (sigma controls exploration radius)
+    sigma_init: float = 0.3,       # Initial sampling radius in [0,1] unit space
+    sigma_final_fraction: float = 0.2,  # Final sigma as fraction of initial
+    sigma_decay_schedule: str = 'exponential',  # 'exponential', 'linear', 'cosine'
+    
+    # Adaptive Shrinking (reduces sigma on stagnation)
+    shrink_factor: float = 0.9,    # Multiply sigma by this when stuck
+    shrink_patience: int = 10,     # Iterations without improvement before shrinking
+    shrink_threshold: float = 1e-6,  # Minimum improvement to count as progress
+    
     # Early stopping
     early_stop_threshold: float = 1e-12,
     early_stop_patience: int = 50,
     
-    # Sigma shrinking (adaptive step size)
-    shrink_factor: float = 0.9,
-    shrink_patience: int = 10,
-    shrink_threshold: float = 1e-6,
-    
-    # Mini-batch settings
-    use_minibatch: bool = False,
-    data_size: int = 1000,
-    minibatch_start: int = 50,
-    minibatch_end: int = 500,
-    minibatch_schedule: str = 'linear',  # 'linear', 'exponential', 'inverse_decay'
-    
     # Worker synchronization
     sync_frequency: int = 100,     # Share best solution every N iters
+    
+    # ===== Worker Strategy =====
+    worker_strategy: str = 'greedy',  # 'greedy' or 'dynamic'
+    
+    # Dynamic strategy settings (only used when worker_strategy='dynamic')
+    elite_fraction: float = 0.5,      # Fraction of top workers to keep (0.0-1.0)
+    restart_mode: str = 'adaptive',   # How non-elite workers restart:
+                                      #   'elite': restart from elite positions
+                                      #   'random': restart randomly
+                                      #   'adaptive': transition from random to elite
+    restart_elite_prob_start: float = 0.3,  # Initial probability of elite restart
+    restart_elite_prob_end: float = 0.8,    # Final probability of elite restart
+    enable_worker_decay: bool = False,      # Reduce workers over time
+    min_workers: int = 2,                   # Minimum workers to keep
+    worker_decay_rate: float = 0.5,         # Decay rate (0.5 = reduce to ~50%)
+    
+    # Mini-batch settings (for expensive ML objectives)
+    use_minibatch: bool = False,
+    data_size: int = None,         # Total dataset size
+    minibatch_start: int = None,   # Starting batch size
+    minibatch_end: int = None,     # Ending batch size
+    minibatch_schedule: str = 'inverse_decay',  # 'constant', 'linear', 'exponential', 'inverse_decay', 'step'
+    
+    # ADAM optimizer settings
+    adam_learning_rate: float = 0.001,
+    adam_beta1: float = 0.9,
+    adam_beta2: float = 0.999,
+    adam_epsilon: float = 1e-8,
 )
 ```
 
@@ -367,12 +483,46 @@ RAGDA uses a **derivative-free gradient approximation** approach:
 ### Multi-Worker Strategy
 
 Each worker uses a different `top_n` fraction (exploration vs exploitation):
-- Worker 0: top_n=100% (full exploration)
+- Worker 0: top_n=100% (full exploration - uses all samples for gradient)
 - Worker 1: top_n=89%
 - ...
-- Worker N: top_n=20% (greedy exploitation)
+- Worker N: top_n=20% (greedy exploitation - uses only top 20% of samples)
 
-Workers periodically synchronize, sharing the global best solution.
+This diversity helps escape local minima - some workers exploit while others explore.
+
+**Worker Synchronization Strategies:**
+
+1. **Greedy Strategy** (`worker_strategy='greedy'`, default):
+   - At each sync point, all workers reset to the global best position
+   - Fast convergence for unimodal problems
+   - Can get stuck in local minima for multi-modal objectives
+
+2. **Dynamic Strategy** (`worker_strategy='dynamic'`):
+   - Uses **elite selection** to maintain search diversity
+   - At each sync point:
+     1. Workers are ranked by their best objective value
+     2. Top `elite_fraction` workers (e.g., top 50%) continue from their current positions
+     3. Non-elite workers restart based on `restart_mode`:
+        - `'elite'`: Restart from an elite worker's position with small perturbation
+        - `'random'`: Restart from a random position in the search space
+        - `'adaptive'`: Probability of elite restart increases over time (explore early, exploit late)
+   - Optional **worker decay** (`enable_worker_decay=True`) gradually reduces active workers
+   - Better for multi-modal landscapes (Rastrigin, Ackley, neural network hyperparameters, etc.)
+
+**Example: Dynamic Strategy for Multi-Modal Optimization**
+
+```python
+result = optimizer.optimize(
+    objective,
+    n_trials=500,
+    worker_strategy='dynamic',   # Use elite selection
+    elite_fraction=0.5,          # Keep top 50% of workers
+    restart_mode='adaptive',     # Explore early, exploit late
+    restart_elite_prob_start=0.3,  # 30% elite restarts initially
+    restart_elite_prob_end=0.8,    # 80% elite restarts by end
+    sync_frequency=50,           # Apply selection every 50 iterations
+)
+```
 
 ### High-Dimensional Optimization Strategy
 
@@ -410,6 +560,11 @@ python -m pytest tests/ -v -m "not slow"
 4. **Set sync_frequency** - more frequent syncing helps on unimodal problems
 5. **High-dim is automatic** - `RAGDAOptimizer` detects 100+ dimensions and uses reduction
 6. **Customize reduction** - use `reduction_method='kernel_pca'` for smooth objectives, `'random_projection'` for speed
+7. **Use dynamic strategy** for multi-modal landscapes with `worker_strategy='dynamic'`
+8. **Increase workers** for noisy objectives - more workers means more diverse search directions
+9. **Enable worker decay** with `enable_worker_decay=True` for faster late-stage convergence
+10. **Tune elite_fraction** - higher (0.6-0.8) for rugged landscapes, lower (0.3-0.5) for smoother ones
+11. **Use adaptive restart** (`restart_mode='adaptive'`) for best balance of exploration and exploitation
 
 ## Verifying Installation
 
@@ -436,6 +591,29 @@ else:
 ```
 
 ## Changelog
+
+### v2.2.0
+- **Dynamic worker strategy** - New `worker_strategy='dynamic'` for multi-modal optimization
+  - Use `worker_strategy='greedy'` (default) for fast convergence on unimodal problems
+  - Use `worker_strategy='dynamic'` for better exploration on multi-modal landscapes
+- **Elite selection**: Top workers survive, others restart based on configurable modes
+- **Three restart modes** for non-elite workers:
+  - `'elite'`: Restart from elite positions with perturbation (exploitation)
+  - `'random'`: Restart randomly in search space (exploration)
+  - `'adaptive'`: Transitions from random → elite over time (balanced)
+- **Worker decay**: Optionally reduce active workers for faster late-stage convergence
+  - `enable_worker_decay=True` to enable
+  - `worker_decay_rate` controls how fast workers reduce
+  - `min_workers` sets the floor
+- **New `optimize()` parameters**:
+  - `worker_strategy`: `'greedy'` or `'dynamic'`
+  - `elite_fraction`: Fraction of top workers to keep (0.0-1.0)
+  - `restart_mode`: `'elite'`, `'random'`, or `'adaptive'`
+  - `restart_elite_prob_start`: Initial probability of elite restart (for adaptive mode)
+  - `restart_elite_prob_end`: Final probability of elite restart (for adaptive mode)
+  - `enable_worker_decay`: Enable gradual worker reduction
+  - `min_workers`: Minimum workers to keep when decay is enabled
+  - `worker_decay_rate`: Rate of worker decay
 
 ### v2.1.0
 - **Automatic high-dimensional optimization** - `RAGDAOptimizer` now automatically detects and handles 100+ dimension problems
