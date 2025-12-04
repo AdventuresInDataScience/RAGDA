@@ -329,6 +329,8 @@ def run_ragda_single(
     Returns:
         Best objective value found
     """
+    # Ensure seed fits in C long (signed 32-bit)
+    seed = seed % (2**31 - 1)
     np.random.seed(seed)
     
     try:
@@ -394,7 +396,8 @@ def evaluate_ragda_config(
         problem_results = []
         
         for run_idx in range(n_runs):
-            seed = hash((problem['name'], run_idx)) % (2**32)
+            # Limit to 2^31-1 for C long compatibility on Windows
+            seed = hash((problem['name'], run_idx)) % (2**31 - 1)
             
             result = run_ragda_single(
                 func=problem['func'],
