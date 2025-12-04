@@ -1,0 +1,78 @@
+{
+  "metadata": {
+    "timestamp": "2025-12-04 19:37:48",
+    "n_categories": 23,
+    "total_problems": 197,
+    "marsopt_iterations": {
+      "cheap": 100,
+      "moderate": 40,
+      "expensive": 30
+    },
+    "n_runs_per_problem": {
+      "cheap": 5,
+      "moderate": 3,
+      "expensive": 1
+    },
+    "fixed_ragda_trials": {
+      "cheap": 100,
+      "moderate": 75,
+      "expensive": 50
+    },
+    "param_subset": "all",
+    "status": "in_progress",
+    "completed_categories": 1,
+    "failed_categories": 0,
+    "cumulative_time_seconds": 96.81265830993652
+  },
+  "categories": {
+    "high_cheap_moderate": {
+      "status": "completed",
+      "dim_class": "high",
+      "cost_class": "cheap",
+      "ruggedness_class": "moderate",
+      "best_params": {
+        "n_workers": 3,
+        "n_trials": 1406,
+        "lambda_start": 72,
+        "lambda_end": 72,
+        "lambda_decay_rate": 7.298986752188723,
+        "sigma_init": 0.12213241331856557,
+        "sigma_final_fraction": 0.4732354690203218,
+        "sigma_decay_schedule": "cosine",
+        "shrink_factor": 0.9589976944809999,
+        "shrink_patience": 10,
+        "shrink_threshold": 6.22751308431922e-10,
+        "adam_learning_rate": 0.0499774937030317,
+        "adam_beta1": 0.9298962831566807,
+        "adam_beta2": 0.9257683686087441,
+        "adam_epsilon": 1.9049008178972432e-07,
+        "worker_strategy": "dynamic",
+        "sync_frequency": 491,
+        "elite_fraction": 0.3347462573473681,
+        "restart_mode": "elite",
+        "restart_elite_prob_start": 0.09310276780589921,
+        "restart_elite_prob_end": 0.8972157579533268,
+        "enable_worker_decay": true,
+        "min_workers": 7,
+        "worker_decay_rate": 0.32309708207374555,
+        "use_improvement_weights": true,
+        "top_n_min": 0.3766800554916077,
+        "top_n_max": 0.9279771819668039,
+        "weight_decay": 0.9426561257082935,
+        "early_stop_threshold": 1.0444313823312156e-08,
+        "early_stop_patience": 132,
+        "use_minibatch": false,
+        "minibatch_start": 204,
+        "minibatch_end": 5849,
+        "minibatch_schedule": "constant"
+      },
+      "best_loss": 1000.0,
+      "n_problems": 2,
+      "optimization_time_seconds": 96.80954074859619,
+      "constraint_violations": [
+        "min_workers_bound"
+      ]
+    }
+  },
+  "failed": {}
+}

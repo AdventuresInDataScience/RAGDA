@@ -102,12 +102,44 @@ def interpret_loss(loss: float) -> str:
 
 
 # =============================================================================
-# PROBLEM LOADING
+# PROBLEM LOADING WITH CACHING
 # =============================================================================
 
-def load_all_problems() -> Dict[str, List[dict]]:
+CLASSIFICATION_CACHE_FILE = "problem_classifications_cache.json"
+
+
+def load_classification_cache() -> Dict[str, dict]:
+    """Load cached problem classifications if available."""
+    cache_path = Path(__file__).parent / CLASSIFICATION_CACHE_FILE
+    if cache_path.exists():
+        try:
+            with open(cache_path, 'r') as f:
+                cache = json.load(f)
+            print(f"  Loaded classification cache with {len(cache)} problems")
+            return cache
+        except Exception as e:
+            print(f"  Warning: Could not load cache: {e}")
+    return {}
+
+
+def save_classification_cache(cache: Dict[str, dict], verbose: bool = False):
+    """Save problem classifications to cache file."""
+    cache_path = Path(__file__).parent / CLASSIFICATION_CACHE_FILE
+    try:
+        with open(cache_path, 'w') as f:
+            json.dump(cache, f, indent=2)
+        if verbose:
+            print(f"  Saved classification cache with {len(cache)} problems")
+    except Exception as e:
+        print(f"  Warning: Could not save cache: {e}")
+
+
+def load_all_problems(use_cache: bool = True) -> Dict[str, List[dict]]:
     """
     Load all benchmark problems and organize by category.
+    
+    Args:
+        use_cache: If True, use cached classifications when available
     
     Returns:
         Dict mapping category key (e.g., "low_cheap_smooth") to list of problem dicts
@@ -116,6 +148,11 @@ def load_all_problems() -> Dict[str, List[dict]]:
     from benchmark_ml_problems import get_all_ml_problems
     from benchmark_realworld_problems import get_all_genuine_problems
     from problem_classifier import classify_problem, DimClass, CostLevel, RuggednessLevel
+    
+    # Load classification cache
+    cache = load_classification_cache() if use_cache else {}
+    cache_hits = 0
+    cache_misses = 0
     
     all_problems = []
     
@@ -178,35 +215,57 @@ def load_all_problems() -> Dict[str, List[dict]]:
             'source': 'realworld',
         })
     
-    # Classify each problem
+    # Classify each problem (using cache when available)
     print(f"Classifying {len(all_problems)} problems...")
+    sys.stdout.flush()
     categorized = {}
+    current_problem = None  # Track for error reporting
     
     for i, p in enumerate(all_problems):
-        if (i + 1) % 20 == 0:
-            print(f"  Classified {i+1}/{len(all_problems)}...")
-        
+        current_problem = p['name']  # Track which problem we're on
         try:
-            # Use bounds if available, else extract from space
-            if p['bounds'] is not None:
-                bounds = p['bounds']
+            # Check cache first
+            if p['name'] in cache:
+                cached = cache[p['name']]
+                key = cached['category_key']
+                cache_hits += 1
             else:
-                bounds = np.array([
-                    s.get('bounds', [0, 1]) for s in p['space'] if s['type'] == 'continuous'
-                ])
-            
-            cp = classify_problem(
-                name=p['name'],
-                func=lambda x: p['func']({f'x{i}': x[i] for i in range(len(x))}),
-                bounds=bounds,
-                dim=p['dim'],
-                category=p['source'],
-                n_timing_samples=3,
-                n_ruggedness_samples=10,
-            )
-            
-            c = cp.characteristics
-            key = f"{c.dim_class.value}_{c.cost_level.value}_{c.ruggedness_level.value}"
+                # Need to classify - Use bounds if available, else extract from space
+                if p['bounds'] is not None:
+                    bounds = p['bounds']
+                else:
+                    bounds = np.array([
+                        s.get('bounds', [0, 1]) for s in p['space'] if s['type'] == 'continuous'
+                    ])
+                
+                cp = classify_problem(
+                    name=p['name'],
+                    func=lambda x: p['func']({f'x{i}': x[i] for i in range(len(x))}),
+                    bounds=bounds,
+                    dim=p['dim'],
+                    category=p['source'],
+                    n_timing_samples=3,
+                    n_ruggedness_samples=10,
+                )
+                
+                c = cp.characteristics
+                key = f"{c.dim_class.value}_{c.cost_level.value}_{c.ruggedness_level.value}"
+                
+                # Cache this classification and SAVE IMMEDIATELY
+                cache[p['name']] = {
+                    'category_key': key,
+                    'dim_class': c.dim_class.value,
+                    'cost_level': c.cost_level.value,
+                    'ruggedness_level': c.ruggedness_level.value,
+                    'dim': p['dim'],
+                    'source': p['source'],
+                }
+                try:
+                    save_classification_cache(cache)
+                except Exception as e:
+                    print(f"  Warning: Could not save cache after {p['name']}: {e}")
+                
+                cache_misses += 1
             
             if key not in categorized:
                 categorized[key] = []
@@ -217,12 +276,27 @@ def load_all_problems() -> Dict[str, List[dict]]:
                 'space': p['space'],
                 'bounds': p['bounds'],
                 'dim': p['dim'],
-                'characteristics': c,
             })
         except Exception as e:
-            print(f"  Warning: Could not classify {p['name']}: {e}")
+            import traceback
+            print(f"\n  ERROR classifying problem #{i+1}: {p['name']}")
+            print(f"  Error: {type(e).__name__}: {e}")
+            traceback.print_exc()
+            sys.stdout.flush()
+        
+        # Progress update every 20 problems (shows last problem name for debugging)
+        if (i + 1) % 20 == 0:
+            print(f"  Classified {i+1}/{len(all_problems)} (last: {p['name']})")
+            sys.stdout.flush()
+    
+    # Final progress message
+    print(f"  Classified {len(all_problems)}/{len(all_problems)} - DONE")
+    print(f"  Classification loop complete. {len(categorized)} categories.")
+    sys.stdout.flush()
     
     print(f"Organized into {len(categorized)} categories")
+    print(f"  Cache: {cache_hits} hits, {cache_misses} misses")
+    sys.stdout.flush()
     for key, problems in sorted(categorized.items()):
         print(f"  {key}: {len(problems)} problems")
     
@@ -441,10 +515,12 @@ def optimize_category(
                         pdef.high
                     )
             elif ptype == 'bool':
-                params[param_name] = trial.suggest_categorical(
+                # MARSOpt requires strings for categorical - convert boolean
+                str_val = trial.suggest_categorical(
                     param_name,
-                    [True, False]
+                    ["True", "False"]
                 )
+                params[param_name] = (str_val == "True")
             elif ptype == 'categorical':
                 params[param_name] = trial.suggest_categorical(
                     param_name,
@@ -589,10 +665,12 @@ def optimize_overall(
                         pdef.high
                     )
             elif ptype == 'bool':
-                params[param_name] = trial.suggest_categorical(
+                # MARSOpt requires strings for categorical - convert boolean
+                str_val = trial.suggest_categorical(
                     param_name,
-                    [True, False]
+                    ["True", "False"]
                 )
+                params[param_name] = (str_val == "True")
             elif ptype == 'categorical':
                 params[param_name] = trial.suggest_categorical(
                     param_name,
@@ -1207,11 +1285,30 @@ MARSOpt iteration budgets:
     print("  Cheap categories:    100 iterations, 5 runs/problem")
     print("  Moderate categories:  40 iterations, 3 runs/problem")
     print("  Expensive categories: 30 iterations, 1 run/problem")
+    sys.stdout.flush()
     
-    run_full_optimization(
-        output_path=args.output,
-        param_subset=args.param_subset,
-        verbose=not args.quiet,
-        resume=not args.no_resume,
-        skip_overall=args.skip_overall,
-    )
+    try:
+        run_full_optimization(
+            output_path=args.output,
+            param_subset=args.param_subset,
+            verbose=not args.quiet,
+            resume=not args.no_resume,
+            skip_overall=args.skip_overall,
+        )
+    except KeyboardInterrupt:
+        print("\n\nInterrupted by user (Ctrl+C)")
+        print("Progress has been saved to cache and checkpoint files.")
+        sys.exit(1)
+    except Exception as e:
+        print("\n" + "="*70)
+        print("FATAL ERROR - META-OPTIMIZER CRASHED")
+        print("="*70)
+        print(f"Error type: {type(e).__name__}")
+        print(f"Error message: {e}")
+        print("\nFull traceback:")
+        import traceback
+        traceback.print_exc()
+        print("\nProgress has been saved to cache and checkpoint files.")
+        print("You can resume from where you left off by running the script again.")
+        sys.stdout.flush()
+        sys.exit(1)

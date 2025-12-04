@@ -1,0 +1,1578 @@
+{
+  "Ackley-2D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 2,
+    "source": "synthetic"
+  },
+  "Rastrigin-2D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 2,
+    "source": "synthetic"
+  },
+  "Griewank-2D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 2,
+    "source": "synthetic"
+  },
+  "Levy-2D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 2,
+    "source": "synthetic"
+  },
+  "Schwefel-2D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 2,
+    "source": "synthetic"
+  },
+  "Ackley-5D": {
+    "category_key": "low_cheap_moderate",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "dim": 5,
+    "source": "synthetic"
+  },
+  "Rastrigin-5D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 5,
+    "source": "synthetic"
+  },
+  "Griewank-5D": {
+    "category_key": "low_cheap_moderate",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "dim": 5,
+    "source": "synthetic"
+  },
+  "Levy-5D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 5,
+    "source": "synthetic"
+  },
+  "Schwefel-5D": {
+    "category_key": "low_cheap_moderate",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "dim": 5,
+    "source": "synthetic"
+  },
+  "Ackley-10D": {
+    "category_key": "low_cheap_moderate",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "dim": 10,
+    "source": "synthetic"
+  },
+  "Rastrigin-10D": {
+    "category_key": "low_cheap_moderate",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "dim": 10,
+    "source": "synthetic"
+  },
+  "Griewank-10D": {
+    "category_key": "low_cheap_smooth",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 10,
+    "source": "synthetic"
+  },
+  "Levy-10D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 10,
+    "source": "synthetic"
+  },
+  "Schwefel-10D": {
+    "category_key": "low_cheap_moderate",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "dim": 10,
+    "source": "synthetic"
+  },
+  "Ackley-20D": {
+    "category_key": "medium_cheap_smooth",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 20,
+    "source": "synthetic"
+  },
+  "Rastrigin-20D": {
+    "category_key": "medium_cheap_moderate",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "dim": 20,
+    "source": "synthetic"
+  },
+  "Griewank-20D": {
+    "category_key": "medium_cheap_smooth",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 20,
+    "source": "synthetic"
+  },
+  "Levy-20D": {
+    "category_key": "medium_cheap_moderate",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "dim": 20,
+    "source": "synthetic"
+  },
+  "Schwefel-20D": {
+    "category_key": "medium_cheap_smooth",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 20,
+    "source": "synthetic"
+  },
+  "Ackley-50D": {
+    "category_key": "medium_cheap_smooth",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 50,
+    "source": "synthetic"
+  },
+  "Rastrigin-50D": {
+    "category_key": "medium_cheap_smooth",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 50,
+    "source": "synthetic"
+  },
+  "Griewank-50D": {
+    "category_key": "medium_cheap_smooth",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 50,
+    "source": "synthetic"
+  },
+  "Levy-50D": {
+    "category_key": "medium_cheap_smooth",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 50,
+    "source": "synthetic"
+  },
+  "Schwefel-50D": {
+    "category_key": "medium_cheap_smooth",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 50,
+    "source": "synthetic"
+  },
+  "Sphere-2D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 2,
+    "source": "synthetic"
+  },
+  "Rosenbrock-2D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 2,
+    "source": "synthetic"
+  },
+  "SumSquares-2D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 2,
+    "source": "synthetic"
+  },
+  "Zakharov-2D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 2,
+    "source": "synthetic"
+  },
+  "DixonPrice-2D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 2,
+    "source": "synthetic"
+  },
+  "StyblinskiTang-2D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 2,
+    "source": "synthetic"
+  },
+  "Sphere-5D": {
+    "category_key": "low_cheap_moderate",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "dim": 5,
+    "source": "synthetic"
+  },
+  "Rosenbrock-5D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 5,
+    "source": "synthetic"
+  },
+  "SumSquares-5D": {
+    "category_key": "low_cheap_moderate",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "dim": 5,
+    "source": "synthetic"
+  },
+  "Zakharov-5D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 5,
+    "source": "synthetic"
+  },
+  "DixonPrice-5D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 5,
+    "source": "synthetic"
+  },
+  "StyblinskiTang-5D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 5,
+    "source": "synthetic"
+  },
+  "Sphere-10D": {
+    "category_key": "low_cheap_smooth",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 10,
+    "source": "synthetic"
+  },
+  "Rosenbrock-10D": {
+    "category_key": "low_cheap_moderate",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "dim": 10,
+    "source": "synthetic"
+  },
+  "SumSquares-10D": {
+    "category_key": "low_cheap_smooth",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 10,
+    "source": "synthetic"
+  },
+  "Zakharov-10D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 10,
+    "source": "synthetic"
+  },
+  "DixonPrice-10D": {
+    "category_key": "low_cheap_moderate",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "dim": 10,
+    "source": "synthetic"
+  },
+  "StyblinskiTang-10D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 10,
+    "source": "synthetic"
+  },
+  "Sphere-20D": {
+    "category_key": "medium_cheap_smooth",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 20,
+    "source": "synthetic"
+  },
+  "Rosenbrock-20D": {
+    "category_key": "medium_cheap_smooth",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 20,
+    "source": "synthetic"
+  },
+  "SumSquares-20D": {
+    "category_key": "medium_cheap_smooth",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 20,
+    "source": "synthetic"
+  },
+  "Zakharov-20D": {
+    "category_key": "medium_cheap_moderate",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "dim": 20,
+    "source": "synthetic"
+  },
+  "DixonPrice-20D": {
+    "category_key": "medium_cheap_smooth",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 20,
+    "source": "synthetic"
+  },
+  "StyblinskiTang-20D": {
+    "category_key": "medium_cheap_rugged",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 20,
+    "source": "synthetic"
+  },
+  "Sphere-50D": {
+    "category_key": "medium_cheap_smooth",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 50,
+    "source": "synthetic"
+  },
+  "Rosenbrock-50D": {
+    "category_key": "medium_cheap_smooth",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 50,
+    "source": "synthetic"
+  },
+  "SumSquares-50D": {
+    "category_key": "medium_cheap_smooth",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 50,
+    "source": "synthetic"
+  },
+  "Zakharov-50D": {
+    "category_key": "medium_cheap_smooth",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 50,
+    "source": "synthetic"
+  },
+  "DixonPrice-50D": {
+    "category_key": "medium_cheap_smooth",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 50,
+    "source": "synthetic"
+  },
+  "StyblinskiTang-50D": {
+    "category_key": "medium_cheap_rugged",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 50,
+    "source": "synthetic"
+  },
+  "Sphere-100D": {
+    "category_key": "high_cheap_smooth",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 100,
+    "source": "synthetic"
+  },
+  "Rosenbrock-100D": {
+    "category_key": "high_cheap_smooth",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 100,
+    "source": "synthetic"
+  },
+  "SumSquares-100D": {
+    "category_key": "high_cheap_smooth",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 100,
+    "source": "synthetic"
+  },
+  "Zakharov-100D": {
+    "category_key": "high_cheap_smooth",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 100,
+    "source": "synthetic"
+  },
+  "DixonPrice-100D": {
+    "category_key": "high_cheap_smooth",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 100,
+    "source": "synthetic"
+  },
+  "StyblinskiTang-100D": {
+    "category_key": "high_cheap_moderate",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "dim": 100,
+    "source": "synthetic"
+  },
+  "Booth-2D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 2,
+    "source": "synthetic"
+  },
+  "Beale-2D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 2,
+    "source": "synthetic"
+  },
+  "Branin-2D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 2,
+    "source": "synthetic"
+  },
+  "GoldsteinPrice-2D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 2,
+    "source": "synthetic"
+  },
+  "SixHumpCamel-2D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 2,
+    "source": "synthetic"
+  },
+  "Easom-2D": {
+    "category_key": "low_cheap_smooth",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 2,
+    "source": "synthetic"
+  },
+  "Eggholder-2D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 2,
+    "source": "synthetic"
+  },
+  "HolderTable-2D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 2,
+    "source": "synthetic"
+  },
+  "Hartmann-3D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 3,
+    "source": "synthetic"
+  },
+  "Colville-4D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 4,
+    "source": "synthetic"
+  },
+  "Shekel-4D": {
+    "category_key": "low_cheap_moderate",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "dim": 4,
+    "source": "synthetic"
+  },
+  "Hartmann-6D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 6,
+    "source": "synthetic"
+  },
+  "Powell-4D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 4,
+    "source": "synthetic"
+  },
+  "Powell-8D": {
+    "category_key": "low_cheap_moderate",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "dim": 8,
+    "source": "synthetic"
+  },
+  "Powell-12D": {
+    "category_key": "medium_cheap_moderate",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "dim": 12,
+    "source": "synthetic"
+  },
+  "Powell-20D": {
+    "category_key": "medium_cheap_smooth",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 20,
+    "source": "synthetic"
+  },
+  "Powell-40D": {
+    "category_key": "medium_cheap_smooth",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 40,
+    "source": "synthetic"
+  },
+  "LightGBM-breast_cancer": {
+    "category_key": "low_cheap_smooth",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 6,
+    "source": "ml"
+  },
+  "LightGBM-digits": {
+    "category_key": "low_cheap_smooth",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 6,
+    "source": "ml"
+  },
+  "LightGBM-wine": {
+    "category_key": "low_cheap_smooth",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 6,
+    "source": "ml"
+  },
+  "LightGBM-iris": {
+    "category_key": "low_cheap_smooth",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 6,
+    "source": "ml"
+  },
+  "XGBoost-breast_cancer": {
+    "category_key": "low_cheap_smooth",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 6,
+    "source": "ml"
+  },
+  "XGBoost-digits": {
+    "category_key": "low_cheap_smooth",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 6,
+    "source": "ml"
+  },
+  "RandomForest-breast_cancer": {
+    "category_key": "low_cheap_smooth",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 5,
+    "source": "ml"
+  },
+  "RandomForest-wine": {
+    "category_key": "low_cheap_smooth",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 5,
+    "source": "ml"
+  },
+  "SVM-breast_cancer": {
+    "category_key": "low_cheap_smooth",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 3,
+    "source": "ml"
+  },
+  "SVM-digits": {
+    "category_key": "low_cheap_smooth",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 3,
+    "source": "ml"
+  },
+  "MLP-digits": {
+    "category_key": "low_cheap_smooth",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 4,
+    "source": "ml"
+  },
+  "MLP-breast_cancer": {
+    "category_key": "low_cheap_smooth",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 4,
+    "source": "ml"
+  },
+  "GBRegressor-diabetes": {
+    "category_key": "low_cheap_smooth",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 5,
+    "source": "ml"
+  },
+  "ElasticNet-diabetes": {
+    "category_key": "low_cheap_smooth",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 2,
+    "source": "ml"
+  },
+  "Portfolio-5assets": {
+    "category_key": "low_cheap_smooth",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 5,
+    "source": "ml"
+  },
+  "Portfolio-10assets": {
+    "category_key": "low_cheap_smooth",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 10,
+    "source": "ml"
+  },
+  "Portfolio-20assets": {
+    "category_key": "medium_cheap_smooth",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 20,
+    "source": "ml"
+  },
+  "Portfolio-30assets": {
+    "category_key": "medium_cheap_smooth",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 30,
+    "source": "ml"
+  },
+  "Portfolio-50assets": {
+    "category_key": "medium_cheap_smooth",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 50,
+    "source": "ml"
+  },
+  "MackeyGlass-4D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 4,
+    "source": "realworld"
+  },
+  "Lorenz-3D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 3,
+    "source": "realworld"
+  },
+  "Henon-2D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 2,
+    "source": "realworld"
+  },
+  "Rossler-3D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 3,
+    "source": "realworld"
+  },
+  "LogisticMap-1D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 1,
+    "source": "realworld"
+  },
+  "CoupledLogistic-10D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 10,
+    "source": "realworld"
+  },
+  "RabinovichFabrikant-2D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 2,
+    "source": "realworld"
+  },
+  "Duffing-5D": {
+    "category_key": "low_moderate_rugged",
+    "dim_class": "low",
+    "cost_level": "moderate",
+    "ruggedness_level": "rugged",
+    "dim": 5,
+    "source": "realworld"
+  },
+  "LotkaVolterra-4D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 4,
+    "source": "realworld"
+  },
+  "LotkaVolterra4Species-8D": {
+    "category_key": "low_cheap_moderate",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "dim": 8,
+    "source": "realworld"
+  },
+  "VanDerPol-1D": {
+    "category_key": "low_cheap_smooth",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 1,
+    "source": "realworld"
+  },
+  "DoublePendulum-4D": {
+    "category_key": "low_moderate_rugged",
+    "dim_class": "low",
+    "cost_level": "moderate",
+    "ruggedness_level": "rugged",
+    "dim": 4,
+    "source": "realworld"
+  },
+  "Burgers-9D": {
+    "category_key": "low_moderate_rugged",
+    "dim_class": "low",
+    "cost_level": "moderate",
+    "ruggedness_level": "rugged",
+    "dim": 9,
+    "source": "realworld"
+  },
+  "NN-XOR-17D": {
+    "category_key": "medium_cheap_smooth",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 17,
+    "source": "realworld"
+  },
+  "NN-Regression-89D": {
+    "category_key": "high_cheap_smooth",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 89,
+    "source": "realworld"
+  },
+  "NN-MNIST-1074D": {
+    "category_key": "high_cheap_smooth",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 1074,
+    "source": "realworld"
+  },
+  "NN-Large-1377D": {
+    "category_key": "high_cheap_smooth",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 1377,
+    "source": "realworld"
+  },
+  "SVM-CV-2D": {
+    "category_key": "low_moderate_smooth",
+    "dim_class": "low",
+    "cost_level": "moderate",
+    "ruggedness_level": "smooth",
+    "dim": 2,
+    "source": "realworld"
+  },
+  "RF-CV-4D": {
+    "category_key": "low_expensive_rugged",
+    "dim_class": "low",
+    "cost_level": "expensive",
+    "ruggedness_level": "rugged",
+    "dim": 4,
+    "source": "realworld"
+  },
+  "SA-Schedule-3D": {
+    "category_key": "low_expensive_rugged",
+    "dim_class": "low",
+    "cost_level": "expensive",
+    "ruggedness_level": "rugged",
+    "dim": 3,
+    "source": "realworld"
+  },
+  "Ridge-CV-1D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 1,
+    "source": "realworld"
+  },
+  "Lasso-CV-1D": {
+    "category_key": "low_cheap_moderate",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "dim": 1,
+    "source": "realworld"
+  },
+  "ElasticNet-CV-2D": {
+    "category_key": "low_cheap_rugged",
+    "dim_class": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 2,
+    "source": "realworld"
+  },
+  "LogisticReg-CV-1D": {
+    "category_key": "low_moderate_smooth",
+    "dim_class": "low",
+    "cost_level": "moderate",
+    "ruggedness_level": "smooth",
+    "dim": 1,
+    "source": "realworld"
+  },
+  "KNN-CV-3D": {
+    "category_key": "low_expensive_smooth",
+    "dim_class": "low",
+    "cost_level": "expensive",
+    "ruggedness_level": "smooth",
+    "dim": 3,
+    "source": "realworld"
+  },
+  "DecisionTree-CV-3D": {
+    "category_key": "low_moderate_smooth",
+    "dim_class": "low",
+    "cost_level": "moderate",
+    "ruggedness_level": "smooth",
+    "dim": 3,
+    "source": "realworld"
+  },
+  "AdaBoost-CV-2D": {
+    "category_key": "low_expensive_smooth",
+    "dim_class": "low",
+    "cost_level": "expensive",
+    "ruggedness_level": "smooth",
+    "dim": 2,
+    "source": "realworld"
+  },
+  "SVM-Large-CV-2D": {
+    "category_key": "low_expensive_smooth",
+    "dim_class": "low",
+    "cost_level": "expensive",
+    "ruggedness_level": "smooth",
+    "dim": 2,
+    "source": "realworld"
+  },
+  "Bagging-CV-3D": {
+    "category_key": "low_expensive_smooth",
+    "dim_class": "low",
+    "cost_level": "expensive",
+    "ruggedness_level": "smooth",
+    "dim": 3,
+    "source": "realworld"
+  },
+  "GradientBoost-CV-3D": {
+    "category_key": "low_expensive_smooth",
+    "dim_class": "low",
+    "cost_level": "expensive",
+    "ruggedness_level": "smooth",
+    "dim": 3,
+    "source": "realworld"
+  },
+  "MLP-Regressor-CV-3D": {
+    "category_key": "low_expensive_rugged",
+    "dim_class": "low",
+    "cost_level": "expensive",
+    "ruggedness_level": "rugged",
+    "dim": 3,
+    "source": "realworld"
+  },
+  "SparseCoding-400D": {
+    "category_key": "high_cheap_smooth",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 400,
+    "source": "realworld"
+  },
+  "PDE-HeatEq-50D": {
+    "category_key": "medium_moderate_smooth",
+    "dim_class": "medium",
+    "cost_level": "moderate",
+    "ruggedness_level": "smooth",
+    "dim": 50,
+    "source": "realworld"
+  },
+  "NN-Medium-20D": {
+    "category_key": "medium_cheap_smooth",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 20,
+    "source": "realworld"
+  },
+  "CoupledOscillators-15D": {
+    "category_key": "medium_moderate_moderate",
+    "dim_class": "medium",
+    "cost_level": "moderate",
+    "ruggedness_level": "moderate",
+    "dim": 15,
+    "source": "realworld"
+  },
+  "RastriginRotated-20D": {
+    "category_key": "medium_cheap_moderate",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "dim": 20,
+    "source": "realworld"
+  },
+  "HeatDiffusion-30D": {
+    "category_key": "medium_cheap_smooth",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 30,
+    "source": "realworld"
+  },
+  "WaveEquation-30D": {
+    "category_key": "medium_moderate_smooth",
+    "dim_class": "medium",
+    "cost_level": "moderate",
+    "ruggedness_level": "smooth",
+    "dim": 30,
+    "source": "realworld"
+  },
+  "AdvectionDiffusion-30D": {
+    "category_key": "medium_cheap_moderate",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "dim": 30,
+    "source": "realworld"
+  },
+  "SparseRegression-40D": {
+    "category_key": "medium_cheap_smooth",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 40,
+    "source": "realworld"
+  },
+  "MatrixFactorization-36D": {
+    "category_key": "medium_cheap_smooth",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 36,
+    "source": "realworld"
+  },
+  "TensorDecomposition-27D": {
+    "category_key": "medium_cheap_smooth",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 27,
+    "source": "realworld"
+  },
+  "ICA-Unmixing-25D": {
+    "category_key": "medium_cheap_moderate",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "dim": 25,
+    "source": "realworld"
+  },
+  "PCA-Reconstruction-30D": {
+    "category_key": "medium_cheap_smooth",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 30,
+    "source": "realworld"
+  },
+  "Lorenz96-20D": {
+    "category_key": "medium_cheap_rugged",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 20,
+    "source": "realworld"
+  },
+  "KuramotoOscillators-20D": {
+    "category_key": "medium_moderate_rugged",
+    "dim_class": "medium",
+    "cost_level": "moderate",
+    "ruggedness_level": "rugged",
+    "dim": 20,
+    "source": "realworld"
+  },
+  "CellularAutomata-25D": {
+    "category_key": "medium_moderate_rugged",
+    "dim_class": "medium",
+    "cost_level": "moderate",
+    "ruggedness_level": "rugged",
+    "dim": 25,
+    "source": "realworld"
+  },
+  "ReactionDiffusion-30D": {
+    "category_key": "medium_moderate_smooth",
+    "dim_class": "medium",
+    "cost_level": "moderate",
+    "ruggedness_level": "smooth",
+    "dim": 30,
+    "source": "realworld"
+  },
+  "SVM-FeatureWeights-20D": {
+    "category_key": "medium_moderate_smooth",
+    "dim_class": "medium",
+    "cost_level": "moderate",
+    "ruggedness_level": "smooth",
+    "dim": 20,
+    "source": "realworld"
+  },
+  "RF-FeatureSelection-25D": {
+    "category_key": "medium_expensive_smooth",
+    "dim_class": "medium",
+    "cost_level": "expensive",
+    "ruggedness_level": "smooth",
+    "dim": 25,
+    "source": "realworld"
+  },
+  "GB-FeatureEngineering-30D": {
+    "category_key": "medium_expensive_smooth",
+    "dim_class": "medium",
+    "cost_level": "expensive",
+    "ruggedness_level": "smooth",
+    "dim": 30,
+    "source": "realworld"
+  },
+  "PCA-SVM-Pipeline-25D": {
+    "category_key": "medium_moderate_smooth",
+    "dim_class": "medium",
+    "cost_level": "moderate",
+    "ruggedness_level": "smooth",
+    "dim": 25,
+    "source": "realworld"
+  },
+  "KernelRidge-30D": {
+    "category_key": "medium_moderate_moderate",
+    "dim_class": "medium",
+    "cost_level": "moderate",
+    "ruggedness_level": "moderate",
+    "dim": 30,
+    "source": "realworld"
+  },
+  "EnsembleWeights-25D": {
+    "category_key": "medium_expensive_smooth",
+    "dim_class": "medium",
+    "cost_level": "expensive",
+    "ruggedness_level": "smooth",
+    "dim": 25,
+    "source": "realworld"
+  },
+  "MLP-Architecture-30D": {
+    "category_key": "medium_expensive_smooth",
+    "dim_class": "medium",
+    "cost_level": "expensive",
+    "ruggedness_level": "smooth",
+    "dim": 30,
+    "source": "realworld"
+  },
+  "XGBoost-Tuning-25D": {
+    "category_key": "medium_expensive_smooth",
+    "dim_class": "medium",
+    "cost_level": "expensive",
+    "ruggedness_level": "smooth",
+    "dim": 25,
+    "source": "realworld"
+  },
+  "LightGBM-Tuning-25D": {
+    "category_key": "medium_expensive_smooth",
+    "dim_class": "medium",
+    "cost_level": "expensive",
+    "ruggedness_level": "smooth",
+    "dim": 25,
+    "source": "realworld"
+  },
+  "GeneticAlgorithm-25D": {
+    "category_key": "medium_moderate_rugged",
+    "dim_class": "medium",
+    "cost_level": "moderate",
+    "ruggedness_level": "rugged",
+    "dim": 25,
+    "source": "realworld"
+  },
+  "ParticleSwarm-30D": {
+    "category_key": "medium_moderate_rugged",
+    "dim_class": "medium",
+    "cost_level": "moderate",
+    "ruggedness_level": "rugged",
+    "dim": 30,
+    "source": "realworld"
+  },
+  "DifferentialEvolution-30D": {
+    "category_key": "medium_expensive_rugged",
+    "dim_class": "medium",
+    "cost_level": "expensive",
+    "ruggedness_level": "rugged",
+    "dim": 30,
+    "source": "realworld"
+  },
+  "CMA-ES-25D": {
+    "category_key": "medium_moderate_rugged",
+    "dim_class": "medium",
+    "cost_level": "moderate",
+    "ruggedness_level": "rugged",
+    "dim": 25,
+    "source": "realworld"
+  },
+  "NN-Deep-100D": {
+    "category_key": "high_cheap_smooth",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 100,
+    "source": "realworld"
+  },
+  "Autoencoder-80D": {
+    "category_key": "high_cheap_smooth",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 80,
+    "source": "realworld"
+  },
+  "RBM-60D": {
+    "category_key": "high_cheap_smooth",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 60,
+    "source": "realworld"
+  },
+  "WordEmbedding-75D": {
+    "category_key": "high_cheap_smooth",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 75,
+    "source": "realworld"
+  },
+  "Hopfield-64D": {
+    "category_key": "high_cheap_moderate",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "dim": 64,
+    "source": "realworld"
+  },
+  "SparseAutoencoder-100D": {
+    "category_key": "high_cheap_smooth",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 100,
+    "source": "realworld"
+  },
+  "VAE-90D": {
+    "category_key": "high_cheap_smooth",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 90,
+    "source": "realworld"
+  },
+  "DenoisingAE-80D": {
+    "category_key": "high_cheap_smooth",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 80,
+    "source": "realworld"
+  },
+  "ContrastiveLearning-70D": {
+    "category_key": "high_cheap_smooth",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 70,
+    "source": "realworld"
+  },
+  "Heat2D-60D": {
+    "category_key": "high_cheap_smooth",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 60,
+    "source": "realworld"
+  },
+  "Poisson-60D": {
+    "category_key": "high_cheap_smooth",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 60,
+    "source": "realworld"
+  },
+  "Laplace-64D": {
+    "category_key": "high_cheap_smooth",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 64,
+    "source": "realworld"
+  },
+  "Helmholtz-60D": {
+    "category_key": "high_cheap_smooth",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 60,
+    "source": "realworld"
+  },
+  "Biharmonic-56D": {
+    "category_key": "high_cheap_smooth",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 56,
+    "source": "realworld"
+  },
+  "SpectralMethod-64D": {
+    "category_key": "high_cheap_smooth",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 64,
+    "source": "realworld"
+  },
+  "FiniteElement-70D": {
+    "category_key": "high_cheap_smooth",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 70,
+    "source": "realworld"
+  },
+  "Multigrid-60D": {
+    "category_key": "high_cheap_smooth",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 60,
+    "source": "realworld"
+  },
+  "DomainDecomposition-72D": {
+    "category_key": "high_cheap_smooth",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 72,
+    "source": "realworld"
+  },
+  "AdaptiveMesh-65D": {
+    "category_key": "high_cheap_smooth",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 65,
+    "source": "realworld"
+  },
+  "Lorenz96Extended-60D": {
+    "category_key": "high_cheap_smooth",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 60,
+    "source": "realworld"
+  },
+  "CoupledMapLattice-64D": {
+    "category_key": "high_moderate_rugged",
+    "dim_class": "high",
+    "cost_level": "moderate",
+    "ruggedness_level": "rugged",
+    "dim": 64,
+    "source": "realworld"
+  },
+  "NeuralField-70D": {
+    "category_key": "high_moderate_moderate",
+    "dim_class": "high",
+    "cost_level": "moderate",
+    "ruggedness_level": "moderate",
+    "dim": 70,
+    "source": "realworld"
+  },
+  "SpatiotemporalChaos-60D": {
+    "category_key": "high_moderate_smooth",
+    "dim_class": "high",
+    "cost_level": "moderate",
+    "ruggedness_level": "smooth",
+    "dim": 60,
+    "source": "realworld"
+  },
+  "GinzburgLandau-56D": {
+    "category_key": "high_cheap_smooth",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "dim": 56,
+    "source": "realworld"
+  },
+  "SVM-HighDim-60D": {
+    "category_key": "high_moderate_smooth",
+    "dim_class": "high",
+    "cost_level": "moderate",
+    "ruggedness_level": "smooth",
+    "dim": 60,
+    "source": "realworld"
+  },
+  "RF-HighDim-70D": {
+    "category_key": "high_expensive_smooth",
+    "dim_class": "high",
+    "cost_level": "expensive",
+    "ruggedness_level": "smooth",
+    "dim": 70,
+    "source": "realworld"
+  },
+  "GB-HighDim-65D": {
+    "category_key": "high_expensive_moderate",
+    "dim_class": "high",
+    "cost_level": "expensive",
+    "ruggedness_level": "moderate",
+    "dim": 65,
+    "source": "realworld"
+  },
+  "KernelPCA-SVM-75D": {
+    "category_key": "high_expensive_rugged",
+    "dim_class": "high",
+    "cost_level": "expensive",
+    "ruggedness_level": "rugged",
+    "dim": 75,
+    "source": "realworld"
+  },
+  "NeuralNet-Dropout-80D": {
+    "category_key": "high_expensive_rugged",
+    "dim_class": "high",
+    "cost_level": "expensive",
+    "ruggedness_level": "rugged",
+    "dim": 80,
+    "source": "realworld"
+  },
+  "XGBoost-HighDim-60D": {
+    "category_key": "high_expensive_rugged",
+    "dim_class": "high",
+    "cost_level": "expensive",
+    "ruggedness_level": "rugged",
+    "dim": 60,
+    "source": "realworld"
+  },
+  "LightGBM-HighDim-65D": {
+    "category_key": "high_expensive_rugged",
+    "dim_class": "high",
+    "cost_level": "expensive",
+    "ruggedness_level": "rugged",
+    "dim": 65,
+    "source": "realworld"
+  },
+  "EnsembleStacking-70D": {
+    "category_key": "high_expensive_rugged",
+    "dim_class": "high",
+    "cost_level": "expensive",
+    "ruggedness_level": "rugged",
+    "dim": 70,
+    "source": "realworld"
+  },
+  "FeatureSelection-75D": {
+    "category_key": "high_expensive_rugged",
+    "dim_class": "high",
+    "cost_level": "expensive",
+    "ruggedness_level": "rugged",
+    "dim": 75,
+    "source": "realworld"
+  },
+  "Hyperband-60D": {
+    "category_key": "high_expensive_rugged",
+    "dim_class": "high",
+    "cost_level": "expensive",
+    "ruggedness_level": "rugged",
+    "dim": 60,
+    "source": "realworld"
+  },
+  "BayesianOpt-60D": {
+    "category_key": "high_expensive_rugged",
+    "dim_class": "high",
+    "cost_level": "expensive",
+    "ruggedness_level": "rugged",
+    "dim": 60,
+    "source": "realworld"
+  },
+  "NAS-70D": {
+    "category_key": "high_expensive_rugged",
+    "dim_class": "high",
+    "cost_level": "expensive",
+    "ruggedness_level": "rugged",
+    "dim": 70,
+    "source": "realworld"
+  },
+  "EvolutionStrategy-65D": {
+    "category_key": "high_expensive_rugged",
+    "dim_class": "high",
+    "cost_level": "expensive",
+    "ruggedness_level": "rugged",
+    "dim": 65,
+    "source": "realworld"
+  },
+  "SimulatedAnnealing-55D": {
+    "category_key": "high_expensive_rugged",
+    "dim_class": "high",
+    "cost_level": "expensive",
+    "ruggedness_level": "rugged",
+    "dim": 55,
+    "source": "realworld"
+  },
+  "CovarianceAdaptation-60D": {
+    "category_key": "high_expensive_rugged",
+    "dim_class": "high",
+    "cost_level": "expensive",
+    "ruggedness_level": "rugged",
+    "dim": 60,
+    "source": "realworld"
+  }
+}

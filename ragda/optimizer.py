@@ -366,7 +366,8 @@ class RAGDAOptimizer:
         }
         
         # Mini-batch schedule (batch size GROWS over time)
-        if minibatch_start is not None and minibatch_end is not None:
+        # Only create schedule if all minibatch params are provided (including schedule type)
+        if minibatch_start is not None and minibatch_end is not None and minibatch_schedule is not None:
             if minibatch_schedule == 'constant':
                 mb_sched = np.full(max_iter, minibatch_start, dtype=np.int32)
             
