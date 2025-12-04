@@ -794,12 +794,18 @@ class RAGDAOptimizer:
         effective_dim = dim_result['effective_dim']
         is_low_dim = dim_result['is_low_dimensional']
         
+        # Cython core has MAX_DIMS=1000 limit - must reduce if exceeding
+        CYTHON_MAX_DIMS = 1000
+        force_reduction = self.space.n_continuous > CYTHON_MAX_DIMS
+        
         if verbose:
             print(f"Effective dimensionality: {effective_dim} / {self.space.n_continuous}")
             print(f"Low-dimensional structure: {'Yes' if is_low_dim else 'No'}")
+            if force_reduction:
+                print(f"Dimensions exceed Cython limit ({CYTHON_MAX_DIMS}), forcing reduction")
         
-        # If no low-dimensional structure, fall back to standard optimization
-        if not is_low_dim or effective_dim >= self.space.n_continuous * 0.8:
+        # If no low-dimensional structure AND within Cython limits, fall back to standard
+        if (not is_low_dim or effective_dim >= self.space.n_continuous * 0.8) and not force_reduction:
             if verbose:
                 print("Falling back to standard optimization...")
                 print(f"{'='*70}\n")
@@ -829,7 +835,12 @@ class RAGDAOptimizer:
             print(f"Using reduction method: {method}")
         
         # Fit dimensionality reducer
-        n_components = min(effective_dim + 5, self.space.n_continuous // 2)
+        # When forcing reduction due to Cython limit, ensure we stay within bounds
+        if force_reduction:
+            # Must reduce to at most CYTHON_MAX_DIMS
+            n_components = min(effective_dim + 5, self.space.n_continuous // 2, CYTHON_MAX_DIMS - 10)
+        else:
+            n_components = min(effective_dim + 5, self.space.n_continuous // 2)
         
         if method == 'kernel_pca':
             reducer_state = highdim_core.fit_kernel_pca(X_samples, n_components=n_components)

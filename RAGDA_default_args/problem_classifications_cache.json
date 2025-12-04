@@ -1574,5 +1574,301 @@
     "ruggedness_level": "rugged",
     "dim": 60,
     "source": "realworld"
+  },
+  "Rosenbrock-150D": {
+    "category_key": "high_cheap_moderate",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "dim": 150,
+    "source": "gap_filler"
+  },
+  "Rosenbrock-200D": {
+    "category_key": "high_cheap_moderate",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "dim": 200,
+    "source": "gap_filler"
+  },
+  "Rosenbrock-250D": {
+    "category_key": "high_cheap_moderate",
+    "dim_class": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "dim": 250,
+    "source": "gap_filler"
+  },
+  "Smooth-Moderate-100D-1": {
+    "category_key": "high_moderate_smooth",
+    "dim_class": "high",
+    "cost_level": "moderate",
+    "ruggedness_level": "smooth",
+    "dim": 100,
+    "source": "gap_filler"
+  },
+  "Smooth-Moderate-150D-2": {
+    "category_key": "high_moderate_smooth",
+    "dim_class": "high",
+    "cost_level": "moderate",
+    "ruggedness_level": "smooth",
+    "dim": 150,
+    "source": "gap_filler"
+  },
+  "Smooth-Moderate-200D-3": {
+    "category_key": "high_moderate_smooth",
+    "dim_class": "high",
+    "cost_level": "moderate",
+    "ruggedness_level": "smooth",
+    "dim": 200,
+    "source": "gap_filler"
+  },
+  "ModerateRugged-Moderate-100D-1": {
+    "category_key": "high_moderate_moderate",
+    "dim_class": "high",
+    "cost_level": "moderate",
+    "ruggedness_level": "moderate",
+    "dim": 100,
+    "source": "gap_filler"
+  },
+  "ModerateRugged-Moderate-120D-2": {
+    "category_key": "high_moderate_moderate",
+    "dim_class": "high",
+    "cost_level": "moderate",
+    "ruggedness_level": "moderate",
+    "dim": 120,
+    "source": "gap_filler"
+  },
+  "ModerateRugged-Moderate-150D-3": {
+    "category_key": "high_moderate_moderate",
+    "dim_class": "high",
+    "cost_level": "moderate",
+    "ruggedness_level": "moderate",
+    "dim": 150,
+    "source": "gap_filler"
+  },
+  "ModerateRugged-Moderate-180D-4": {
+    "category_key": "high_moderate_moderate",
+    "dim_class": "high",
+    "cost_level": "moderate",
+    "ruggedness_level": "moderate",
+    "dim": 180,
+    "source": "gap_filler"
+  },
+  "Rugged-Moderate-100D-1": {
+    "category_key": "high_moderate_rugged",
+    "dim_class": "high",
+    "cost_level": "moderate",
+    "ruggedness_level": "rugged",
+    "dim": 100,
+    "source": "gap_filler"
+  },
+  "Rugged-Moderate-120D-2": {
+    "category_key": "high_moderate_rugged",
+    "dim_class": "high",
+    "cost_level": "moderate",
+    "ruggedness_level": "rugged",
+    "dim": 120,
+    "source": "gap_filler"
+  },
+  "Rugged-Moderate-150D-3": {
+    "category_key": "high_moderate_rugged",
+    "dim_class": "high",
+    "cost_level": "moderate",
+    "ruggedness_level": "rugged",
+    "dim": 150,
+    "source": "gap_filler"
+  },
+  "Rugged-Moderate-180D-4": {
+    "category_key": "high_moderate_rugged",
+    "dim_class": "high",
+    "cost_level": "moderate",
+    "ruggedness_level": "rugged",
+    "dim": 180,
+    "source": "gap_filler"
+  },
+  "Smooth-Expensive-80D-1": {
+    "category_key": "high_expensive_smooth",
+    "dim_class": "high",
+    "cost_level": "expensive",
+    "ruggedness_level": "smooth",
+    "dim": 80,
+    "source": "gap_filler"
+  },
+  "Smooth-Expensive-100D-2": {
+    "category_key": "high_expensive_smooth",
+    "dim_class": "high",
+    "cost_level": "expensive",
+    "ruggedness_level": "smooth",
+    "dim": 100,
+    "source": "gap_filler"
+  },
+  "Smooth-Expensive-120D-3": {
+    "category_key": "high_expensive_smooth",
+    "dim_class": "high",
+    "cost_level": "expensive",
+    "ruggedness_level": "smooth",
+    "dim": 120,
+    "source": "gap_filler"
+  },
+  "Smooth-Expensive-150D-4": {
+    "category_key": "high_expensive_smooth",
+    "dim_class": "high",
+    "cost_level": "expensive",
+    "ruggedness_level": "smooth",
+    "dim": 150,
+    "source": "gap_filler"
+  },
+  "ModerateRugged-Expensive-80D-1": {
+    "category_key": "high_expensive_moderate",
+    "dim_class": "high",
+    "cost_level": "expensive",
+    "ruggedness_level": "moderate",
+    "dim": 80,
+    "source": "gap_filler"
+  },
+  "ModerateRugged-Expensive-100D-2": {
+    "category_key": "high_expensive_moderate",
+    "dim_class": "high",
+    "cost_level": "expensive",
+    "ruggedness_level": "moderate",
+    "dim": 100,
+    "source": "gap_filler"
+  },
+  "ModerateRugged-Expensive-120D-3": {
+    "category_key": "high_expensive_moderate",
+    "dim_class": "high",
+    "cost_level": "expensive",
+    "ruggedness_level": "moderate",
+    "dim": 120,
+    "source": "gap_filler"
+  },
+  "ModerateRugged-Expensive-150D-4": {
+    "category_key": "high_expensive_moderate",
+    "dim_class": "high",
+    "cost_level": "expensive",
+    "ruggedness_level": "moderate",
+    "dim": 150,
+    "source": "gap_filler"
+  },
+  "Rugged-Cheap-20D-1": {
+    "category_key": "medium_cheap_rugged",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 20,
+    "source": "gap_filler"
+  },
+  "Rugged-Cheap-30D-2": {
+    "category_key": "medium_cheap_rugged",
+    "dim_class": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "dim": 30,
+    "source": "gap_filler"
+  },
+  "ModerateRugged-ModerateCost-15D-1": {
+    "category_key": "medium_moderate_moderate",
+    "dim_class": "medium",
+    "cost_level": "moderate",
+    "ruggedness_level": "moderate",
+    "dim": 15,
+    "source": "gap_filler"
+  },
+  "ModerateRugged-ModerateCost-25D-2": {
+    "category_key": "medium_moderate_moderate",
+    "dim_class": "medium",
+    "cost_level": "moderate",
+    "ruggedness_level": "moderate",
+    "dim": 25,
+    "source": "gap_filler"
+  },
+  "ModerateRugged-ModerateCost-35D-3": {
+    "category_key": "medium_moderate_moderate",
+    "dim_class": "medium",
+    "cost_level": "moderate",
+    "ruggedness_level": "moderate",
+    "dim": 35,
+    "source": "gap_filler"
+  },
+  "Rugged-Expensive-15D-1": {
+    "category_key": "medium_expensive_rugged",
+    "dim_class": "medium",
+    "cost_level": "expensive",
+    "ruggedness_level": "rugged",
+    "dim": 15,
+    "source": "gap_filler"
+  },
+  "Rugged-Expensive-25D-2": {
+    "category_key": "medium_expensive_rugged",
+    "dim_class": "medium",
+    "cost_level": "expensive",
+    "ruggedness_level": "rugged",
+    "dim": 25,
+    "source": "gap_filler"
+  },
+  "Rugged-Expensive-35D-3": {
+    "category_key": "medium_expensive_rugged",
+    "dim_class": "medium",
+    "cost_level": "expensive",
+    "ruggedness_level": "rugged",
+    "dim": 35,
+    "source": "gap_filler"
+  },
+  "Rugged-Expensive-45D-4": {
+    "category_key": "medium_expensive_rugged",
+    "dim_class": "medium",
+    "cost_level": "expensive",
+    "ruggedness_level": "rugged",
+    "dim": 45,
+    "source": "gap_filler"
+  },
+  "Smooth-ModerateCost-5D-1": {
+    "category_key": "low_moderate_smooth",
+    "dim_class": "low",
+    "cost_level": "moderate",
+    "ruggedness_level": "smooth",
+    "dim": 5,
+    "source": "gap_filler"
+  },
+  "Smooth-ModerateCost-8D-2": {
+    "category_key": "low_moderate_smooth",
+    "dim_class": "low",
+    "cost_level": "moderate",
+    "ruggedness_level": "smooth",
+    "dim": 8,
+    "source": "gap_filler"
+  },
+  "Rugged-ModerateCost-5D-1": {
+    "category_key": "low_moderate_rugged",
+    "dim_class": "low",
+    "cost_level": "moderate",
+    "ruggedness_level": "rugged",
+    "dim": 5,
+    "source": "gap_filler"
+  },
+  "Rugged-ModerateCost-8D-2": {
+    "category_key": "low_moderate_rugged",
+    "dim_class": "low",
+    "cost_level": "moderate",
+    "ruggedness_level": "rugged",
+    "dim": 8,
+    "source": "gap_filler"
+  },
+  "Rugged-Expensive-5D-1": {
+    "category_key": "low_expensive_rugged",
+    "dim_class": "low",
+    "cost_level": "expensive",
+    "ruggedness_level": "rugged",
+    "dim": 5,
+    "source": "gap_filler"
+  },
+  "Rugged-Expensive-8D-2": {
+    "category_key": "low_expensive_rugged",
+    "dim_class": "low",
+    "cost_level": "expensive",
+    "ruggedness_level": "rugged",
+    "dim": 8,
+    "source": "gap_filler"
   }
 }
