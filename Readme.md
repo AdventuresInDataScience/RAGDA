@@ -252,6 +252,68 @@ print(f"Best params: {result.best_params}")
 print(f"Best value: {result.best_value}")
 ```
 
+### Dynamic Worker Strategy (Multi-Modal Optimization)
+
+For problems with many local minima, the dynamic worker strategy preserves exploration diversity:
+
+```python
+from ragda import RAGDAOptimizer
+import numpy as np
+
+# Rastrigin function - highly multi-modal
+def rastrigin(params):
+    x = np.array([params[f'x{i}'] for i in range(10)])
+    return 10 * len(x) + np.sum(x**2 - 10 * np.cos(2 * np.pi * x))
+
+space = [
+    {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.12, 5.12]}
+    for i in range(10)
+]
+
+optimizer = RAGDAOptimizer(
+    space, 
+    n_workers=8,              # Can exceed CPU count for noisy objectives
+    max_parallel_workers=4,   # Run in waves of 4
+    random_state=42
+)
+
+result = optimizer.optimize(
+    rastrigin,
+    n_trials=500,
+    
+    # Dynamic worker strategy (vs 'greedy' default)
+    worker_strategy='dynamic',
+    
+    # Elite selection: keep top 50% of workers
+    elite_fraction=0.5,
+    
+    # How to restart non-elite workers
+    restart_mode='adaptive',           # 'elite', 'random', or 'adaptive'
+    restart_elite_prob_start=0.3,      # 30% from elite initially
+    restart_elite_prob_end=0.8,        # 80% from elite at end
+    
+    # Optional: reduce workers over time for faster convergence
+    enable_worker_decay=True,
+    min_workers=2,
+    worker_decay_rate=0.5,             # Reduce to 50% of workers by end
+    
+    sync_frequency=50,                 # Sync and select every 50 iterations
+)
+
+print(f"Best value: {result.best_value}")
+```
+
+**Worker Strategy Options:**
+- `'greedy'` (default): All workers reset to global best at sync points. Fast convergence but can get stuck in local minima.
+- `'dynamic'`: Top `elite_fraction` workers survive, others restart. Better for multi-modal landscapes.
+
+**Restart Modes (for `worker_strategy='dynamic'`):**
+- `'elite'`: Non-elite workers restart from elite positions with perturbation
+- `'random'`: Non-elite workers restart randomly in search space
+- `'adaptive'`: Mix that starts mostly random, transitions to mostly from elite
+
+**Worker Decay:** Gradually reduces active workers over time, focusing compute on the most promising search directions.
+
 ## API Reference
 
 ### RAGDAOptimizer
@@ -262,7 +324,8 @@ The main optimizer class - handles both standard and high-dimensional problems a
 RAGDAOptimizer(
     space: List[Dict],              # Search space definition
     direction: str = 'minimize',    # 'minimize' or 'maximize'
-    n_workers: int = None,          # Number of parallel workers (default: CPU count)
+    n_workers: int = None,          # Number of logical workers (default: CPU count // 2)
+    max_parallel_workers: int = None,  # Max simultaneous workers (default: CPU count)
     random_state: int = None,       # Random seed for reproducibility
     
     # High-dimensional settings (automatic when dims >= threshold)
@@ -299,6 +362,16 @@ result = optimizer.optimize(
     
     # Worker synchronization
     sync_frequency: int = 100,     # Share best solution every N iters
+    
+    # Worker strategy (NEW)
+    worker_strategy: str = 'greedy',      # 'greedy' or 'dynamic'
+    elite_fraction: float = 0.5,          # Fraction of workers to keep (dynamic only)
+    restart_mode: str = 'adaptive',       # 'elite', 'random', 'adaptive' (dynamic only)
+    restart_elite_prob_start: float = 0.3,  # Initial elite restart probability
+    restart_elite_prob_end: float = 0.8,    # Final elite restart probability
+    enable_worker_decay: bool = False,    # Reduce workers over time (dynamic only)
+    min_workers: int = 2,                 # Minimum workers to keep
+    worker_decay_rate: float = 0.5,       # Worker reduction rate (0-1)
 )
 ```
 
@@ -372,7 +445,19 @@ Each worker uses a different `top_n` fraction (exploration vs exploitation):
 - ...
 - Worker N: top_n=20% (greedy exploitation)
 
-Workers periodically synchronize, sharing the global best solution.
+**Worker Synchronization Strategies:**
+
+1. **Greedy (default)**: All workers reset to global best at sync points. Fast convergence for unimodal problems.
+
+2. **Dynamic**: Elite selection with adaptive restarts:
+   - Top `elite_fraction` workers continue from their current positions
+   - Non-elite workers restart based on `restart_mode`:
+     - `'elite'`: Sample from elite positions with perturbation
+     - `'random'`: Fresh random restart
+     - `'adaptive'`: Starts mostly random, transitions to mostly elite over time
+   - Optional worker decay reduces active workers over time for faster late-stage convergence
+
+**Wave-Based Execution**: When `n_workers > max_parallel_workers`, workers run in waves, allowing more logical workers than CPU cores for noisy objectives.
 
 ### High-Dimensional Optimization Strategy
 
@@ -410,6 +495,10 @@ python -m pytest tests/ -v -m "not slow"
 4. **Set sync_frequency** - more frequent syncing helps on unimodal problems
 5. **High-dim is automatic** - `RAGDAOptimizer` detects 100+ dimensions and uses reduction
 6. **Customize reduction** - use `reduction_method='kernel_pca'` for smooth objectives, `'random_projection'` for speed
+7. **Use dynamic strategy** for multi-modal landscapes with `worker_strategy='dynamic'`
+8. **Increase workers beyond cores** for noisy objectives - set `n_workers=16, max_parallel_workers=8` to run in waves
+9. **Enable worker decay** with `enable_worker_decay=True` for faster late-stage convergence
+10. **Tune elite_fraction** - higher (0.6-0.8) for rugged landscapes, lower (0.3-0.5) for smoother ones
 
 ## Verifying Installation
 
@@ -436,6 +525,15 @@ else:
 ```
 
 ## Changelog
+
+### v2.2.0
+- **Dynamic worker strategy** - New `worker_strategy='dynamic'` for multi-modal optimization
+- Elite selection: keep top % of workers, restart others adaptively
+- Configurable restart modes: `'elite'`, `'random'`, or `'adaptive'` (transitions over time)
+- Worker decay: optionally reduce active workers over time for faster convergence
+- Wave-based execution: support for `n_workers > max_parallel_workers` (run in waves)
+- New parameters: `elite_fraction`, `restart_mode`, `restart_elite_prob_start/end`, `enable_worker_decay`, `min_workers`, `worker_decay_rate`
+- Constructor parameter `max_parallel_workers` to control simultaneous execution
 
 ### v2.1.0
 - **Automatic high-dimensional optimization** - `RAGDAOptimizer` now automatically detects and handles 100+ dimension problems
