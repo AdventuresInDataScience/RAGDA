@@ -8,6 +8,10 @@ The output is a config file that RAGDA can load to use smart defaults based on
 problem characteristics.
 """
 
+# Suppress warnings BEFORE importing numpy
+import warnings
+warnings.filterwarnings('ignore')
+
 import numpy as np
 import json
 import time
@@ -15,8 +19,6 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Callable, Any, Optional
 from dataclasses import dataclass, asdict
 from concurrent.futures import ProcessPoolExecutor, as_completed
-import warnings
-warnings.filterwarnings('ignore')
 
 # MARSOpt import
 try:
@@ -75,30 +77,30 @@ def format_duration(seconds: float) -> str:
         return f"{hours}h {minutes}m"
 
 
-def interpret_loss(loss: float) -> str:
+def interpret_auc(auc: float) -> str:
     """
-    Interpret a loss value and return a human-readable quality description.
+    Interpret an AUC value and return a human-readable quality description.
     
-    The loss is normalized so that:
-    - 0.0 = always found the global optimum
-    - 1.0 = equivalent to random sampling
+    AUC (Area Under Curve) measures convergence quality:
+    - 0.0 = perfect (found best immediately)
+    - 1.0 = worst (no improvement until end)
     """
-    if loss < 0.05:
-        return "excellent - near-optimal solutions"
-    elif loss < 0.15:
+    if auc < 0.05:
+        return "excellent - near-optimal convergence"
+    elif auc < 0.15:
         return "very good - consistently strong"
-    elif loss < 0.30:
+    elif auc < 0.30:
         return "good - solid performance"
-    elif loss < 0.50:
+    elif auc < 0.50:
         return "moderate - room for improvement"
-    elif loss < 0.75:
-        return "fair - mediocre performance"
-    elif loss < 1.0:
-        return "poor - barely better than random"
-    elif loss >= 1e9:
+    elif auc < 0.75:
+        return "fair - mediocre convergence"
+    elif auc < 1.0:
+        return "poor - slow convergence"
+    elif auc >= 1e9:
         return "FAILED - evaluation errors"
     else:
-        return "very poor - worse than random or constraint violations"
+        return "very poor - constraint violations"
 
 
 # =============================================================================
@@ -307,6 +309,57 @@ def load_all_problems(use_cache: bool = True) -> Dict[str, List[dict]]:
 # RAGDA EVALUATION
 # =============================================================================
 
+def compute_normalized_auc(values: List[float], direction: str = 'minimize') -> float:
+    """
+    Compute normalized Area Under Curve for a convergence curve.
+    
+    This metric is scale-invariant and doesn't require knowing the true optimum.
+    
+    Args:
+        values: List of objective values from optimization (in order)
+        direction: 'minimize' or 'maximize'
+    
+    Returns:
+        Normalized AUC in range [0, 1] where:
+        - 0 = Perfect (found best value immediately)
+        - 1 = Worst (best value found only on last iteration)
+        - 0.5 = Linear improvement
+    """
+    if len(values) == 0:
+        return 1.0  # No values = worst possible
+    
+    if len(values) == 1:
+        return 0.5  # Single value = neutral
+    
+    values = np.array(values, dtype=float)
+    
+    # Compute best-so-far curve
+    if direction == 'minimize':
+        best_so_far = np.minimum.accumulate(values)
+    else:
+        best_so_far = np.maximum.accumulate(values)
+    
+    # Normalize to [0, 1] based on observed range
+    v_min = best_so_far[-1]  # Best found (final value)
+    v_max = best_so_far[0]   # Worst (first value = starting point)
+    
+    if v_max == v_min:
+        # All values same = perfect convergence from start
+        return 0.0
+    
+    # Normalize curve: 0 = at best, 1 = at worst
+    if direction == 'minimize':
+        normalized = (best_so_far - v_min) / (v_max - v_min)
+    else:
+        normalized = (v_max - best_so_far) / (v_max - v_min)
+    
+    # AUC using trapezoidal rule, normalized by number of points
+    # This gives area as fraction of total possible area
+    auc = np.trapz(normalized) / (len(normalized) - 1)
+    
+    return float(auc)
+
+
 def run_ragda_single(
     func: Callable,
     space: List[Dict[str, Any]],
@@ -316,7 +369,10 @@ def run_ragda_single(
     fixed_n_trials: Optional[int] = None,
 ) -> float:
     """
-    Run RAGDA once with given parameters and return the best value found.
+    Run RAGDA once and return the normalized AUC of the convergence curve.
+    
+    AUC (Area Under Curve) is scale-invariant and doesn't require knowing
+    the true optimum, making it ideal for comparing across different problems.
     
     Args:
         func: Objective function (takes dict params)
@@ -327,7 +383,7 @@ def run_ragda_single(
         fixed_n_trials: Override n_trials if provided (for budget control)
     
     Returns:
-        Best objective value found
+        Normalized AUC in [0, 1] where 0 = perfect, 1 = worst
     """
     # Ensure seed fits in C long (signed 32-bit)
     seed = seed % (2**31 - 1)
@@ -354,12 +410,21 @@ def run_ragda_single(
             **opt_params
         )
         
-        return result.best_value
+        # Extract trial values in order and compute AUC
+        trials_df = result.trials_df
+        if len(trials_df) == 0:
+            return 1.0  # No trials = worst possible
+        
+        # Sort by trial_id to get evaluation order
+        trials_df = trials_df.sort_values('trial_id')
+        values = trials_df['value'].tolist()
+        
+        return compute_normalized_auc(values, direction='minimize')
     
     except Exception as e:
-        # Return a large penalty value on failure
+        # Return worst possible AUC on failure
         print(f"    RAGDA failed: {e}")
-        return 1e10
+        return 1.0
 
 
 def evaluate_ragda_config(
@@ -371,6 +436,9 @@ def evaluate_ragda_config(
     """
     Evaluate a RAGDA configuration across all problems in a category.
     
+    Uses normalized AUC (Area Under Curve) metric which is scale-invariant
+    and doesn't require knowing true optima.
+    
     Args:
         params: Full RAGDA configuration to evaluate
         problems: List of problem dicts
@@ -378,7 +446,8 @@ def evaluate_ragda_config(
         fixed_n_trials: Override n_trials for budget control
     
     Returns:
-        (mean_loss, list_of_constraint_violations)
+        (mean_auc, list_of_constraint_violations)
+        where mean_auc is in [0, 1]: 0 = perfect, 1 = worst
     """
     # Check constraints first
     penalty, violations = compute_constraint_penalty(params)
@@ -479,14 +548,26 @@ def optimize_category(
     else:
         param_names = ALL_TUNABLE_PARAMS
     
+    # Calculate total evaluations for progress display
+    n_problems = len(problems)
+    evals_per_trial = n_problems * n_runs_per_problem
+    total_evals = n_iterations * evals_per_trial
+    
+    if verbose:
+        print(f"  Total RAGDA evaluations: {total_evals} ({n_iterations} trials × {n_problems} problems × {n_runs_per_problem} runs)")
+    
     # Track best across all trials
     best_loss = float('inf')
     best_params = None
     best_violations = []
+    trial_count = 0
+    eval_count = 0
     
     # Create objective function for MARSOpt
     def objective(trial):
-        nonlocal best_loss, best_params, best_violations
+        nonlocal best_loss, best_params, best_violations, trial_count, eval_count
+        trial_count += 1
+        eval_count += evals_per_trial
         
         # Suggest parameters using MARSOpt's trial interface
         params = {}
@@ -543,18 +624,23 @@ def optimize_category(
             best_loss = loss
             best_params = params.copy()
             best_violations = violations
+            print(f"  Trial {trial_count}/{n_iterations} (eval {eval_count}/{total_evals}): AUC={loss:.4f} ★ NEW BEST")
+        else:
+            print(f"  Trial {trial_count}/{n_iterations} (eval {eval_count}/{total_evals}): AUC={loss:.4f} (best={best_loss:.4f})")
         
+        sys.stdout.flush()
         return loss
     
     # Create MARSOpt study and optimize
-    study = MARSOptStudy(direction='minimize', random_state=42, verbose=verbose)
+    # Note: MARSOpt verbose=False to avoid cluttering output with full param lists
+    study = MARSOptStudy(direction='minimize', random_state=42, verbose=False)
     study.optimize(objective, n_trials=n_iterations)
     
     elapsed = time.time() - start_time
     
     if verbose:
         print(f"\nCategory {category_key} complete!")
-        print(f"  Best loss: {best_loss:.6f}")
+        print(f"  Best AUC: {best_loss:.6f}")
         print(f"  Time: {elapsed:.1f}s")
         if best_violations:
             print(f"  WARNING: Best config has violations: {best_violations}")
@@ -630,14 +716,27 @@ def optimize_overall(
     else:
         param_names = ALL_TUNABLE_PARAMS
     
+    # Calculate total evaluations for progress display
+    n_categories = len(sampled_problems)
+    total_problems = sum(len(probs) for probs in sampled_problems.values())
+    evals_per_trial = total_problems * n_runs_per_problem
+    total_evals = n_iterations * evals_per_trial
+    
+    if verbose:
+        print(f"  Total RAGDA evaluations: {total_evals} ({n_iterations} trials × {total_problems} problems × {n_runs_per_problem} runs)")
+    
     # Track best
     best_loss = float('inf')
     best_params = None
     best_violations = []
+    trial_count = 0
+    eval_count = 0
     
     # Create objective function for MARSOpt
     def objective(trial):
-        nonlocal best_loss, best_params, best_violations
+        nonlocal best_loss, best_params, best_violations, trial_count, eval_count
+        trial_count += 1
+        eval_count += evals_per_trial
         
         # Suggest parameters using MARSOpt's trial interface
         params = {}
@@ -706,18 +805,23 @@ def optimize_overall(
             best_loss = loss
             best_params = params.copy()
             best_violations = violations
+            print(f"  Trial {trial_count}/{n_iterations} (eval {eval_count}/{total_evals}): AUC={loss:.4f} ★ NEW BEST")
+        else:
+            print(f"  Trial {trial_count}/{n_iterations} (eval {eval_count}/{total_evals}): AUC={loss:.4f} (best={best_loss:.4f})")
         
+        sys.stdout.flush()
         return loss
     
     # Create MARSOpt study and optimize
-    study = MARSOptStudy(direction='minimize', random_state=42, verbose=verbose)
+    # Note: MARSOpt verbose=False to avoid cluttering output with full param lists
+    study = MARSOptStudy(direction='minimize', random_state=42, verbose=False)
     study.optimize(objective, n_trials=n_iterations)
     
     elapsed = time.time() - start_time
     
     if verbose:
         print(f"\nOverall optimization complete!")
-        print(f"  Best loss: {best_loss:.6f}")
+        print(f"  Best AUC: {best_loss:.6f}")
         print(f"  Time: {elapsed:.1f}s")
     
     return CategoryResult(
@@ -742,32 +846,32 @@ def get_marsopt_iterations_for_category(category_key: str) -> int:
     """
     Determine MARSOpt iterations based on category cost level.
     
-    Cheap problems: 100 MARSOpt iterations
-    Moderate problems: 40 MARSOpt iterations  
-    Expensive problems: 30 MARSOpt iterations
+    Cheap problems: 30 MARSOpt iterations
+    Moderate problems: 20 MARSOpt iterations  
+    Expensive problems: 15 MARSOpt iterations
     """
     if "expensive" in category_key:
-        return 30
+        return 15
     elif "moderate" in category_key:
-        return 40
+        return 20
     else:  # cheap
-        return 100
+        return 30
 
 
 def get_n_runs_for_category(category_key: str) -> int:
     """
     Determine number of RAGDA runs per problem based on category cost level.
     
-    Cheap problems: 5 runs (for robustness)
-    Moderate problems: 3 runs
+    Cheap problems: 2 runs (for robustness)
+    Moderate problems: 2 runs
     Expensive problems: 1 run (to save time)
     """
     if "expensive" in category_key:
         return 1
     elif "moderate" in category_key:
-        return 3
+        return 2
     else:  # cheap
-        return 5
+        return 2
 
 
 def get_fixed_n_trials_for_category(category_key: str) -> int:
@@ -843,13 +947,13 @@ def save_checkpoint(
             "n_categories": len(categorized),
             "total_problems": sum(len(p) for p in categorized.values()),
             "marsopt_iterations": {
-                "cheap": 100,
-                "moderate": 40,
-                "expensive": 30,
+                "cheap": 30,
+                "moderate": 20,
+                "expensive": 15,
             },
             "n_runs_per_problem": {
-                "cheap": 5,
-                "moderate": 3,
+                "cheap": 2,
+                "moderate": 2,
                 "expensive": 1,
             },
             "fixed_ragda_trials": {
@@ -930,21 +1034,22 @@ def run_full_optimization(
     print("="*70)
     print(f"\nParameter subset: {param_subset}")
     print(f"Parameters being tuned: {count_params_for_subset(param_subset)}")
-    print(f"\nMARSOpt iterations: Cheap=100, Moderate=40, Expensive=30")
-    print(f"RAGDA runs per problem: Cheap=5, Moderate=3, Expensive=1")
+    print(f"\nMARSOpt iterations: Cheap=30, Moderate=20, Expensive=15")
+    print(f"RAGDA runs per problem: Cheap=2, Moderate=2, Expensive=1")
     print(f"Resume mode: {'ON' if resume else 'OFF'}")
     print(f"Output file: {output_path}")
     
     # Explain the loss metric
     print("\n" + "-"*70)
-    print("LOSS METRIC INTERPRETATION")
+    print("LOSS METRIC: Normalized AUC (Area Under Curve)")
     print("-"*70)
-    print("The 'loss' is the mean normalized objective value across problems.")
-    print("  - Range: 0.0 (perfect) to 1.0+ (poor)")
-    print("  - 0.0 = Always found the global optimum")
-    print("  - 0.5 = On average, found values halfway between best and worst")
-    print("  - 1.0 = Performance equivalent to random sampling")
-    print("  - >1.0 = Constraint violations or failures")
+    print("The 'loss' is the mean normalized AUC of convergence curves.")
+    print("This metric is scale-invariant and doesn't require known optima.")
+    print("  - Range: 0.0 (perfect) to 1.0 (worst)")
+    print("  - 0.0 = Found best solution immediately (perfect convergence)")
+    print("  - 0.5 = Linear improvement over iterations")
+    print("  - 1.0 = No improvement (best found only at end)")
+    print("  - >1.0 = Constraint violations (penalty applied)")
     print("-"*70)
     
     # Check for existing checkpoint
@@ -1052,10 +1157,10 @@ def run_full_optimization(
             category_times.append((category_key, elapsed))
             cumulative_time += elapsed
             
-            # Interpret loss value
-            loss_quality = interpret_loss(result.best_loss)
+            # Interpret AUC value
+            auc_quality = interpret_auc(result.best_loss)
             print(f"  ✓ COMPLETED in {format_duration(elapsed)}")
-            print(f"    Loss: {result.best_loss:.6f} ({loss_quality})")
+            print(f"    AUC: {result.best_loss:.6f} ({auc_quality})")
             
         except Exception as e:
             error_msg = str(e)
@@ -1115,13 +1220,13 @@ def run_full_optimization(
             "n_categories": len(categorized),
             "total_problems": sum(len(p) for p in categorized.values()),
             "marsopt_iterations": {
-                "cheap": 100,
-                "moderate": 40,
-                "expensive": 30,
+                "cheap": 30,
+                "moderate": 20,
+                "expensive": 15,
             },
             "n_runs_per_problem": {
-                "cheap": 5,
-                "moderate": 3,
+                "cheap": 2,
+                "moderate": 2,
                 "expensive": 1,
             },
             "fixed_ragda_trials": {
@@ -1178,10 +1283,10 @@ def run_full_optimization(
             min_loss = np.min(losses)
             max_loss = np.max(losses)
             
-            print(f"\n--- LOSS STATISTICS ---")
-            print(f"Average loss: {avg_loss:.4f} ({interpret_loss(avg_loss)})")
-            print(f"Best loss:    {min_loss:.4f} ({interpret_loss(min_loss)})")
-            print(f"Worst loss:   {max_loss:.4f} ({interpret_loss(max_loss)})")
+            print(f"\n--- AUC STATISTICS ---")
+            print(f"Average AUC: {avg_loss:.4f} ({interpret_auc(avg_loss)})")
+            print(f"Best AUC:    {min_loss:.4f} ({interpret_auc(min_loss)})")
+            print(f"Worst AUC:   {max_loss:.4f} ({interpret_auc(max_loss)})")
         
         if times:
             avg_time = np.mean(times)
@@ -1199,23 +1304,23 @@ def run_full_optimization(
             cat_results = [(k, r) for k, r in results.items() 
                            if r.cost_class == cost_class]
             if cat_results:
-                cat_losses = [r.best_loss for _, r in cat_results if r.best_loss < 1e9]
+                cat_aucs = [r.best_loss for _, r in cat_results if r.best_loss < 1e9]
                 cat_times = [r.optimization_time_seconds for _, r in cat_results]
-                if cat_losses:
+                if cat_aucs:
                     print(f"\n{cost_class.upper()} categories ({len(cat_results)}):")
-                    print(f"  Avg loss: {np.mean(cat_losses):.4f}, "
+                    print(f"  Avg AUC: {np.mean(cat_aucs):.4f}, "
                           f"Avg time: {format_duration(np.mean(cat_times))}")
         
         # Detailed per-category results
         print(f"\n--- DETAILED CATEGORY RESULTS ---")
-        print(f"{'Category':<30} {'Loss':>10} {'Quality':<25} {'Time':>10}")
+        print(f"{'Category':<30} {'AUC':>10} {'Quality':<25} {'Time':>10}")
         print("-" * 80)
         for key, result in sorted(results.items()):
-            loss_str = f"{result.best_loss:.6f}" if result.best_loss < 1e9 else "FAILED"
-            quality = interpret_loss(result.best_loss).split(' - ')[0]
+            auc_str = f"{result.best_loss:.6f}" if result.best_loss < 1e9 else "FAILED"
+            quality = interpret_auc(result.best_loss).split(' - ')[0]
             time_str = format_duration(result.optimization_time_seconds)
             violations = " *" if result.constraint_violations else ""
-            print(f"{key:<30} {loss_str:>10} {quality:<25} {time_str:>10}{violations}")
+            print(f"{key:<30} {auc_str:>10} {quality:<25} {time_str:>10}{violations}")
         
         if any(r.constraint_violations for r in results.values()):
             print("\n* = has constraint violations")
@@ -1258,9 +1363,9 @@ Examples:
   python meta_optimizer.py --param-subset core
 
 MARSOpt iteration budgets:
-  Cheap categories:    100 iterations, 5 runs/problem
-  Moderate categories:  40 iterations, 3 runs/problem
-  Expensive categories: 30 iterations, 1 run/problem
+  Cheap categories:    30 iterations, 2 runs/problem
+  Moderate categories: 20 iterations, 2 runs/problem
+  Expensive categories: 15 iterations, 1 run/problem
         """
     )
     parser.add_argument("--output", "-o", default="ragda_optimal_defaults.json",
@@ -1285,9 +1390,9 @@ MARSOpt iteration budgets:
     print(f"  Resume mode: {'OFF (--no-resume)' if args.no_resume else 'ON'}")
     print(f"  Skip overall: {'YES' if args.skip_overall else 'NO'}")
     print("\nMARSOpt iteration budgets:")
-    print("  Cheap categories:    100 iterations, 5 runs/problem")
-    print("  Moderate categories:  40 iterations, 3 runs/problem")
-    print("  Expensive categories: 30 iterations, 1 run/problem")
+    print("  Cheap categories:    30 iterations, 2 runs/problem")
+    print("  Moderate categories: 20 iterations, 2 runs/problem")
+    print("  Expensive categories: 15 iterations, 1 run/problem")
     sys.stdout.flush()
     
     try:
