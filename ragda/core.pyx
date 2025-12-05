@@ -639,9 +639,6 @@ def optimize_worker_core(
     if n_cat > 0 and len(cat_n_values) != n_cat:
         raise ValueError(f"cat_n_values length {len(cat_n_values)} != n_cat {n_cat}")
     
-    if n_cont > MAX_DIMS:
-        raise ValueError(f"n_cont {n_cont} exceeds MAX_DIMS {MAX_DIMS}")
-    
     # Memory allocation
     cdef int max_lambda = lambda_schedule.max()
     if max_lambda > MAX_BATCH_SIZE:

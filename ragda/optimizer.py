@@ -298,6 +298,10 @@ class RAGDAOptimizer:
         
         self.space = SearchSpace(space)
         self.direction = direction
+        
+        # Ensure random_state fits in C long (signed 32-bit) for Cython compatibility
+        if random_state is not None:
+            random_state = random_state % (2**31 - 1)
         self.random_state = random_state
         
         if n_workers is None:
@@ -366,7 +370,8 @@ class RAGDAOptimizer:
         }
         
         # Mini-batch schedule (batch size GROWS over time)
-        if minibatch_start is not None and minibatch_end is not None:
+        # Only create schedule if all minibatch params are provided (including schedule type)
+        if minibatch_start is not None and minibatch_end is not None and minibatch_schedule is not None:
             if minibatch_schedule == 'constant':
                 mb_sched = np.full(max_iter, minibatch_start, dtype=np.int32)
             
@@ -940,73 +945,86 @@ class RAGDAOptimizer:
             print(f"Stage 1 best: {stage1_result.best_value:.6f}")
         
         # Stage 2: Trust region refinement in full space
+        # Wrapped in try/except to handle MemoryError for very high-dimensional problems
         stage2_trials = n_trials - stage1_trials
+        stage2_success = False
         
         if stage2_trials > 20:
-            if verbose:
-                print(f"\nStage 2: Trust region refinement ({stage2_trials} trials)...")
-            
-            # Create tight trust region around Stage 1 solution
-            trust_fraction = 0.1
-            trust_space = []
-            
-            for param in self.space.parameters:
-                if param.type == 'categorical':
-                    trust_space.append({
-                        'name': param.name,
-                        'type': 'categorical',
-                        'values': list(param.values)
-                    })
+            try:
+                if verbose:
+                    print(f"\nStage 2: Trust region refinement ({stage2_trials} trials)...")
+                
+                # Create tight trust region around Stage 1 solution
+                trust_fraction = 0.1
+                trust_space = []
+                
+                for param in self.space.parameters:
+                    if param.type == 'categorical':
+                        trust_space.append({
+                            'name': param.name,
+                            'type': 'categorical',
+                            'values': list(param.values)
+                        })
+                    else:
+                        center = stage1_best_params[param.name]
+                        full_range = param.bounds[1] - param.bounds[0]
+                        half_width = full_range * trust_fraction / 2
+                        
+                        new_lower = max(param.bounds[0], center - half_width)
+                        new_upper = min(param.bounds[1], center + half_width)
+                        
+                        trust_space.append({
+                            'name': param.name,
+                            'type': 'continuous',
+                            'bounds': [new_lower, new_upper]
+                        })
+                
+                # Run Stage 2 optimization
+                trust_optimizer = RAGDAOptimizer(
+                    trust_space,
+                    direction=self.direction,
+                    n_workers=self.n_workers,
+                    random_state=(self.random_state + 1000) if self.random_state else None,
+                    highdim_threshold=1000000  # Disable recursive highdim
+                )
+                
+                stage2_result = trust_optimizer.optimize(
+                    objective,
+                    n_trials=stage2_trials,
+                    x0=stage1_best_params,
+                    verbose=False,
+                    **{k: v for k, v in kwargs.items() if k not in ['x0']}
+                )
+                
+                if verbose:
+                    print(f"Stage 2 best: {stage2_result.best_value:.6f}")
+                
+                # Use better of Stage 1 or Stage 2
+                if self.direction == 'minimize':
+                    if stage2_result.best_value < stage1_result.best_value:
+                        final_best_params = stage2_result.best_params
+                        final_best_value = stage2_result.best_value
+                    else:
+                        final_best_params = stage1_best_params
+                        final_best_value = stage1_result.best_value
                 else:
-                    center = stage1_best_params[param.name]
-                    full_range = param.bounds[1] - param.bounds[0]
-                    half_width = full_range * trust_fraction / 2
-                    
-                    new_lower = max(param.bounds[0], center - half_width)
-                    new_upper = min(param.bounds[1], center + half_width)
-                    
-                    trust_space.append({
-                        'name': param.name,
-                        'type': 'continuous',
-                        'bounds': [new_lower, new_upper]
-                    })
-            
-            # Run Stage 2 optimization
-            trust_optimizer = RAGDAOptimizer(
-                trust_space,
-                direction=self.direction,
-                n_workers=self.n_workers,
-                random_state=(self.random_state + 1000) if self.random_state else None,
-                highdim_threshold=1000000  # Disable recursive highdim
-            )
-            
-            stage2_result = trust_optimizer.optimize(
-                objective,
-                n_trials=stage2_trials,
-                x0=stage1_best_params,
-                verbose=False,
-                **{k: v for k, v in kwargs.items() if k not in ['x0']}
-            )
-            
-            if verbose:
-                print(f"Stage 2 best: {stage2_result.best_value:.6f}")
-            
-            # Use better of Stage 1 or Stage 2
-            if self.direction == 'minimize':
-                if stage2_result.best_value < stage1_result.best_value:
-                    final_best_params = stage2_result.best_params
-                    final_best_value = stage2_result.best_value
-                else:
-                    final_best_params = stage1_best_params
-                    final_best_value = stage1_result.best_value
-            else:
-                if stage2_result.best_value > stage1_result.best_value:
-                    final_best_params = stage2_result.best_params
-                    final_best_value = stage2_result.best_value
-                else:
-                    final_best_params = stage1_best_params
-                    final_best_value = stage1_result.best_value
-        else:
+                    if stage2_result.best_value > stage1_result.best_value:
+                        final_best_params = stage2_result.best_params
+                        final_best_value = stage2_result.best_value
+                    else:
+                        final_best_params = stage1_best_params
+                        final_best_value = stage1_result.best_value
+                
+                stage2_success = True
+                
+            except MemoryError:
+                warnings.warn(
+                    f"Stage 2 trust region refinement skipped: insufficient memory for "
+                    f"{self.space.n_continuous}D optimization. Returning Stage 1 results only.",
+                    RuntimeWarning
+                )
+        
+        if not stage2_success:
             final_best_params = stage1_best_params
             final_best_value = stage1_result.best_value
         

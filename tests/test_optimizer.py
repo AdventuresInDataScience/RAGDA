@@ -185,6 +185,30 @@ class TestMinibatch:
         assert abs(result.best_params['w1'] - 2.0) < 1.0
         assert abs(result.best_params['w2'] - 3.0) < 1.0
 
+    def test_minibatch_params_ignored_when_disabled(self, space):
+        """Test that minibatch params don't cause errors when use_minibatch=False.
+        
+        Regression test: Previously, passing minibatch_start/minibatch_end with
+        use_minibatch=False would cause 'Unknown minibatch_schedule: None' error.
+        """
+        def simple_objective(params):
+            return params['w1']**2 + params['w2']**2
+        
+        opt = RAGDAOptimizer(space, n_workers=2, random_state=42)
+        
+        # This should NOT raise an error - minibatch params should be ignored
+        result = opt.optimize(
+            simple_objective,
+            n_trials=30,
+            use_minibatch=False,  # Disabled
+            minibatch_start=32,   # But params are still passed
+            minibatch_end=1000,
+            minibatch_schedule='inverse_decay',
+            verbose=False
+        )
+        
+        assert result.best_value < 1.0
+
 
 class TestRagdaOptimize:
     """Test scipy-style interface."""
