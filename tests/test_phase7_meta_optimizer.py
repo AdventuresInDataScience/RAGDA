@@ -193,7 +193,157 @@ class TestAUCMetric:
 # Section 2: Benchmark Functions Tests
 # =============================================================================
 
-# Placeholder for Step 2 tests
+class TestBenchmarkFunctions:
+    """Tests for benchmark functions (Optuna API)."""
+    
+    def test_benchmark_functions_count(self):
+        """Verify current chunk progress (after Chunk 2.1.4: 52 functions)."""
+        from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
+        assert len(ALL_BENCHMARK_FUNCTIONS) == 52, \
+            f"Expected 52 functions after Chunk 2.1.4, got {len(ALL_BENCHMARK_FUNCTIONS)}"
+    
+    def test_unimodal_count(self):
+        """Verify we have 12 unimodal functions."""
+        from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
+        unimodal = [p for p in ALL_BENCHMARK_FUNCTIONS.values() if p.category == 'unimodal']
+        assert len(unimodal) == 12
+    
+    def test_multimodal_count(self):
+        """Verify we have 40 multimodal functions (after Chunk 2.1.4)."""
+        from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
+        multimodal = [p for p in ALL_BENCHMARK_FUNCTIONS.values() if p.category == 'multimodal']
+        assert len(multimodal) == 40
+    
+    def test_sphere_2d_optuna(self):
+        """Test simple sphere function works with Optuna trial mock."""
+        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        
+        class MockTrial:
+            def suggest_float(self, name, low, high):
+                return 0.0  # Always suggest 0
+        
+        problem = get_benchmark_function('sphere_2d')
+        result = problem.objective(MockTrial())
+        
+        assert abs(result - 0.0) < 1e-10, f"Sphere at origin should be 0, got {result}"
+        assert problem.dimension == 2
+        assert problem.known_optimum == 0.0
+        assert problem.category == 'unimodal'
+    
+    def test_ackley_10d_optuna(self):
+        """Test multimodal ackley function (Chunk 2.1.2)."""
+        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        
+        class MockTrial:
+            def suggest_float(self, name, low, high):
+                return 0.0  # At optimum
+        
+        problem = get_benchmark_function('ackley_10d')
+        result = problem.objective(MockTrial())
+        
+        assert abs(result - 0.0) < 1e-6, f"Ackley at origin should be ~0, got {result}"
+        assert problem.dimension == 10
+        assert problem.category == 'multimodal'
+        assert problem.known_optimum == 0.0
+    
+    def test_rastrigin_5d_optuna(self):
+        """Test rastrigin function (Chunk 2.1.2)."""
+        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        
+        problem = get_benchmark_function('rastrigin_5d')
+        assert problem.dimension == 5
+        assert problem.category == 'multimodal'
+        assert callable(problem.objective)
+    
+    def test_styblinski_tang_20d(self):
+        """Test styblinski-tang function (Chunk 2.1.2)."""
+        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        
+        problem = get_benchmark_function('styblinski_tang_20d')
+        assert problem.dimension == 20
+        assert problem.category == 'multimodal'
+        assert abs(problem.known_optimum - (-39.16599 * 20)) < 1
+    
+    def test_all_functions_callable(self):
+        """Verify all registered functions are callable."""
+        from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
+        
+        for name, problem in ALL_BENCHMARK_FUNCTIONS.items():
+            assert callable(problem.objective), f"{name} objective not callable"
+    
+    def test_problem_metadata_complete(self):
+        """Verify all problems have required metadata."""
+        from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
+        
+        for name, problem in ALL_BENCHMARK_FUNCTIONS.items():
+            assert problem.name == name
+            assert problem.dimension > 0
+            assert len(problem.bounds) == problem.dimension
+            assert problem.category is not None
+            assert problem.description
+    
+    # =========================================================================
+    # Chunk 2.1.3: Special 2D Functions
+    # =========================================================================
+    
+    def test_special_2d_count(self):
+        """Verify we have 52 total functions after Chunk 2.1.4."""
+        from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
+        assert len(ALL_BENCHMARK_FUNCTIONS) == 52
+    
+    def test_eggholder_2d_optuna(self):
+        """Test eggholder function with Optuna interface."""
+        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        
+        class MockTrial:
+            def suggest_float(self, name, low, high):
+                # Suggest near global optimum
+                if 'x0' in name:
+                    return 512.0
+                return 404.2319
+        
+        problem = get_benchmark_function('eggholder_2d')
+        result = problem.objective(MockTrial())
+        
+        # Should be near global minimum
+        assert result < -900  # Close to -959.6407
+        assert problem.dimension == 2
+        assert problem.category == 'multimodal'
+    
+    def test_hartmann_3d_dimension(self):
+        """Test hartmann_3d has correct dimension."""
+        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        
+        problem = get_benchmark_function('hartmann_3d')
+        assert problem.dimension == 3
+        assert problem.category == 'multimodal'
+        assert all(b == (0, 1) for b in problem.bounds)
+    
+    # Chunk 2.1.4: Fixed Dimension Functions
+    def test_fixed_dim_count(self):
+        """After Chunk 2.1.4, should have exactly 52 functions (50 + 2 fixed dim)."""
+        from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
+        assert len(ALL_BENCHMARK_FUNCTIONS) == 52
+    
+    def test_shekel_4d_fixed(self):
+        """Test Shekel is exactly 4D with correct bounds."""
+        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        
+        problem = get_benchmark_function('shekel_4d')
+        assert problem.dimension == 4
+        assert problem.category == 'multimodal'
+        assert all(b == (0, 10) for b in problem.bounds)
+        assert problem.known_optimum is not None
+    
+    def test_hartmann_6d_fixed(self):
+        """Test Hartmann 6D is exactly 6D with (0,1) bounds."""
+        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        
+        problem = get_benchmark_function('hartmann_6d')
+        assert problem.dimension == 6
+        assert problem.category == 'multimodal'
+        assert all(b == (0, 1) for b in problem.bounds)
+        assert problem.known_optimum is not None
 
 
 # =============================================================================

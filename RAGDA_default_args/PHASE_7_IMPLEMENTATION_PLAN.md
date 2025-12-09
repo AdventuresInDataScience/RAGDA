@@ -148,142 +148,209 @@ def test_evaluate_optimizer_on_simple_problem():
 
 ## Step 2: Benchmark Functions - Optuna API
 
-**STATUS**: ⏳ PENDING
+**STATUS**: 🔄 IN PROGRESS (Chunk 2.1.2 DONE: 44/234)
 
 **Purpose**: Create clean benchmark problem definitions using Optuna-style API.
 
-### 2.1 Mathematical Benchmark Functions
+**Inventory from Archive**:
+- `archive/benchmark_functions.py`: 78 mathematical functions
+- `archive/benchmark_realworld_problems.py`: 137 real-world problems
+- `archive/benchmark_ml_problems.py`: 19 ML problems
+- **Total: 234 problems**
+
+**Strategy**: Rebuild incrementally in small batches to avoid errors.
+
+**Progress Tracker**:
+```
+Chunk 2.1.1: ✅ DONE   (12/234)  - Core + Unimodal
+Chunk 2.1.2: ✅ DONE   (44/234)  - Multimodal Core
+Chunk 2.1.3: ✅ DONE (50/234)  - Multimodal Special 2D
+Chunk 2.1.4: ⏳ TODO  (50/234)  - Multimodal Fixed Dim
+Chunk 2.1.5: ⏳ TODO  (68/234)  - Valley Functions
+Chunk 2.1.6: ⏳ TODO  (76/234)  - Plate Functions
+Chunk 2.1.7: ⏳ TODO  (78/234)  - Steep Functions
+Chunk 2.2.1: ⏳ TODO  (91/234)  - Chaotic Systems
+Chunk 2.2.2: ⏳ TODO  (100/234) - Dynamical Systems
+Chunk 2.2.3: ⏳ TODO  (114/234) - NN Weights
+Chunk 2.2.4: ⏳ TODO  (129/234) - ML Training Part 1
+Chunk 2.2.5: ⏳ TODO  (149/234) - ML Training Part 2
+Chunk 2.2.6: ⏳ TODO  (159/234) - ML Training Part 3
+Chunk 2.2.7: ⏳ TODO  (177/234) - PDE Problems
+Chunk 2.2.8: ⏳ TODO  (195/234) - Meta-Opt & Control
+Chunk 2.2.9: ⏳ TODO  (215/234) - Remaining Real-World
+Chunk 2.3.1: ⏳ TODO  (234/234) - All ML Problems ✅
+```
+
+---
+
+### 2.1 Mathematical Benchmark Functions (78 total)
 
 **File**: `RAGDA_default_args/benchmark_functions.py`
 
-**Structure**:
-```python
-"""
-Mathematical Benchmark Functions (Optuna API)
+**Source**: `archive/benchmark_functions.py`
 
-~50 standard test functions from optimization literature.
-All wrapped in Optuna-style objective(trial) format.
-"""
+**Chunking Strategy**:
 
-from typing import Callable, Dict, Any, List, Tuple
-from dataclasses import dataclass
+#### Chunk 2.1.1: Core Structure + Unimodal (12 functions) ✅
+- Create dataclass, helper functions, registry structure
+- **Note**: `known_optimum` field is **Optional** - not used by AUC metric (which is scale-invariant). Kept as reference metadata for research/validation. Real-world problems use `None`.
+- **Functions from archive**:
+  - `sphere_2d, sphere_5d, sphere_10d, sphere_20d, sphere_50d, sphere_100d` (6)
+  - `sum_squares_2d, sum_squares_5d, sum_squares_10d, sum_squares_20d, sum_squares_50d, sum_squares_100d` (6)
+- **Test**: Import, count, test sphere_2d with mock trial
 
-@dataclass
-class BenchmarkProblem:
-    """Metadata for a benchmark problem."""
-    name: str
-    objective: Callable  # Optuna-style: objective(trial) -> float
-    dimension: int
-    bounds: List[Tuple[float, float]]
-    known_optimum: Optional[float]
-    category: str  # 'multimodal', 'unimodal', 'valley', etc.
-    description: str
+#### Chunk 2.1.2: Multimodal - Core Functions (30 functions)
+- **Functions from archive** (6 base × 5 dimensions each):
+  - `ackley_2d, ackley_5d, ackley_10d, ackley_20d, ackley_50d, ackley_100d` (6)
+  - `rastrigin_2d, rastrigin_5d, rastrigin_10d, rastrigin_20d, rastrigin_50d` (5)
+  - `schwefel_2d, schwefel_5d, schwefel_10d, schwefel_20d, schwefel_50d` (5)
+  - `griewank_2d, griewank_5d, griewank_10d, griewank_20d, griewank_50d` (5)
+  - `levy_2d, levy_5d, levy_10d, levy_20d, levy_50d` (5)
+  - `styblinski_tang_2d, styblinski_tang_5d, styblinski_tang_10d, styblinski_tang_20d, styblinski_tang_50d, styblinski_tang_100d` (6)
+- **Test**: Count = 42 total, test ackley_10d, test rastrigin_5d
 
-# Example structure:
-def sphere_2d_optuna(trial):
-    """2D Sphere function: f(x,y) = x² + y²"""
-    x = trial.suggest_float('x', -5.0, 5.0)
-    y = trial.suggest_float('y', -5.0, 5.0)
-    return x**2 + y**2
+#### Chunk 2.1.3: Multimodal - Special 2D Functions (6 functions) ✅ DONE
+- **Functions from archive** (2D only):
+  - `beale_2d, branin_2d, goldstein_price_2d` (3)
+  - `eggholder_2d, holder_table_2d` (2)
+  - `hartmann_3d` (1, special 3D)
+- **Expected Count After**: 50 total (44 + 6)
+- **Tests Added**: test_special_2d_count, test_eggholder_2d_optuna, test_hartmann_3d_dimension
+- **Status**: ✅ All 12 benchmark tests passing (50 functions total)
 
-SPHERE_2D = BenchmarkProblem(
-    name='sphere_2d',
-    objective=sphere_2d_optuna,
-    dimension=2,
-    bounds=[(-5.0, 5.0), (-5.0, 5.0)],
-    known_optimum=0.0,
-    category='unimodal',
-    description='Simple convex quadratic function'
-)
+#### Chunk 2.1.4: Multimodal - Fixed Dimension (2 functions) ✅ DONE
+- **Functions from archive**:
+  - `shekel_4d` (4D only, bounds (0,10), optimum -10.5364)
+  - `hartmann_6d` (6D only, bounds (0,1), optimum -3.32237)
+- **Expected Count After**: 52 total (50 + 2)
+- **Tests Added**: test_fixed_dim_count, test_shekel_4d_fixed, test_hartmann_6d_fixed
+- **Status**: ✅ All 15 benchmark tests passing (52 functions: 12 unimodal + 40 multimodal)
 
-# ... repeat for all ~50 functions
-```
+#### Chunk 2.1.5: Valley Functions (18 functions)
+- **Functions from archive**:
+  - `rosenbrock_2d, rosenbrock_5d, rosenbrock_10d, rosenbrock_20d, rosenbrock_50d, rosenbrock_100d` (6)
+  - `dixon_price_2d, dixon_price_5d, dixon_price_10d, dixon_price_20d, dixon_price_50d, dixon_price_100d` (6)
+  - `six_hump_camel_2d` (1)
+  - `powell_4d, powell_8d, powell_12d, powell_20d, powell_40d` (5)
+- **Test**: Count = 68 total, test rosenbrock_10d
 
-**Functions to Include** (extract from archive):
+#### Chunk 2.1.6: Plate Functions (8 functions)
+- **Functions from archive**:
+  - `zakharov_2d, zakharov_5d, zakharov_10d, zakharov_20d, zakharov_50d, zakharov_100d` (6)
+  - `booth_2d` (1)
+  - `colville_4d` (1)
+- **Test**: Count = 76 total
 
-**Multimodal** (~20 functions):
-- Ackley (2D, 5D, 10D, 20D variants)
-- Rastrigin (2D, 5D, 10D, 20D)
-- Schwefel (2D, 5D, 10D)
-- Griewank (2D, 5D, 10D)
-- Levy (2D, 5D, 10D)
-- Michalewicz (2D, 5D, 10D)
-- Drop-Wave (2D)
-- Shubert (2D)
-- Eggholder (2D)
-- Holder Table (2D)
-- Langermann (2D)
+#### Chunk 2.1.7: Steep Functions (2 functions)
+- **Functions from archive**:
+  - `easom_2d` (1)
+  - (Need 1 more from archive review)
+- **Test**: Count = 78 total ✅
 
-**Unimodal** (~15 functions):
-- Sphere (2D, 5D, 10D, 20D, 50D)
-- Rosenbrock (2D, 5D, 10D, 20D)
-- Sum of Squares (5D, 10D, 20D)
-- Rotated Hyper-Ellipsoid (5D, 10D)
+**Structure**: See chunks above for exact implementation order.
 
-**Other Landscapes** (~15 functions):
-- Beale (2D)
-- Booth (2D)
-- Matyas (2D)
-- McCormick (2D)
-- Six-Hump Camel (2D)
-- Three-Hump Camel (2D)
-- Dixon-Price (5D, 10D)
-- Zakharov (5D, 10D)
-- Powell (4D, 8D)
-- Styblinski-Tang (2D, 5D, 10D)
+---
 
-**Registry**:
-```python
-# Dictionary of all benchmark functions
-ALL_BENCHMARK_FUNCTIONS: Dict[str, BenchmarkProblem] = {
-    'sphere_2d': SPHERE_2D,
-    'sphere_5d': SPHERE_5D,
-    # ... etc
-}
-
-def get_benchmark_function(name: str) -> BenchmarkProblem:
-    """Get benchmark problem by name."""
-    pass
-
-def list_benchmark_functions() -> List[str]:
-    """List all available benchmark function names."""
-    pass
-```
-
-### 2.2 Real-World Benchmark Problems
+### 2.2 Real-World Benchmark Problems (137 total)
 
 **File**: `RAGDA_default_args/benchmark_realworld_problems.py`
 
-**Structure**: Same as above, but with ~137 real-world problems:
+**Source**: `archive/benchmark_realworld_problems.py`
 
-**Categories**:
-- Chaotic system parameter estimation (~30 problems)
-  - Lorenz, Rössler, Hénon, Mackey-Glass, coupled maps
-- Neural network training (~20 problems)
-  - Small networks on MNIST/XOR/toy datasets
-- Control systems (~25 problems)
-  - PID tuning, LQR, trajectory optimization
-- Physics simulations (~20 problems)
-  - Pendulum, wave equations, spin glass
-- System identification (~15 problems)
-  - AR/ARMA parameter estimation
-- Operations research (~15 problems)
-  - Supply chain, routing, scheduling
-- Acquisition functions (~12 problems)
-  - Bayesian optimization test cases
+**Chunking Strategy**:
 
-**Registry**: Same structure as benchmark_functions.py
+#### Chunk 2.2.1: Core Structure + Chaotic Systems (13 functions)
+- Create dataclass, helper functions (Optuna wrapper for callable functions)
+- **Functions from archive**:
+  - `MackeyGlass-4D, Lorenz-3D, Henon-2D, Rossler-3D, LogisticMap-1D` (5)
+  - `CoupledLogistic-10D, RabinovichFabrikant-2D, Duffing-5D, DoublePendulum-4D` (4)
+  - `Lorenz96-20D, Lorenz96Extended-60D, CoupledMapLattice-64D, HenonExtended-20D` (4)
+- **Test**: Count = 13, test Lorenz-3D
 
-### 2.3 ML Benchmark Problems
+#### Chunk 2.2.2: Dynamical Systems (9 functions)
+- **Functions from archive**:
+  - `LotkaVolterra-4D, LotkaVolterra4Species-8D, VanDerPol-1D` (3)
+  - `CoupledOscillators-15D, KuramotoOscillators-20D, KuramotoSync-100D, KuramotoSync-150D` (4)
+  - `NeuralField-70D, SpatiotemporalChaos-60D` (2)
+- **Test**: Count = 22
+
+#### Chunk 2.2.3: Neural Network Weights (14 functions)
+- **Functions from archive**:
+  - `NN-XOR-17D, NN-Regression-89D, NN-MNIST-1074D, NN-Large-1377D` (4)
+  - `NN-Medium-20D, NN-Deep-100D` (2)
+  - `Autoencoder-80D, RBM-60D, WordEmbedding-75D, Hopfield-64D` (4)
+  - `SparseAutoencoder-100D, VAE-90D, DenoisingAE-80D, ContrastiveLearning-70D` (4)
+- **Test**: Count = 36
+
+#### Chunk 2.2.4: ML Training Problems Part 1 (15 functions)
+- **Functions from archive**:
+  - `SVM-CV-2D, RF-CV-4D, Ridge-CV-1D, Lasso-CV-1D, ElasticNet-CV-2D` (5)
+  - `LogisticReg-CV-1D, KNN-CV-3D, DecisionTree-CV-3D, AdaBoost-CV-2D` (4)
+  - `SVM-Large-CV-2D, Bagging-CV-3D, GradientBoost-CV-3D, MLP-Regressor-CV-3D` (4)
+  - `NestedCV-5D, BayesianAcquisition-6D` (2)
+- **Test**: Count = 51
+
+#### Chunk 2.2.5: ML Training Problems Part 2 (20 functions)
+- **Functions from archive**:
+  - `SparseCoding-400D, SparseRegression-40D, MatrixFactorization-36D, TensorDecomposition-27D` (4)
+  - `ICA-Unmixing-25D, PCA-Reconstruction-30D, SVM-FeatureWeights-20D, RF-FeatureSelection-25D` (4)
+  - `GB-FeatureEngineering-30D, PCA-SVM-Pipeline-25D, KernelRidge-30D, EnsembleWeights-25D` (4)
+  - `MLP-Architecture-30D, XGBoost-Tuning-25D, LightGBM-Tuning-25D` (3)
+  - `SVM-HighDim-60D, RF-HighDim-70D, GB-HighDim-65D, KernelPCA-SVM-75D, NeuralNet-Dropout-80D` (5)
+- **Test**: Count = 71
+
+#### Chunk 2.2.6: ML Training Problems Part 3 (10 functions)
+- **Functions from archive**:
+  - `XGBoost-HighDim-60D, LightGBM-HighDim-65D, EnsembleStacking-70D, FeatureSelection-75D` (4)
+  - `MatrixFactorization-100D, PCAReconstruction-100D, PCAReconstruction-144D` (3)
+  - `NeuralHessian-80D, NeuralHessian-100D` (2)
+  - (Need 1 more - check archive)
+- **Test**: Count = 81
+
+#### Chunk 2.2.7: PDE Problems (18 functions)
+- **Functions from archive**:
+  - `Burgers-9D, PDE-HeatEq-50D, HeatDiffusion-30D, WaveEquation-30D, AdvectionDiffusion-30D` (5)
+  - `ReactionDiffusion-30D, Heat2D-60D, Poisson-60D, Laplace-64D, Helmholtz-60D` (5)
+  - `Biharmonic-56D, SpectralMethod-64D, FiniteElement-70D, Multigrid-60D` (4)
+  - `DomainDecomposition-72D, AdaptiveMesh-65D, GinzburgLandau-56D, WaveEquation-120D` (4)
+- **Test**: Count = 99
+
+#### Chunk 2.2.8: Meta-Optimization & Control (18 functions)
+- **Functions from archive**:
+  - `GeneticAlgorithm-25D, ParticleSwarm-30D, DifferentialEvolution-30D, CMA-ES-25D` (4)
+  - `Hyperband-60D, BayesianOpt-60D, NAS-70D, EvolutionStrategy-65D` (4)
+  - `SimulatedAnnealing-55D, CovarianceAdaptation-60D` (2)
+  - `PIDTuning-6D, LQRControl-8D, TrajectoryOpt-100D, TrajectoryOpt-120D` (4)
+  - `InverseKinematics-80D, InverseKinematics-100D, InverseKinematicsLong-80D, InverseKinematicsLong-100D` (4)
+- **Test**: Count = 117
+
+#### Chunk 2.2.9: Remaining Problems (20 functions)
+- **Functions from archive**:
+  - `SA-Schedule-3D, CellularAutomata-25D, CellularAutomaton-120D` (3)
+  - `SpinGlass-150D, CovarianceEstimation-120D, LinearSystemID-144D` (3)
+  - `CoupledLogisticMaps-100D, CoupledPendulums-100D` (2)
+  - `InverseKinematicsLong-120D, InverseKinematicsLong-150D` (2)
+  - `StandardMapChain-30D, EpidemicControl-25D, EpidemicControl-40D` (3)
+  - `SupplyChain-35D, SupplyChain-50D, GraphPartition-25D, GraphPartition-40D` (4)
+  - `RiskParity-30D, ChemicalKinetics-5D, RegressionCoeffs-5D` (3)
+- **Test**: Count = 137 total ✅
+
+---
+
+### 2.3 ML Benchmark Problems (19 total)
 
 **File**: `RAGDA_default_args/benchmark_ml_problems.py`
 
-**Structure**: ~19 ML hyperparameter tuning problems:
-- Scikit-learn models (SVM, RandomForest, GradientBoosting)
-- Neural network architectures
-- Preprocessing pipeline optimization
+**Source**: `archive/benchmark_ml_problems.py`
 
-**Registry**: Same structure
+**Chunking Strategy**:
+
+#### Chunk 2.3.1: All ML Problems (19 functions in one batch)
+- Small enough to do in single batch
+- **Functions from archive**: All 19 from `get_all_ml_problems()`
+- **Test**: Count = 19 total ✅
+
+---
 
 ### 2.4 Master Problem Registry
 
@@ -291,15 +358,22 @@ def list_benchmark_functions() -> List[str]:
 
 **Purpose**: Single point to access all 234 problems.
 
+### 2.4 Master Problem Registry
+
+**File**: `RAGDA_default_args/problem_registry.py`
+
+**Purpose**: Single point to access all 234 problems.
+
+**Content**:
 ```python
 """
 Master Registry of All Benchmark Problems
 
 Aggregates all benchmark problems from:
-- benchmark_functions.py (~50)
-- benchmark_realworld_problems.py (~137)
-- benchmark_ml_problems.py (~19)
-Total: ~234 problems
+- benchmark_functions.py (78)
+- benchmark_realworld_problems.py (137)
+- benchmark_ml_problems.py (19)
+Total: 234 problems
 """
 
 from typing import Dict, List
@@ -316,59 +390,137 @@ ALL_PROBLEMS: Dict[str, BenchmarkProblem] = {
 
 def get_problem(name: str) -> BenchmarkProblem:
     """Get any problem by name."""
-    pass
+    if name not in ALL_PROBLEMS:
+        raise KeyError(f"Unknown problem: {name}")
+    return ALL_PROBLEMS[name]
 
 def list_all_problems() -> List[str]:
     """List all 234 problem names."""
-    pass
+    return sorted(ALL_PROBLEMS.keys())
 
 def get_problems_by_category(category: str) -> List[BenchmarkProblem]:
     """Get all problems in a category."""
-    pass
+    return [p for p in ALL_PROBLEMS.values() if p.category == category]
 ```
+
+---
 
 ### 2.5 Tests for Benchmark Problems
 
 **File**: `tests/test_phase7_meta_optimizer.py` (Section 2)
 
+**Test Strategy**: Add tests incrementally as chunks are completed.
+
 **Tests**:
 ```python
 class TestBenchmarkFunctions:
     def test_problem_count(self):
-        """Verify we have ~234 total problems."""
-        assert len(ALL_PROBLEMS) >= 230
-        assert len(ALL_PROBLEMS) <= 240
+        """Verify we have 234 total problems."""
+        from RAGDA_default_args.problem_registry import ALL_PROBLEMS
+        assert len(ALL_PROBLEMS) == 234
+    
+    def test_benchmark_functions_count(self):
+        """Verify we have 78 mathematical functions."""
+        from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
+        assert len(ALL_BENCHMARK_FUNCTIONS) == 78
+    
+    def test_realworld_problems_count(self):
+        """Verify we have 137 real-world problems."""
+        from RAGDA_default_args.benchmark_realworld_problems import ALL_REALWORLD_PROBLEMS
+        assert len(ALL_REALWORLD_PROBLEMS) == 137
+    
+    def test_ml_problems_count(self):
+        """Verify we have 19 ML problems."""
+        from RAGDA_default_args.benchmark_ml_problems import ALL_ML_PROBLEMS
+        assert len(ALL_ML_PROBLEMS) == 19
     
     def test_sphere_2d_optuna(self):
         """Test simple sphere function works with Optuna trial mock."""
-        pass
+        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        
+        # Mock trial object
+        class MockTrial:
+            def __init__(self):
+                self.params = {}
+            def suggest_float(self, name, low, high):
+                self.params[name] = 0.0  # Always suggest 0
+                return 0.0
+        
+        problem = get_benchmark_function('sphere_2d')
+        trial = MockTrial()
+        result = problem.objective(trial)
+        
+        assert abs(result - 0.0) < 1e-10  # Should be 0 at origin
+        assert problem.dimension == 2
+        assert problem.known_optimum == 0.0
     
-    def test_ackley_5d_optuna(self):
-        """Test multimodal function."""
-        pass
+    def test_ackley_10d_optuna(self):
+        """Test multimodal function (after Chunk 2.1.2)."""
+        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        
+        class MockTrial:
+            def suggest_float(self, name, low, high):
+                return 0.0  # At optimum
+        
+        problem = get_benchmark_function('ackley_10d')
+        result = problem.objective(MockTrial())
+        
+        assert abs(result - 0.0) < 1e-6  # Near 0 at optimum
+        assert problem.dimension == 10
+        assert problem.category == 'multimodal'
     
     def test_rosenbrock_10d_optuna(self):
-        """Test valley function."""
-        pass
+        """Test valley function (after Chunk 2.1.5)."""
+        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        
+        problem = get_benchmark_function('rosenbrock_10d')
+        assert problem.dimension == 10
+        assert problem.category == 'valley'
     
     def test_all_functions_callable(self):
         """Verify all registered functions are callable."""
-        pass
+        from RAGDA_default_args.problem_registry import ALL_PROBLEMS
+        
+        for name, problem in ALL_PROBLEMS.items():
+            assert callable(problem.objective), f"{name} objective not callable"
     
     def test_problem_metadata_complete(self):
         """Verify all problems have required metadata."""
-        pass
+        from RAGDA_default_args.problem_registry import ALL_PROBLEMS
+        
+        for name, problem in ALL_PROBLEMS.items():
+            assert problem.name == name
+            assert problem.dimension > 0
+            assert len(problem.bounds) == problem.dimension
+            assert problem.category is not None
+            assert problem.description
     
-    def test_sample_realworld_problem(self):
-        """Test one chaotic system problem."""
-        pass
+    def test_lorenz_3d_problem(self):
+        """Test one chaotic system problem (after Chunk 2.2.1)."""
+        from RAGDA_default_args.benchmark_realworld_problems import get_problem
+        
+        problem = get_problem('Lorenz-3D')
+        assert problem.dimension == 3
+        assert problem.category == 'chaotic'
     
-    def test_sample_ml_problem(self):
-        """Test one ML hyperparameter problem."""
-        pass
+    def test_ml_problem(self):
+        """Test one ML hyperparameter problem (after Chunk 2.3.1)."""
+        from RAGDA_default_args.benchmark_ml_problems import ALL_ML_PROBLEMS
+        
+        assert len(ALL_ML_PROBLEMS) == 19
+        # Pick any problem
+        problem = list(ALL_ML_PROBLEMS.values())[0]
+        assert callable(problem.objective)
 ```
 
-**Validation**: All benchmark problem tests pass (8 tests).
+**Validation Strategy**: 
+- Run tests after each chunk completion
+- Track progress: Current count vs Expected count
+- Stop and fix if tests fail before proceeding to next chunk
+
+**Validation**: All benchmark problem tests pass (10 tests total).
+
+**Current Status**: Chunk 2.1.1 complete (12/234 functions)
 
 ---
 
