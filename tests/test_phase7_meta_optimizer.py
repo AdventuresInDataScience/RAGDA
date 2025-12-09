@@ -197,10 +197,10 @@ class TestBenchmarkFunctions:
     """Tests for benchmark functions (Optuna API)."""
     
     def test_benchmark_functions_count(self):
-        """Verify current chunk progress (after Chunk 2.1.4: 52 functions)."""
+        """Verify current chunk progress (after Chunk 2.1.6: 78 functions)."""
         from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
-        assert len(ALL_BENCHMARK_FUNCTIONS) == 52, \
-            f"Expected 52 functions after Chunk 2.1.4, got {len(ALL_BENCHMARK_FUNCTIONS)}"
+        assert len(ALL_BENCHMARK_FUNCTIONS) == 78, \
+            f"Expected 78 functions after Chunk 2.1.6, got {len(ALL_BENCHMARK_FUNCTIONS)}"
     
     def test_unimodal_count(self):
         """Verify we have 12 unimodal functions."""
@@ -209,10 +209,10 @@ class TestBenchmarkFunctions:
         assert len(unimodal) == 12
     
     def test_multimodal_count(self):
-        """Verify we have 40 multimodal functions (after Chunk 2.1.4)."""
+        """Verify we have 39 multimodal functions (archive-verified: 5 each of ackley/rastrigin/schwefel/griewank/levy, 6 styblinski_tang, 8 special/fixed)."""
         from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
         multimodal = [p for p in ALL_BENCHMARK_FUNCTIONS.values() if p.category == 'multimodal']
-        assert len(multimodal) == 40
+        assert len(multimodal) == 39
     
     def test_sphere_2d_optuna(self):
         """Test simple sphere function works with Optuna trial mock."""
@@ -287,9 +287,9 @@ class TestBenchmarkFunctions:
     # =========================================================================
     
     def test_special_2d_count(self):
-        """Verify we have 52 total functions after Chunk 2.1.4."""
+        """After all chunks through 2.1.6, should have 78 functions."""
         from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
-        assert len(ALL_BENCHMARK_FUNCTIONS) == 52
+        assert len(ALL_BENCHMARK_FUNCTIONS) == 78
     
     def test_eggholder_2d_optuna(self):
         """Test eggholder function with Optuna interface."""
@@ -321,9 +321,9 @@ class TestBenchmarkFunctions:
     
     # Chunk 2.1.4: Fixed Dimension Functions
     def test_fixed_dim_count(self):
-        """After Chunk 2.1.4, should have exactly 52 functions (50 + 2 fixed dim)."""
+        """After all chunks through 2.1.6, should have 78 functions."""
         from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
-        assert len(ALL_BENCHMARK_FUNCTIONS) == 52
+        assert len(ALL_BENCHMARK_FUNCTIONS) == 78
     
     def test_shekel_4d_fixed(self):
         """Test Shekel is exactly 4D with correct bounds."""
@@ -344,6 +344,149 @@ class TestBenchmarkFunctions:
         assert problem.category == 'multimodal'
         assert all(b == (0, 1) for b in problem.bounds)
         assert problem.known_optimum is not None
+    
+    # =========================================================================
+    # Chunk 2.1.5: Valley Functions
+    # =========================================================================
+    
+    def test_valley_count(self):
+        """Verify we have 78 total functions after all chunks through 2.1.6."""
+        from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
+        assert len(ALL_BENCHMARK_FUNCTIONS) == 78, \
+            f"Expected 78 functions after Chunk 2.1.6, got {len(ALL_BENCHMARK_FUNCTIONS)}"
+    
+    def test_valley_category_count(self):
+        """Verify we have 19 valley functions (includes colville_4d)."""
+        from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
+        valley = [p for p in ALL_BENCHMARK_FUNCTIONS.values() if p.category == 'valley']
+        assert len(valley) == 19, f"Expected 19 valley functions, got {len(valley)}"
+    
+    def test_rosenbrock_10d_valley(self):
+        """Test Rosenbrock 10D function."""
+        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        
+        problem = get_benchmark_function('rosenbrock_10d')
+        assert problem.dimension == 10
+        assert problem.category == 'valley'
+        assert all(b == (-5.0, 10.0) for b in problem.bounds)
+        assert problem.known_optimum == 0.0
+    
+    def test_dixon_price_50d(self):
+        """Test Dixon-Price 50D function."""
+        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        
+        problem = get_benchmark_function('dixon_price_50d')
+        assert problem.dimension == 50
+        assert problem.category == 'valley'
+        assert all(b == (-10.0, 10.0) for b in problem.bounds)
+    
+    def test_six_hump_camel_2d(self):
+        """Test Six-Hump Camel 2D function."""
+        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        
+        problem = get_benchmark_function('six_hump_camel_2d')
+        assert problem.dimension == 2
+        assert problem.category == 'valley'
+        assert problem.bounds == [(-3, 3), (-2, 2)]
+        assert abs(problem.known_optimum - (-1.0316)) < 0.01
+    
+    def test_powell_20d(self):
+        """Test Powell 20D function (multiple of 4)."""
+        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        
+        problem = get_benchmark_function('powell_20d')
+        assert problem.dimension == 20
+        assert problem.category == 'valley'
+        assert all(b == (-4.0, 5.0) for b in problem.bounds)
+        assert problem.known_optimum == 0.0
+    
+    # =========================================================================
+    # Chunk 2.1.6: Plate Functions (8 functions)
+    # =========================================================================
+    
+    def test_plate_count(self):
+        """Verify we have 78 total functions after Chunk 2.1.6 (70 + 7 plate + 1 colville moved to valley)."""
+        from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
+        assert len(ALL_BENCHMARK_FUNCTIONS) == 78, \
+            f"Expected 78 functions after Chunk 2.1.6, got {len(ALL_BENCHMARK_FUNCTIONS)}"
+    
+    def test_plate_category_count(self):
+        """Verify we have 7 plate functions."""
+        from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
+        plate = [p for p in ALL_BENCHMARK_FUNCTIONS.values() if p.category == 'plate']
+        assert len(plate) == 7, f"Expected 7 plate functions, got {len(plate)}"
+    
+    def test_zakharov_20d_plate(self):
+        """Test Zakharov 20D function."""
+        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        
+        problem = get_benchmark_function('zakharov_20d')
+        assert problem.dimension == 20
+        assert problem.category == 'plate'
+        assert all(b == (-5.0, 10.0) for b in problem.bounds)
+        assert problem.known_optimum == 0.0
+    
+    def test_booth_2d_plate(self):
+        """Test Booth 2D function."""
+        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        
+        problem = get_benchmark_function('booth_2d')
+        assert problem.dimension == 2
+        assert problem.category == 'plate'
+        assert all(b == (-10.0, 10.0) for b in problem.bounds)
+        assert problem.known_optimum == 0.0
+    
+    def test_colville_4d_valley(self):
+        """Test Colville 4D function (valley category per archive)."""
+        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        
+        problem = get_benchmark_function('colville_4d')
+        assert problem.dimension == 4
+        assert problem.category == 'valley'
+        assert all(b == (-10.0, 10.0) for b in problem.bounds)
+        assert problem.known_optimum == 0.0
+    
+    # =========================================================================
+    # Chunk 2.1.7: Steep Functions (1 function) - COMPLETES MATHEMATICAL FUNCTIONS
+    # =========================================================================
+    
+    def test_steep_count(self):
+        """Verify we have 78 total functions after corrections (Chunk 2.1.7: +easom, -ackley_100d, colville→valley)."""
+        from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
+        assert len(ALL_BENCHMARK_FUNCTIONS) == 78, \
+            f"Expected 78 functions after Chunk 2.1.7, got {len(ALL_BENCHMARK_FUNCTIONS)}"
+    
+    def test_steep_category_count(self):
+        """Verify we have 1 steep function."""
+        from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
+        steep = [p for p in ALL_BENCHMARK_FUNCTIONS.values() if p.category == 'steep']
+        assert len(steep) == 1, f"Expected 1 steep function, got {len(steep)}"
+    
+    def test_easom_2d_steep(self):
+        """Test Easom 2D function."""
+        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        
+        problem = get_benchmark_function('easom_2d')
+        assert problem.dimension == 2
+        assert problem.category == 'steep'
+        assert all(b == (-100.0, 100.0) for b in problem.bounds)
+        assert problem.known_optimum == -1.0
+    
+    def test_mathematical_functions_complete(self):
+        """Verify all 78 mathematical functions match archive counts exactly."""
+        from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
+        
+        cats = {}
+        for p in ALL_BENCHMARK_FUNCTIONS.values():
+            cats[p.category] = cats.get(p.category, 0) + 1
+        
+        # Archive counts (verified):
+        assert cats['unimodal'] == 12
+        assert cats['multimodal'] == 39
+        assert cats['valley'] == 19
+        assert cats['plate'] == 7
+        assert cats['steep'] == 1
+        assert len(ALL_BENCHMARK_FUNCTIONS) == 78
 
 
 # =============================================================================

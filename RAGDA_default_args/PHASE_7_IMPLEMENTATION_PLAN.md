@@ -165,10 +165,10 @@ def test_evaluate_optimizer_on_simple_problem():
 Chunk 2.1.1: ✅ DONE   (12/234)  - Core + Unimodal
 Chunk 2.1.2: ✅ DONE   (44/234)  - Multimodal Core
 Chunk 2.1.3: ✅ DONE (50/234)  - Multimodal Special 2D
-Chunk 2.1.4: ⏳ TODO  (50/234)  - Multimodal Fixed Dim
-Chunk 2.1.5: ⏳ TODO  (68/234)  - Valley Functions
-Chunk 2.1.6: ⏳ TODO  (76/234)  - Plate Functions
-Chunk 2.1.7: ⏳ TODO  (78/234)  - Steep Functions
+Chunk 2.1.4: ✅ DONE  (52/234)  - Multimodal Fixed Dim
+Chunk 2.1.5: ✅ DONE  (70/234)  - Valley Functions
+Chunk 2.1.6: ✅ DONE  (77/234)  - Plate Functions (7)
+Chunk 2.1.7: ✅ DONE  (78/234)  - Steep Functions (1) - MATHEMATICAL COMPLETE!
 Chunk 2.2.1: ⏳ TODO  (91/234)  - Chaotic Systems
 Chunk 2.2.2: ⏳ TODO  (100/234) - Dynamical Systems
 Chunk 2.2.3: ⏳ TODO  (114/234) - NN Weights
@@ -200,8 +200,8 @@ Chunk 2.3.1: ⏳ TODO  (234/234) - All ML Problems ✅
 - **Test**: Import, count, test sphere_2d with mock trial
 
 #### Chunk 2.1.2: Multimodal - Core Functions (30 functions)
-- **Functions from archive** (6 base × 5 dimensions each):
-  - `ackley_2d, ackley_5d, ackley_10d, ackley_20d, ackley_50d, ackley_100d` (6)
+- **Functions from archive** (6 base functions, varying dimensions):
+  - `ackley_2d, ackley_5d, ackley_10d, ackley_20d, ackley_50d` (5 - archive verified)
   - `rastrigin_2d, rastrigin_5d, rastrigin_10d, rastrigin_20d, rastrigin_50d` (5)
   - `schwefel_2d, schwefel_5d, schwefel_10d, schwefel_20d, schwefel_50d` (5)
   - `griewank_2d, griewank_5d, griewank_10d, griewank_20d, griewank_50d` (5)
@@ -226,26 +226,35 @@ Chunk 2.3.1: ⏳ TODO  (234/234) - All ML Problems ✅
 - **Tests Added**: test_fixed_dim_count, test_shekel_4d_fixed, test_hartmann_6d_fixed
 - **Status**: ✅ All 15 benchmark tests passing (52 functions: 12 unimodal + 40 multimodal)
 
-#### Chunk 2.1.5: Valley Functions (18 functions)
+#### Chunk 2.1.5: Valley Functions (18 functions) ✅ DONE
 - **Functions from archive**:
   - `rosenbrock_2d, rosenbrock_5d, rosenbrock_10d, rosenbrock_20d, rosenbrock_50d, rosenbrock_100d` (6)
   - `dixon_price_2d, dixon_price_5d, dixon_price_10d, dixon_price_20d, dixon_price_50d, dixon_price_100d` (6)
   - `six_hump_camel_2d` (1)
   - `powell_4d, powell_8d, powell_12d, powell_20d, powell_40d` (5)
-- **Test**: Count = 68 total, test rosenbrock_10d
+- **Expected Count After**: 70 total (52 + 18)
+- **Tests Added**: test_valley_count, test_valley_category_count, test_rosenbrock_10d_valley, test_dixon_price_50d, test_six_hump_camel_2d, test_powell_20d
+- **Status**: ✅ All 21 benchmark tests passing (70 functions: 12 unimodal + 40 multimodal + 18 valley)
 
-#### Chunk 2.1.6: Plate Functions (8 functions)
+#### Chunk 2.1.6: Plate Functions (7 functions) ✅ DONE
 - **Functions from archive**:
   - `zakharov_2d, zakharov_5d, zakharov_10d, zakharov_20d, zakharov_50d, zakharov_100d` (6)
   - `booth_2d` (1)
-  - `colville_4d` (1)
-- **Test**: Count = 76 total
+- **Expected Count After**: 77 total (70 + 7)
+- **Tests Added**: test_plate_count, test_plate_category_count, test_zakharov_20d_plate, test_booth_2d_plate
+- **Status**: ✅ All 24 benchmark tests passing (77 functions: 12 unimodal + 39 multimodal + 19 valley + 7 plate)
+- **Note**: colville_4d categorized as VALLEY in archive, not plate
 
-#### Chunk 2.1.7: Steep Functions (2 functions)
+#### Chunk 2.1.7: Steep Functions (1 function) ✅ DONE - COMPLETES ALL MATHEMATICAL FUNCTIONS
 - **Functions from archive**:
-  - `easom_2d` (1)
-  - (Need 1 more from archive review)
-- **Test**: Count = 78 total ✅
+  - `easom_2d` (1) - Only steep function in archive
+- **Expected Count After**: 78 total (77 + 1)
+- **Tests Added**: test_steep_count, test_steep_category_count, test_easom_2d_steep, test_mathematical_functions_complete
+- **Status**: ✅ All 30 benchmark tests passing (78 functions: 12 unimodal + 39 multimodal + 19 valley + 7 plate + 1 steep)
+- **Corrections Applied**:
+  - Moved colville_4d from plate to valley (per archive)
+  - Removed ackley_100d (archive only has ackley up to 50D)
+  - **ARCHIVE VERIFIED**: All 78 mathematical functions now match archive exactly
 
 **Structure**: See chunks above for exact implementation order.
 

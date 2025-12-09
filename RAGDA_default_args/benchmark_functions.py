@@ -128,8 +128,8 @@ for dim in [2, 5, 10, 20, 50, 100]:
 # Register MULTIMODAL CORE functions
 _MULTIMODAL_REGISTRY = {}
 
-# Ackley variants (2D, 5D, 10D, 20D, 50D, 100D)
-for dim in [2, 5, 10, 20, 50, 100]:
+# Ackley variants (2D, 5D, 10D, 20D, 50D)
+for dim in [2, 5, 10, 20, 50]:
     bounds = [(-32.768, 32.768)] * dim
     _MULTIMODAL_REGISTRY[f'ackley_{dim}d'] = BenchmarkProblem(
         name=f'ackley_{dim}d',
@@ -383,7 +383,219 @@ _FIXED_DIM_REGISTRY['hartmann_6d'] = BenchmarkProblem(
 
 
 # =============================================================================
-# MASTER REGISTRY (Batches 1-4: Unimodal + Multimodal Core + Special 2D + Fixed Dimension)
+# BATCH 5: VALLEY FUNCTIONS (18 functions - Chunk 2.1.5)
+# =============================================================================
+# Valley/banana-shaped functions with narrow, curved valleys leading to minimum
+
+def _rosenbrock(x: np.ndarray) -> float:
+    """Rosenbrock function. Global min: f(1,...,1) = 0"""
+    return np.sum(100 * (x[1:] - x[:-1]**2)**2 + (1 - x[:-1])**2)
+
+def _dixon_price(x: np.ndarray) -> float:
+    """Dixon-Price function. Optimum depends on dimension."""
+    d = len(x)
+    term1 = (x[0] - 1)**2
+    i = np.arange(2, d + 1)
+    term2 = np.sum(i * (2*x[1:]**2 - x[:-1])**2)
+    return term1 + term2
+
+def _six_hump_camel(x: np.ndarray) -> float:
+    """Six-Hump Camel function (2D only). Global min: f* ≈ -1.0316"""
+    return (4 - 2.1*x[0]**2 + x[0]**4/3) * x[0]**2 + x[0]*x[1] + (-4 + 4*x[1]**2) * x[1]**2
+
+def _powell(x: np.ndarray) -> float:
+    """Powell function. f(0,...,0) = 0. Dimension must be multiple of 4."""
+    d = len(x)
+    result = 0.0
+    for i in range(d // 4):
+        idx = 4 * i
+        result += (x[idx] + 10*x[idx+1])**2
+        result += 5 * (x[idx+2] - x[idx+3])**2
+        result += (x[idx+1] - 2*x[idx+2])**4
+        result += 10 * (x[idx] - x[idx+3])**4
+    return result
+
+def _colville(x: np.ndarray) -> float:
+    """Colville: 4D, f(1,1,1,1) = 0. Valley-shaped."""
+    return (100*(x[0]**2 - x[1])**2 + (x[0] - 1)**2 + (x[2] - 1)**2 + 
+            90*(x[2]**2 - x[3])**2 + 10.1*((x[1] - 1)**2 + (x[3] - 1)**2) + 
+            19.8*(x[1] - 1)*(x[3] - 1))
+
+_VALLEY_REGISTRY: Dict[str, BenchmarkProblem] = {}
+
+# Rosenbrock variants (6 dimensions)
+for dim in [2, 5, 10, 20, 50, 100]:
+    bounds = [(-5.0, 10.0)] * dim
+    _VALLEY_REGISTRY[f'rosenbrock_{dim}d'] = BenchmarkProblem(
+        name=f'rosenbrock_{dim}d',
+        objective=_make_optuna_objective(_rosenbrock, bounds, dim),
+        dimension=dim,
+        bounds=bounds,
+        known_optimum=0.0,
+        category='valley',
+        description=f'Rosenbrock function in {dim}D - narrow curved valley to minimum at (1,...,1)'
+    )
+
+# Dixon-Price variants (6 dimensions)
+for dim in [2, 5, 10, 20, 50, 100]:
+    bounds = [(-10.0, 10.0)] * dim
+    _VALLEY_REGISTRY[f'dixon_price_{dim}d'] = BenchmarkProblem(
+        name=f'dixon_price_{dim}d',
+        objective=_make_optuna_objective(_dixon_price, bounds, dim),
+        dimension=dim,
+        bounds=bounds,
+        known_optimum=0.0,
+        category='valley',
+        description=f'Dixon-Price function in {dim}D - steep valley structure'
+    )
+
+# Six-Hump Camel (2D only)
+_VALLEY_REGISTRY['six_hump_camel_2d'] = BenchmarkProblem(
+    name='six_hump_camel_2d',
+    objective=_make_optuna_objective(_six_hump_camel, [(-3, 3), (-2, 2)], 2),
+    dimension=2,
+    bounds=[(-3, 3), (-2, 2)],
+    known_optimum=-1.0316,
+    category='valley',
+    description='Six-Hump Camel function - 2D with six local minima and two global minima'
+)
+
+# Powell variants (dimensions must be multiples of 4)
+for dim in [4, 8, 12, 20, 40]:
+    bounds = [(-4.0, 5.0)] * dim
+    _VALLEY_REGISTRY[f'powell_{dim}d'] = BenchmarkProblem(
+        name=f'powell_{dim}d',
+        objective=_make_optuna_objective(_powell, bounds, dim),
+        dimension=dim,
+        bounds=bounds,
+        known_optimum=0.0,
+        category='valley',
+        description=f'Powell function in {dim}D - quartic valley, must be multiple of 4D'
+    )
+
+# Colville (4D only)
+_VALLEY_REGISTRY['colville_4d'] = BenchmarkProblem(
+    name='colville_4d',
+    objective=_make_optuna_objective(_colville, [(-10.0, 10.0)] * 4, 4),
+    dimension=4,
+    bounds=[(-10.0, 10.0)] * 4,
+    known_optimum=0.0,
+    category='valley',
+    description='Colville 4D: Complex valley function, f(1,1,1,1) = 0'
+)
+
+
+# =============================================================================
+# BATCH 6: PLATE FUNCTIONS (Plate-shaped landscapes - 7 functions)
+# =============================================================================
+
+def _zakharov(x: np.ndarray) -> float:
+    """Zakharov: f(0,...,0) = 0. Plate-shaped."""
+    d = len(x)
+    i = np.arange(1, d + 1)
+    sum1 = np.sum(x**2)
+    sum2 = np.sum(0.5 * i * x)
+    return sum1 + sum2**2 + sum2**4
+
+
+def _booth(x: np.ndarray) -> float:
+    """Booth: 2D, f(1,3) = 0. Plate-shaped."""
+    return (x[0] + 2*x[1] - 7)**2 + (2*x[0] + x[1] - 5)**2
+
+
+# Zakharov variants (6 dimensions)
+_PLATE_REGISTRY = {
+    'zakharov_2d': BenchmarkProblem(
+        name='zakharov_2d',
+        objective=_make_optuna_objective(_zakharov, [(-5.0, 10.0)] * 2, 2),
+        dimension=2,
+        bounds=[(-5.0, 10.0)] * 2,
+        known_optimum=0.0,
+        category='plate',
+        description='Zakharov 2D: Plate-shaped landscape'
+    ),
+    'zakharov_5d': BenchmarkProblem(
+        name='zakharov_5d',
+        objective=_make_optuna_objective(_zakharov, [(-5.0, 10.0)] * 5, 5),
+        dimension=5,
+        bounds=[(-5.0, 10.0)] * 5,
+        known_optimum=0.0,
+        category='plate',
+        description='Zakharov 5D: Plate-shaped landscape'
+    ),
+    'zakharov_10d': BenchmarkProblem(
+        name='zakharov_10d',
+        objective=_make_optuna_objective(_zakharov, [(-5.0, 10.0)] * 10, 10),
+        dimension=10,
+        bounds=[(-5.0, 10.0)] * 10,
+        known_optimum=0.0,
+        category='plate',
+        description='Zakharov 10D: Plate-shaped landscape'
+    ),
+    'zakharov_20d': BenchmarkProblem(
+        name='zakharov_20d',
+        objective=_make_optuna_objective(_zakharov, [(-5.0, 10.0)] * 20, 20),
+        dimension=20,
+        bounds=[(-5.0, 10.0)] * 20,
+        known_optimum=0.0,
+        category='plate',
+        description='Zakharov 20D: Plate-shaped landscape'
+    ),
+    'zakharov_50d': BenchmarkProblem(
+        name='zakharov_50d',
+        objective=_make_optuna_objective(_zakharov, [(-5.0, 10.0)] * 50, 50),
+        dimension=50,
+        bounds=[(-5.0, 10.0)] * 50,
+        known_optimum=0.0,
+        category='plate',
+        description='Zakharov 50D: Plate-shaped landscape'
+    ),
+    'zakharov_100d': BenchmarkProblem(
+        name='zakharov_100d',
+        objective=_make_optuna_objective(_zakharov, [(-5.0, 10.0)] * 100, 100),
+        dimension=100,
+        bounds=[(-5.0, 10.0)] * 100,
+        known_optimum=0.0,
+        category='plate',
+        description='Zakharov 100D: Plate-shaped landscape'
+    ),
+    # Booth (2D only)
+    'booth_2d': BenchmarkProblem(
+        name='booth_2d',
+        objective=_make_optuna_objective(_booth, [(-10.0, 10.0)] * 2, 2),
+        dimension=2,
+        bounds=[(-10.0, 10.0)] * 2,
+        known_optimum=0.0,
+        category='plate',
+        description='Booth 2D: Plate-shaped, f(1,3) = 0'
+    ),
+}
+
+
+# =============================================================================
+# BATCH 7: STEEP FUNCTIONS (Steep drops/ridges - 1 function)
+# =============================================================================
+
+def _easom(x: np.ndarray) -> float:
+    """Easom: 2D, f(π,π) = -1. Flat with steep drop at optimum."""
+    return -np.cos(x[0]) * np.cos(x[1]) * np.exp(-((x[0]-np.pi)**2 + (x[1]-np.pi)**2))
+
+# Easom (2D only)
+_STEEP_REGISTRY = {
+    'easom_2d': BenchmarkProblem(
+        name='easom_2d',
+        objective=_make_optuna_objective(_easom, [(-100.0, 100.0)] * 2, 2),
+        dimension=2,
+        bounds=[(-100.0, 100.0)] * 2,
+        known_optimum=-1.0,
+        category='steep',
+        description='Easom 2D: Nearly flat landscape with steep drop at (π,π), f(π,π) = -1'
+    ),
+}
+
+
+# =============================================================================
+# MASTER REGISTRY (Batches 1-7: Unimodal + Multimodal + Special 2D + Fixed Dim + Valley + Plate + Steep)
 # =============================================================================
 
 ALL_BENCHMARK_FUNCTIONS: Dict[str, BenchmarkProblem] = {
@@ -391,6 +603,9 @@ ALL_BENCHMARK_FUNCTIONS: Dict[str, BenchmarkProblem] = {
     **_MULTIMODAL_REGISTRY,
     **_SPECIAL_2D_REGISTRY,
     **_FIXED_DIM_REGISTRY,
+    **_VALLEY_REGISTRY,
+    **_PLATE_REGISTRY,
+    **_STEEP_REGISTRY,
 }
 
 
