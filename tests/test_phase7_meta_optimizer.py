@@ -198,25 +198,25 @@ class TestBenchmarkFunctions:
     
     def test_benchmark_functions_count(self):
         """Verify current chunk progress (after Chunk 2.1.6: 78 functions)."""
-        from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
+        from RAGDA_default_args.benchmark_mathematical_problems import ALL_BENCHMARK_FUNCTIONS
         assert len(ALL_BENCHMARK_FUNCTIONS) == 78, \
             f"Expected 78 functions after Chunk 2.1.6, got {len(ALL_BENCHMARK_FUNCTIONS)}"
     
     def test_unimodal_count(self):
         """Verify we have 12 unimodal functions."""
-        from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
+        from RAGDA_default_args.benchmark_mathematical_problems import ALL_BENCHMARK_FUNCTIONS
         unimodal = [p for p in ALL_BENCHMARK_FUNCTIONS.values() if p.category == 'unimodal']
         assert len(unimodal) == 12
     
     def test_multimodal_count(self):
         """Verify we have 39 multimodal functions (archive-verified: 5 each of ackley/rastrigin/schwefel/griewank/levy, 6 styblinski_tang, 8 special/fixed)."""
-        from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
+        from RAGDA_default_args.benchmark_mathematical_problems import ALL_BENCHMARK_FUNCTIONS
         multimodal = [p for p in ALL_BENCHMARK_FUNCTIONS.values() if p.category == 'multimodal']
         assert len(multimodal) == 39
     
     def test_sphere_2d_optuna(self):
-        """Test simple sphere function works with Optuna trial mock."""
-        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        """Test simple sphere function with Optuna trial mock."""
+        from RAGDA_default_args.benchmark_mathematical_problems import get_benchmark_function
         
         class MockTrial:
             def suggest_float(self, name, low, high):
@@ -232,7 +232,7 @@ class TestBenchmarkFunctions:
     
     def test_ackley_10d_optuna(self):
         """Test multimodal ackley function (Chunk 2.1.2)."""
-        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        from RAGDA_default_args.benchmark_mathematical_problems import get_benchmark_function
         
         class MockTrial:
             def suggest_float(self, name, low, high):
@@ -248,7 +248,7 @@ class TestBenchmarkFunctions:
     
     def test_rastrigin_5d_optuna(self):
         """Test rastrigin function (Chunk 2.1.2)."""
-        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        from RAGDA_default_args.benchmark_mathematical_problems import get_benchmark_function
         
         problem = get_benchmark_function('rastrigin_5d')
         assert problem.dimension == 5
@@ -257,7 +257,7 @@ class TestBenchmarkFunctions:
     
     def test_styblinski_tang_20d(self):
         """Test styblinski-tang function (Chunk 2.1.2)."""
-        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        from RAGDA_default_args.benchmark_mathematical_problems import get_benchmark_function
         
         problem = get_benchmark_function('styblinski_tang_20d')
         assert problem.dimension == 20
@@ -266,14 +266,14 @@ class TestBenchmarkFunctions:
     
     def test_all_functions_callable(self):
         """Verify all registered functions are callable."""
-        from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
+        from RAGDA_default_args.benchmark_mathematical_problems import ALL_BENCHMARK_FUNCTIONS
         
         for name, problem in ALL_BENCHMARK_FUNCTIONS.items():
             assert callable(problem.objective), f"{name} objective not callable"
     
     def test_problem_metadata_complete(self):
         """Verify all problems have required metadata."""
-        from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
+        from RAGDA_default_args.benchmark_mathematical_problems import ALL_BENCHMARK_FUNCTIONS
         
         for name, problem in ALL_BENCHMARK_FUNCTIONS.items():
             assert problem.name == name
@@ -288,12 +288,12 @@ class TestBenchmarkFunctions:
     
     def test_special_2d_count(self):
         """After all chunks through 2.1.6, should have 78 functions."""
-        from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
+        from RAGDA_default_args.benchmark_mathematical_problems import ALL_BENCHMARK_FUNCTIONS
         assert len(ALL_BENCHMARK_FUNCTIONS) == 78
     
     def test_eggholder_2d_optuna(self):
         """Test eggholder function with Optuna interface."""
-        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        from RAGDA_default_args.benchmark_mathematical_problems import get_benchmark_function
         
         class MockTrial:
             def suggest_float(self, name, low, high):
@@ -312,7 +312,7 @@ class TestBenchmarkFunctions:
     
     def test_hartmann_3d_dimension(self):
         """Test hartmann_3d has correct dimension."""
-        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        from RAGDA_default_args.benchmark_mathematical_problems import get_benchmark_function
         
         problem = get_benchmark_function('hartmann_3d')
         assert problem.dimension == 3
@@ -322,12 +322,12 @@ class TestBenchmarkFunctions:
     # Chunk 2.1.4: Fixed Dimension Functions
     def test_fixed_dim_count(self):
         """After all chunks through 2.1.6, should have 78 functions."""
-        from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
+        from RAGDA_default_args.benchmark_mathematical_problems import ALL_BENCHMARK_FUNCTIONS
         assert len(ALL_BENCHMARK_FUNCTIONS) == 78
     
     def test_shekel_4d_fixed(self):
         """Test Shekel is exactly 4D with correct bounds."""
-        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        from RAGDA_default_args.benchmark_mathematical_problems import get_benchmark_function
         
         problem = get_benchmark_function('shekel_4d')
         assert problem.dimension == 4
@@ -337,7 +337,7 @@ class TestBenchmarkFunctions:
     
     def test_hartmann_6d_fixed(self):
         """Test Hartmann 6D is exactly 6D with (0,1) bounds."""
-        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        from RAGDA_default_args.benchmark_mathematical_problems import get_benchmark_function
         
         problem = get_benchmark_function('hartmann_6d')
         assert problem.dimension == 6
@@ -351,19 +351,19 @@ class TestBenchmarkFunctions:
     
     def test_valley_count(self):
         """Verify we have 78 total functions after all chunks through 2.1.6."""
-        from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
+        from RAGDA_default_args.benchmark_mathematical_problems import ALL_BENCHMARK_FUNCTIONS
         assert len(ALL_BENCHMARK_FUNCTIONS) == 78, \
             f"Expected 78 functions after Chunk 2.1.6, got {len(ALL_BENCHMARK_FUNCTIONS)}"
     
     def test_valley_category_count(self):
         """Verify we have 19 valley functions (includes colville_4d)."""
-        from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
+        from RAGDA_default_args.benchmark_mathematical_problems import ALL_BENCHMARK_FUNCTIONS
         valley = [p for p in ALL_BENCHMARK_FUNCTIONS.values() if p.category == 'valley']
         assert len(valley) == 19, f"Expected 19 valley functions, got {len(valley)}"
     
     def test_rosenbrock_10d_valley(self):
         """Test Rosenbrock 10D function."""
-        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        from RAGDA_default_args.benchmark_mathematical_problems import get_benchmark_function
         
         problem = get_benchmark_function('rosenbrock_10d')
         assert problem.dimension == 10
@@ -373,7 +373,7 @@ class TestBenchmarkFunctions:
     
     def test_dixon_price_50d(self):
         """Test Dixon-Price 50D function."""
-        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        from RAGDA_default_args.benchmark_mathematical_problems import get_benchmark_function
         
         problem = get_benchmark_function('dixon_price_50d')
         assert problem.dimension == 50
@@ -382,7 +382,7 @@ class TestBenchmarkFunctions:
     
     def test_six_hump_camel_2d(self):
         """Test Six-Hump Camel 2D function."""
-        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        from RAGDA_default_args.benchmark_mathematical_problems import get_benchmark_function
         
         problem = get_benchmark_function('six_hump_camel_2d')
         assert problem.dimension == 2
@@ -392,7 +392,7 @@ class TestBenchmarkFunctions:
     
     def test_powell_20d(self):
         """Test Powell 20D function (multiple of 4)."""
-        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        from RAGDA_default_args.benchmark_mathematical_problems import get_benchmark_function
         
         problem = get_benchmark_function('powell_20d')
         assert problem.dimension == 20
@@ -406,19 +406,19 @@ class TestBenchmarkFunctions:
     
     def test_plate_count(self):
         """Verify we have 78 total functions after Chunk 2.1.6 (70 + 7 plate + 1 colville moved to valley)."""
-        from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
+        from RAGDA_default_args.benchmark_mathematical_problems import ALL_BENCHMARK_FUNCTIONS
         assert len(ALL_BENCHMARK_FUNCTIONS) == 78, \
             f"Expected 78 functions after Chunk 2.1.6, got {len(ALL_BENCHMARK_FUNCTIONS)}"
     
     def test_plate_category_count(self):
         """Verify we have 7 plate functions."""
-        from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
+        from RAGDA_default_args.benchmark_mathematical_problems import ALL_BENCHMARK_FUNCTIONS
         plate = [p for p in ALL_BENCHMARK_FUNCTIONS.values() if p.category == 'plate']
         assert len(plate) == 7, f"Expected 7 plate functions, got {len(plate)}"
     
     def test_zakharov_20d_plate(self):
-        """Test Zakharov 20D function."""
-        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        """Test zakharov 20D plate function."""
+        from RAGDA_default_args.benchmark_mathematical_problems import get_benchmark_function
         
         problem = get_benchmark_function('zakharov_20d')
         assert problem.dimension == 20
@@ -428,7 +428,7 @@ class TestBenchmarkFunctions:
     
     def test_booth_2d_plate(self):
         """Test Booth 2D function."""
-        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        from RAGDA_default_args.benchmark_mathematical_problems import get_benchmark_function
         
         problem = get_benchmark_function('booth_2d')
         assert problem.dimension == 2
@@ -438,7 +438,7 @@ class TestBenchmarkFunctions:
     
     def test_colville_4d_valley(self):
         """Test Colville 4D function (valley category per archive)."""
-        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        from RAGDA_default_args.benchmark_mathematical_problems import get_benchmark_function
         
         problem = get_benchmark_function('colville_4d')
         assert problem.dimension == 4
@@ -452,19 +452,19 @@ class TestBenchmarkFunctions:
     
     def test_steep_count(self):
         """Verify we have 78 total functions after corrections (Chunk 2.1.7: +easom, -ackley_100d, colville→valley)."""
-        from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
+        from RAGDA_default_args.benchmark_mathematical_problems import ALL_BENCHMARK_FUNCTIONS
         assert len(ALL_BENCHMARK_FUNCTIONS) == 78, \
             f"Expected 78 functions after Chunk 2.1.7, got {len(ALL_BENCHMARK_FUNCTIONS)}"
     
     def test_steep_category_count(self):
         """Verify we have 1 steep function."""
-        from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
+        from RAGDA_default_args.benchmark_mathematical_problems import ALL_BENCHMARK_FUNCTIONS
         steep = [p for p in ALL_BENCHMARK_FUNCTIONS.values() if p.category == 'steep']
         assert len(steep) == 1, f"Expected 1 steep function, got {len(steep)}"
     
     def test_easom_2d_steep(self):
         """Test Easom 2D function."""
-        from RAGDA_default_args.benchmark_functions import get_benchmark_function
+        from RAGDA_default_args.benchmark_mathematical_problems import get_benchmark_function
         
         problem = get_benchmark_function('easom_2d')
         assert problem.dimension == 2
@@ -474,7 +474,7 @@ class TestBenchmarkFunctions:
     
     def test_mathematical_functions_complete(self):
         """Verify all 78 mathematical functions match archive counts exactly."""
-        from RAGDA_default_args.benchmark_functions import ALL_BENCHMARK_FUNCTIONS
+        from RAGDA_default_args.benchmark_mathematical_problems import ALL_BENCHMARK_FUNCTIONS
         
         cats = {}
         for p in ALL_BENCHMARK_FUNCTIONS.values():
@@ -487,6 +487,344 @@ class TestBenchmarkFunctions:
         assert cats['plate'] == 7
         assert cats['steep'] == 1
         assert len(ALL_BENCHMARK_FUNCTIONS) == 78
+
+
+# =============================================================================
+# Chunk 2.2.1: Chaotic Systems Tests (16 functions)
+# =============================================================================
+
+class TestChaoticSystems:
+    """Tests for chaotic system problems (Chunk 2.2.1)."""
+    
+    def test_chaotic_count(self):
+        """Verify we added 38 real-world problems (16 chaotic + 6 dynamical + 16 nn_weights)."""
+        from RAGDA_default_args.benchmark_realworld_problems import ALL_REALWORLD_PROBLEMS
+        assert len(ALL_REALWORLD_PROBLEMS) == 38
+    
+    def test_chaotic_category_count(self):
+        """Verify all 16 are categorized as 'chaotic'."""
+        from RAGDA_default_args.benchmark_realworld_problems import ALL_REALWORLD_PROBLEMS
+        
+        chaotic = [p for p in ALL_REALWORLD_PROBLEMS.values() if p.category == 'chaotic']
+        assert len(chaotic) == 16
+    
+    def test_mackey_glass_4d(self):
+        """Test Mackey-Glass 4D problem."""
+        from RAGDA_default_args.benchmark_realworld_problems import get_problem
+        
+        class MockTrial:
+            def suggest_float(self, name, low, high):
+                # Known good parameters
+                if 'x0' in name: return 0.2  # beta
+                if 'x1' in name: return 0.1  # gamma
+                if 'x2' in name: return 10   # n
+                if 'x3' in name: return 1.0  # tau_scale
+                return (low + high) / 2
+        
+        problem = get_problem('MackeyGlass-4D')
+        result = problem.objective(MockTrial())
+        
+        assert problem.dimension == 4
+        assert problem.category == 'chaotic'
+        assert problem.known_optimum is None  # Real-world problem
+        assert isinstance(result, (int, float))
+        assert result < 1e10  # Should not hit penalty
+    
+    def test_lorenz_3d(self):
+        """Test Lorenz attractor 3D problem."""
+        from RAGDA_default_args.benchmark_realworld_problems import get_problem
+        
+        class MockTrial:
+            def suggest_float(self, name, low, high):
+                # Classic chaotic parameters
+                if 'x0' in name: return 10.0  # sigma
+                if 'x1' in name: return 28.0  # rho
+                if 'x2' in name: return 8/3   # beta
+                return (low + high) / 2
+        
+        problem = get_problem('Lorenz-3D')
+        result = problem.objective(MockTrial())
+        
+        assert problem.dimension == 3
+        assert problem.category == 'chaotic'
+        assert isinstance(result, (int, float))
+        assert result < 1e10
+    
+    def test_henon_2d(self):
+        """Test Hénon map 2D problem."""
+        from RAGDA_default_args.benchmark_realworld_problems import get_problem
+        
+        problem = get_problem('Henon-2D')
+        assert problem.dimension == 2
+        assert problem.category == 'chaotic'
+        assert problem.bounds == [(1.0, 1.5), (0.1, 0.5)]
+    
+    def test_logistic_map_1d(self):
+        """Test Logistic map 1D problem."""
+        from RAGDA_default_args.benchmark_realworld_problems import get_problem
+        
+        problem = get_problem('LogisticMap-1D')
+        assert problem.dimension == 1
+        assert problem.category == 'chaotic'
+        assert problem.bounds == [(3.5, 4.0)]
+    
+    def test_high_dimensional_chaotic(self):
+        """Test high-dimensional chaotic problems exist."""
+        from RAGDA_default_args.benchmark_realworld_problems import ALL_REALWORLD_PROBLEMS
+        
+        high_dim = [p for p in ALL_REALWORLD_PROBLEMS.values() if p.dimension >= 50]
+        assert len(high_dim) >= 3  # Lorenz96-60D, CoupledMapLattice-64D, etc.
+        
+        # Check specific high-dim problems
+        assert 'Lorenz96Extended-60D' in ALL_REALWORLD_PROBLEMS
+        assert 'CoupledMapLattice-64D' in ALL_REALWORLD_PROBLEMS
+        assert 'CoupledLogisticMaps-100D' in ALL_REALWORLD_PROBLEMS
+    
+    def test_all_chaotic_callable(self):
+        """Verify all chaotic functions are callable."""
+        from RAGDA_default_args.benchmark_realworld_problems import ALL_REALWORLD_PROBLEMS
+        
+        for name, problem in ALL_REALWORLD_PROBLEMS.items():
+            assert callable(problem.objective), f"{name} objective not callable"
+            assert problem.dimension > 0, f"{name} has invalid dimension"
+            assert len(problem.bounds) == problem.dimension, f"{name} bounds mismatch"
+
+
+# =============================================================================
+# Chunk 2.2.2: Dynamical Systems Tests (6 functions)
+# =============================================================================
+
+class TestDynamicalSystems:
+    """Tests for dynamical systems problems (Chunk 2.2.2)."""
+    
+    def test_dynamical_count(self):
+        """Verify we added 6 dynamical systems (94 + 6 = 100 total)."""
+        from RAGDA_default_args.benchmark_realworld_problems import ALL_REALWORLD_PROBLEMS
+        assert len(ALL_REALWORLD_PROBLEMS) == 38  # 16 chaotic + 6 dynamical + 16 nn_weights
+    
+    def test_dynamical_category_count(self):
+        """Verify all 6 are categorized as 'dynamical'."""
+        from RAGDA_default_args.benchmark_realworld_problems import ALL_REALWORLD_PROBLEMS
+        
+        dynamical = [p for p in ALL_REALWORLD_PROBLEMS.values() if p.category == 'dynamical']
+        assert len(dynamical) == 6
+    
+    def test_lotka_volterra_4d(self):
+        """Test Lotka-Volterra 4D problem."""
+        from RAGDA_default_args.benchmark_realworld_problems import get_problem
+        
+        class MockTrial:
+            def suggest_float(self, name, low, high):
+                # Classic parameter values
+                if 'x0' in name: return 1.5  # alpha
+                if 'x1' in name: return 1.0  # beta
+                if 'x2' in name: return 1.0  # delta
+                if 'x3' in name: return 3.0  # gamma
+                return (low + high) / 2
+        
+        problem = get_problem('LotkaVolterra-4D')
+        result = problem.objective(MockTrial())
+        
+        assert problem.dimension == 4
+        assert problem.category == 'dynamical'
+        assert problem.known_optimum is None
+        assert isinstance(result, (int, float))
+        assert result < 1e10
+    
+    def test_van_der_pol_1d(self):
+        """Test Van der Pol 1D problem."""
+        from RAGDA_default_args.benchmark_realworld_problems import get_problem
+        
+        problem = get_problem('VanDerPol-1D')
+        assert problem.dimension == 1
+        assert problem.category == 'dynamical'
+        assert problem.bounds == [(0.1, 5)]
+    
+    def test_kuramoto_20d(self):
+        """Test Kuramoto oscillators 20D problem."""
+        from RAGDA_default_args.benchmark_realworld_problems import get_problem
+        
+        problem = get_problem('KuramotoOscillators-20D')
+        assert problem.dimension == 20
+        assert problem.category == 'dynamical'
+    
+    def test_neural_field_70d(self):
+        """Test Neural Field 70D is high-dimensional."""
+        from RAGDA_default_args.benchmark_realworld_problems import get_problem
+        
+        problem = get_problem('NeuralField-70D')
+        assert problem.dimension == 70
+        assert problem.category == 'dynamical'
+    
+    def test_all_dynamical_callable(self):
+        """Verify all dynamical functions are callable."""
+        from RAGDA_default_args.benchmark_realworld_problems import get_problems_by_category
+        
+        dynamical_probs = get_problems_by_category('dynamical')
+        assert len(dynamical_probs) == 6
+        
+        for name, problem in dynamical_probs.items():
+            assert callable(problem.objective), f"{name} objective not callable"
+            assert problem.dimension > 0, f"{name} has invalid dimension"
+            assert len(problem.bounds) == problem.dimension, f"{name} bounds mismatch"
+
+
+# =============================================================================
+# Chunk 2.2.3: Neural Network Weight Optimization Problems
+# =============================================================================
+
+class TestNNWeightProblems:
+    """Test neural network weight optimization problems."""
+    
+    def test_nn_weights_count(self):
+        """Verify we added 16 NN weight problems (22 + 16 = 38 total real-world)."""
+        from RAGDA_default_args.benchmark_realworld_problems import ALL_REALWORLD_PROBLEMS
+        assert len(ALL_REALWORLD_PROBLEMS) == 38
+    
+    def test_nn_weights_category_count(self):
+        """Verify all 16 are categorized as 'nn_weights'."""
+        from RAGDA_default_args.benchmark_realworld_problems import ALL_REALWORLD_PROBLEMS
+        nn_probs = {k: v for k, v in ALL_REALWORLD_PROBLEMS.items() if v.category == 'nn_weights'}
+        assert len(nn_probs) == 16
+    
+    def test_nn_xor_17d(self):
+        """Test NN-XOR-17D problem."""
+        from RAGDA_default_args.benchmark_realworld_problems import get_problem
+        
+        class MockTrial:
+            def __init__(self, params):
+                self._params = params
+            def suggest_float(self, name, low, high):
+                idx = int(name[1:])
+                return self._params['x'][idx]
+        
+        problem = get_problem('NN-XOR-17D')
+        assert problem.dimension == 17
+        assert problem.category == 'nn_weights'
+        
+        # Test with random parameters
+        import numpy as np
+        trial = MockTrial({'x': list(np.random.randn(17) * 0.5)})
+        loss = problem.objective(trial)
+        assert isinstance(loss, float)
+        assert loss < 1e10
+    
+    def test_nn_regression_89d(self):
+        """Test NN-Regression-89D problem."""
+        from RAGDA_default_args.benchmark_realworld_problems import get_problem
+        
+        class MockTrial:
+            def __init__(self, params):
+                self._params = params
+            def suggest_float(self, name, low, high):
+                idx = int(name[1:])
+                return self._params['x'][idx]
+        
+        problem = get_problem('NN-Regression-89D')
+        assert problem.dimension == 89
+        assert problem.category == 'nn_weights'
+        
+        import numpy as np
+        trial = MockTrial({'x': list(np.random.randn(89) * 0.1)})
+        loss = problem.objective(trial)
+        assert isinstance(loss, float)
+        assert loss < 1e10
+    
+    def test_nn_mnist_1074d(self):
+        """Test high-dimensional NN-MNIST-1074D problem."""
+        from RAGDA_default_args.benchmark_realworld_problems import get_problem
+        
+        class MockTrial:
+            def __init__(self, params):
+                self._params = params
+            def suggest_float(self, name, low, high):
+                idx = int(name[1:])
+                return self._params['x'][idx]
+        
+        problem = get_problem('NN-MNIST-1074D')
+        assert problem.dimension == 1074
+        assert problem.category == 'nn_weights'
+        
+        import numpy as np
+        trial = MockTrial({'x': list(np.random.randn(1074) * 0.01)})
+        loss = problem.objective(trial)
+        assert isinstance(loss, float)
+        assert loss < 1e10
+    
+    def test_nn_large_1377d(self):
+        """Test very high-dimensional NN-Large-1377D problem."""
+        from RAGDA_default_args.benchmark_realworld_problems import get_problem
+        
+        class MockTrial:
+            def __init__(self, params):
+                self._params = params
+            def suggest_float(self, name, low, high):
+                idx = int(name[1:])
+                return self._params['x'][idx]
+        
+        problem = get_problem('NN-Large-1377D')
+        assert problem.dimension == 1377
+        assert problem.category == 'nn_weights'
+        
+        import numpy as np
+        trial = MockTrial({'x': list(np.random.randn(1377) * 0.01)})
+        loss = problem.objective(trial)
+        assert isinstance(loss, float)
+        assert loss < 1e10
+    
+    def test_sparse_autoencoder_100d(self):
+        """Test SparseAutoencoder-100D problem."""
+        from RAGDA_default_args.benchmark_realworld_problems import get_problem
+        
+        class MockTrial:
+            def __init__(self, params):
+                self._params = params
+            def suggest_float(self, name, low, high):
+                idx = int(name[1:])
+                return self._params['x'][idx]
+        
+        problem = get_problem('SparseAutoencoder-100D')
+        assert problem.dimension == 100
+        assert problem.category == 'nn_weights'
+        
+        import numpy as np
+        trial = MockTrial({'x': list(np.random.randn(100) * 0.1)})
+        loss = problem.objective(trial)
+        assert isinstance(loss, float)
+        assert loss < 1e10
+    
+    def test_neural_hessian_80d(self):
+        """Test NeuralHessian-80D (expensive problem)."""
+        from RAGDA_default_args.benchmark_realworld_problems import get_problem
+        
+        class MockTrial:
+            def __init__(self, params):
+                self._params = params
+            def suggest_float(self, name, low, high):
+                idx = int(name[1:])
+                return self._params['x'][idx]
+        
+        problem = get_problem('NeuralHessian-80D')
+        assert problem.dimension == 80
+        assert problem.category == 'nn_weights'
+        assert 'expensive' in problem.description.lower()
+        
+        import numpy as np
+        trial = MockTrial({'x': list(np.random.randn(80) * 0.1)})
+        loss = problem.objective(trial)
+        assert isinstance(loss, float)
+        assert loss < 1e10
+    
+    def test_all_nn_weights_callable(self):
+        """Verify all 16 NN weight problems are callable with proper metadata."""
+        from RAGDA_default_args.benchmark_realworld_problems import ALL_REALWORLD_PROBLEMS
+        nn_probs = {k: v for k, v in ALL_REALWORLD_PROBLEMS.items() if v.category == 'nn_weights'}
+        
+        assert len(nn_probs) == 16
+        assert all(callable(prob.objective) for prob in nn_probs.values())
+        assert all(prob.dimension > 0 for prob in nn_probs.values())
+        assert all(prob.bounds for prob in nn_probs.values())
+        assert all(len(prob.bounds) == prob.dimension for prob in nn_probs.values())
 
 
 # =============================================================================

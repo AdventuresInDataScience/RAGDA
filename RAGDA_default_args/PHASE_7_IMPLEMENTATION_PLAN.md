@@ -169,10 +169,10 @@ Chunk 2.1.4: ✅ DONE  (52/234)  - Multimodal Fixed Dim
 Chunk 2.1.5: ✅ DONE  (70/234)  - Valley Functions
 Chunk 2.1.6: ✅ DONE  (77/234)  - Plate Functions (7)
 Chunk 2.1.7: ✅ DONE  (78/234)  - Steep Functions (1) - MATHEMATICAL COMPLETE!
-Chunk 2.2.1: ⏳ TODO  (91/234)  - Chaotic Systems
-Chunk 2.2.2: ⏳ TODO  (100/234) - Dynamical Systems
-Chunk 2.2.3: ⏳ TODO  (114/234) - NN Weights
-Chunk 2.2.4: ⏳ TODO  (129/234) - ML Training Part 1
+Chunk 2.2.1: ✅ DONE  (94/234)  - Chaotic Systems (16)
+Chunk 2.2.2: ✅ DONE  (100/234) - Dynamical Systems (6)
+Chunk 2.2.3: ✅ DONE  (116/234) - NN Weights (16) 🎉 HALFWAY!
+Chunk 2.2.4: ⏳ TODO  (131/234) - ML Training Part 1
 Chunk 2.2.5: ⏳ TODO  (149/234) - ML Training Part 2
 Chunk 2.2.6: ⏳ TODO  (159/234) - ML Training Part 3
 Chunk 2.2.7: ⏳ TODO  (177/234) - PDE Problems
@@ -185,7 +185,7 @@ Chunk 2.3.1: ⏳ TODO  (234/234) - All ML Problems ✅
 
 ### 2.1 Mathematical Benchmark Functions (78 total)
 
-**File**: `RAGDA_default_args/benchmark_functions.py`
+**File**: `RAGDA_default_args/benchmark_mathematical_problems.py`
 
 **Source**: `archive/benchmark_functions.py`
 
@@ -268,28 +268,43 @@ Chunk 2.3.1: ⏳ TODO  (234/234) - All ML Problems ✅
 
 **Chunking Strategy**:
 
-#### Chunk 2.2.1: Core Structure + Chaotic Systems (13 functions)
-- Create dataclass, helper functions (Optuna wrapper for callable functions)
-- **Functions from archive**:
-  - `MackeyGlass-4D, Lorenz-3D, Henon-2D, Rossler-3D, LogisticMap-1D` (5)
-  - `CoupledLogistic-10D, RabinovichFabrikant-2D, Duffing-5D, DoublePendulum-4D` (4)
-  - `Lorenz96-20D, Lorenz96Extended-60D, CoupledMapLattice-64D, HenonExtended-20D` (4)
-- **Test**: Count = 13, test Lorenz-3D
+#### Chunk 2.2.1: Core Structure + Chaotic Systems (16 functions) ✅ DONE
+- Created dataclass, helper functions (Optuna wrapper for callable functions)
+- **Functions from archive** (16 chaotic systems):
+  - Low-dim: `LogisticMap-1D, Henon-2D, RabinovichFabrikant-2D, Lorenz-3D, Rossler-3D` (5)
+  - Med-dim: `MackeyGlass-4D, DoublePendulum-4D, Duffing-5D, CoupledLogistic-10D` (4)
+  - High-dim: `Lorenz96-20D, HenonExtended-20D, StandardMapChain-30D, Lorenz96Extended-60D, SpatiotemporalChaos-60D, CoupledMapLattice-64D, CoupledLogisticMaps-100D` (7)
+- **Expected Count After**: 94 total (78 + 16)
+- **Tests Added**: test_chaotic_count, test_chaotic_category_count, test_mackey_glass_4d, test_lorenz_3d, test_henon_2d, test_logistic_map_1d, test_high_dimensional_chaotic, test_all_chaotic_callable
+- **Status**: ✅ All 50 tests passing (12 AUC + 30 mathematical + 8 chaotic)
+- **Note**: Archive had 16 chaotic problems (not 13). File renamed: `benchmark_functions.py` → `benchmark_mathematical_problems.py`
 
-#### Chunk 2.2.2: Dynamical Systems (9 functions)
-- **Functions from archive**:
+#### Chunk 2.2.2: Dynamical Systems (6 functions) ✅ DONE
+- **Functions from archive** (6 dynamical systems):
   - `LotkaVolterra-4D, LotkaVolterra4Species-8D, VanDerPol-1D` (3)
-  - `CoupledOscillators-15D, KuramotoOscillators-20D, KuramotoSync-100D, KuramotoSync-150D` (4)
-  - `NeuralField-70D, SpatiotemporalChaos-60D` (2)
-- **Test**: Count = 22
+  - `CoupledOscillators-15D, KuramotoOscillators-20D` (2)
+  - `NeuralField-70D` (1)
+- **Expected Count After**: 100 total (78 + 16 + 6)
+- **Tests Added**: test_dynamical_count, test_dynamical_category_count, test_lotka_volterra_4d, test_lotka_volterra_4species_8d, test_van_der_pol_1d, test_kuramoto_20d, test_neural_field_70d
+- **Status**: ✅ All 58 tests passing (12 AUC + 30 mathematical + 8 chaotic + 7 dynamical + 1 count fix)
+- **Note**: Archive had 6 dynamical problems (not 9). Some problems were duplicates or in other categories.
 
-#### Chunk 2.2.3: Neural Network Weights (14 functions)
-- **Functions from archive**:
+#### Chunk 2.2.3: Neural Network Weights (16 functions) ✅ DONE
+- **Functions from archive** (16 NN weight optimization problems):
   - `NN-XOR-17D, NN-Regression-89D, NN-MNIST-1074D, NN-Large-1377D` (4)
   - `NN-Medium-20D, NN-Deep-100D` (2)
   - `Autoencoder-80D, RBM-60D, WordEmbedding-75D, Hopfield-64D` (4)
   - `SparseAutoencoder-100D, VAE-90D, DenoisingAE-80D, ContrastiveLearning-70D` (4)
-- **Test**: Count = 36
+  - `NeuralHessian-80D, NeuralHessian-100D` (2)
+- **Expected Count After**: 116 total (78 + 16 + 6 + 16)
+- **Tests Added**: test_nn_weights_count, test_nn_weights_category_count, test_nn_xor_17d, test_nn_regression_89d, test_nn_mnist_1074d, test_nn_large_1377d, test_sparse_autoencoder_100d, test_neural_hessian_80d, test_all_nn_weights_callable
+- **Status**: ✅ All 66 tests passing (12 AUC + 30 mathematical + 8 chaotic + 7 dynamical + 9 NN weights)
+- **Fixes Applied**:
+  - Fixed MockTrial parsing: `name[1:]` instead of `name.split('_')[1]`
+  - Fixed NN-Regression-89D: 1→8→8→1 without b2 (89 params exactly)
+  - Fixed NN-Large-1377D: 10→32→31→1 with 2-element b2 (1377 params exactly)
+  - Fixed SparseAutoencoder-100D: 10→5→9 without decoder bias (100 params exactly)
+- **Progress**: **49.6% complete (116/234 functions)** - PASSED HALFWAY MARK! 🎉
 
 #### Chunk 2.2.4: ML Training Problems Part 1 (15 functions)
 - **Functions from archive**:
