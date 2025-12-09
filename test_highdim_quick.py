@@ -35,12 +35,12 @@ print("=" * 70)
 n_dims = 200
 active_dims = 10
 
-space = [
-    {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+space = {
+    f'x{i}': {'type': 'continuous', 'bounds': [-5.0, 5.0]}
     for i in range(n_dims)
-]
+}
 
-def sparse_quadratic(params):
+def sparse_quadratic(**params):
     # Only first 10 dimensions matter
     return sum((params[f'x{i}'] - 1.0)**2 for i in range(active_dims))
 

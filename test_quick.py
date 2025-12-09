@@ -11,17 +11,15 @@ import sys
 # Module-level objective functions (required for multiprocessing pickle)
 # =============================================================================
 
-def sphere_objective(params):
+def sphere_objective(x, y):
     """Simple sphere function: x^2 + y^2"""
-    return params['x']**2 + params['y']**2
+    return x**2 + y**2
 
 
-def categorical_objective(params):
+def categorical_objective(x, category):
     """Categorical test: minimize (x - offset[cat])^2"""
-    x = params['x']
-    cat = params['category']
     offsets = {'A': 0, 'B': 1, 'C': 2}
-    return (x - offsets[cat])**2
+    return (x - offsets[category])**2
 
 
 # Global data for minibatch test (initialized lazily)
@@ -38,12 +36,10 @@ def _init_ml_data():
         _y_data = _X_data[:, 0] * 2 + _X_data[:, 1] * 3 + np.random.randn(1000) * 0.1
 
 
-def ml_objective(params, batch_size=None):
+def ml_objective(w1, w2, batch_size=None):
     """Linear regression objective with optional mini-batch."""
     global _X_data, _y_data
     _init_ml_data()
-    
-    w1, w2 = params['w1'], params['w2']
     
     if batch_size and batch_size > 0:
         idx = np.random.choice(len(_X_data), min(batch_size, len(_X_data)), replace=False)
@@ -71,10 +67,10 @@ def test_basic():
     print(f"RAGDA Core Version: {core.get_version()}")
     print(f"Is Cython: {core.is_cython()}")
     
-    space = [
-        {'name': 'x', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-        {'name': 'y', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
-    ]
+    space = {
+        'x': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+        'y': {'type': 'continuous', 'bounds': [-5.0, 5.0]}
+    }
     
     optimizer = RAGDAOptimizer(space, n_workers=2, random_state=42)
     result = optimizer.optimize(sphere_objective, n_trials=50, verbose=True)
@@ -91,10 +87,10 @@ def test_categorical():
     """Test categorical optimization."""
     from ragda import RAGDAOptimizer
     
-    space = [
-        {'name': 'x', 'type': 'continuous', 'bounds': [0.0, 3.0]},
-        {'name': 'category', 'type': 'categorical', 'values': ['A', 'B', 'C']}
-    ]
+    space = {
+        'x': {'type': 'continuous', 'bounds': [0.0, 3.0]},
+        'category': {'type': 'categorical', 'values': ['A', 'B', 'C']}
+    }
     
     optimizer = RAGDAOptimizer(space, n_workers=2, random_state=123)
     result = optimizer.optimize(categorical_objective, n_trials=50, verbose=True)
@@ -114,10 +110,10 @@ def test_minibatch():
     # Initialize global data
     _init_ml_data()
     
-    space = [
-        {'name': 'w1', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-        {'name': 'w2', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
-    ]
+    space = {
+        'w1': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+        'w2': {'type': 'continuous', 'bounds': [-5.0, 5.0]}
+    }
     
     optimizer = RAGDAOptimizer(space, n_workers=2, random_state=42)
     result = optimizer.optimize(

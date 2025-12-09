@@ -281,12 +281,12 @@ class TestHighDimOptimizer:
         from ragda import HighDimRAGDAOptimizer
         
         # Small 10D problem - should not use high-dim mode
-        space = [
-            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+        space = {
+            f'x{i}': {'type': 'continuous', 'bounds': [-5.0, 5.0]}
             for i in range(10)
-        ]
+        }
         
-        def sphere(params):
+        def sphere(**params):
             return sum(params[f'x{i}']**2 for i in range(10))
         
         optimizer = HighDimRAGDAOptimizer(
@@ -316,12 +316,12 @@ class TestHighDimOptimizer:
         n_dims = 500
         active_dims = 10
         
-        space = [
-            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+        space = {
+            f'x{i}': {'type': 'continuous', 'bounds': [-5.0, 5.0]}
             for i in range(n_dims)
-        ]
+        }
         
-        def sparse_sphere(params):
+        def sparse_sphere(**params):
             # Only first 10 dimensions contribute
             return sum(params[f'x{i}']**2 for i in range(active_dims))
         
@@ -349,12 +349,12 @@ class TestHighDimOptimizer:
         from ragda import HighDimRAGDAOptimizer
         
         n_dims = 100
-        space = [
-            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-1.0, 1.0]}
+        space = {
+            f'x{i}': {'type': 'continuous', 'bounds': [-1.0, 1.0]}
             for i in range(n_dims)
-        ]
+        }
         
-        def simple_objective(params):
+        def simple_objective(**params):
             return sum(params[f'x{i}']**2 for i in range(n_dims))
         
         optimizer = HighDimRAGDAOptimizer(

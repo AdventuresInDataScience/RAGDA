@@ -162,11 +162,8 @@ class SyntheticFunctions:
         
         # Define base functions
         if base_func == 'sphere':
-            def func(params):
-                if isinstance(params, dict):
-                    x = np.array([params[f'x{i}'] for i in range(n_dims)])
-                else:
-                    x = params
+            def func(**kwargs):
+                x = np.array([kwargs[f'x{i}'] for i in range(n_dims)])
                 
                 if cost_delay > 0:
                     time.sleep(cost_delay)
@@ -183,11 +180,8 @@ class SyntheticFunctions:
             description = "Unimodal quadratic"
         
         elif base_func == 'rosenbrock':
-            def func(params):
-                if isinstance(params, dict):
-                    x = np.array([params[f'x{i}'] for i in range(n_dims)])
-                else:
-                    x = params
+            def func(**kwargs):
+                x = np.array([kwargs[f'x{i}'] for i in range(n_dims)])
                 
                 if cost_delay > 0:
                     time.sleep(cost_delay)
@@ -204,11 +198,8 @@ class SyntheticFunctions:
             description = "Narrow curved valley"
         
         elif base_func == 'rastrigin':
-            def func(params):
-                if isinstance(params, dict):
-                    x = np.array([params[f'x{i}'] for i in range(n_dims)])
-                else:
-                    x = params
+            def func(**kwargs):
+                x = np.array([kwargs[f'x{i}'] for i in range(n_dims)])
                 
                 if cost_delay > 0:
                     time.sleep(cost_delay)
@@ -226,11 +217,8 @@ class SyntheticFunctions:
             description = "Highly multimodal"
         
         elif base_func == 'ackley':
-            def func(params):
-                if isinstance(params, dict):
-                    x = np.array([params[f'x{i}'] for i in range(n_dims)])
-                else:
-                    x = params
+            def func(**kwargs):
+                x = np.array([kwargs[f'x{i}'] for i in range(n_dims)])
                 
                 if cost_delay > 0:
                     time.sleep(cost_delay)
@@ -250,11 +238,8 @@ class SyntheticFunctions:
             description = "Multimodal with deep basin"
         
         elif base_func == 'griewank':
-            def func(params):
-                if isinstance(params, dict):
-                    x = np.array([params[f'x{i}'] for i in range(n_dims)])
-                else:
-                    x = params
+            def func(**kwargs):
+                x = np.array([kwargs[f'x{i}'] for i in range(n_dims)])
                 
                 if cost_delay > 0:
                     time.sleep(cost_delay)
@@ -276,10 +261,10 @@ class SyntheticFunctions:
             raise ValueError(f"Unknown base function: {base_func}")
         
         # Create space definition
-        space = [
-            {'name': f'x{i}', 'type': 'continuous', 'bounds': [float(bounds[i, 0]), float(bounds[i, 1])]}
+        space = {
+            f'x{i}': {'type': 'continuous', 'bounds': [float(bounds[i, 0]), float(bounds[i, 1])]}
             for i in range(n_dims)
-        ]
+        }
         
         name = f"{base_func.capitalize()}-{n_dims}D-{cost_class}-{noise_class}"
         
@@ -332,7 +317,7 @@ class RealWorldProblems:
         
         eval_count = {'count': 0, 'batch_sizes': []}
         
-        def func(params, batch_size: int = None):
+        def func(num_leaves, learning_rate, feature_fraction, bagging_fraction, bagging_freq, min_child_samples, batch_size: int = None):
             """
             Objective with batch_size support.
             
@@ -342,30 +327,17 @@ class RealWorldProblems:
             """
             eval_count['count'] += 1
             
-            if isinstance(params, dict):
-                lgb_params = {
-                    'objective': 'multiclass' if dataset_name == 'digits' else 'binary',
-                    'num_leaves': params['num_leaves'],
-                    'learning_rate': params['learning_rate'],
-                    'feature_fraction': params['feature_fraction'],
-                    'bagging_fraction': params['bagging_fraction'],
-                    'bagging_freq': params['bagging_freq'],
-                    'min_child_samples': params['min_child_samples'],
-                    'verbose': -1,
-                    'n_jobs': 1
-                }
-            else:
-                lgb_params = {
-                    'objective': 'multiclass' if dataset_name == 'digits' else 'binary',
-                    'num_leaves': int(params[0]),
-                    'learning_rate': params[1],
-                    'feature_fraction': params[2],
-                    'bagging_fraction': params[3],
-                    'bagging_freq': int(params[4]),
-                    'min_child_samples': int(params[5]),
-                    'verbose': -1,
-                    'n_jobs': 1
-                }
+            lgb_params = {
+                'objective': 'multiclass' if dataset_name == 'digits' else 'binary',
+                'num_leaves': num_leaves,
+                'learning_rate': learning_rate,
+                'feature_fraction': feature_fraction,
+                'bagging_fraction': bagging_fraction,
+                'bagging_freq': bagging_freq,
+                'min_child_samples': min_child_samples,
+                'verbose': -1,
+                'n_jobs': 1
+            }
             
             # Determine CV strategy based on batch_size
             if batch_size is not None and batch_size > 0:
@@ -405,14 +377,14 @@ class RealWorldProblems:
             
             return result
         
-        space = [
-            {'name': 'num_leaves', 'type': 'ordinal', 'values': [15, 31, 63, 127, 255]},
-            {'name': 'learning_rate', 'type': 'continuous', 'bounds': [0.001, 0.3], 'log': True},
-            {'name': 'feature_fraction', 'type': 'continuous', 'bounds': [0.5, 1.0]},
-            {'name': 'bagging_fraction', 'type': 'continuous', 'bounds': [0.5, 1.0]},
-            {'name': 'bagging_freq', 'type': 'ordinal', 'values': [0, 1, 5, 10]},
-            {'name': 'min_child_samples', 'type': 'ordinal', 'values': [5, 10, 20, 50]},
-        ]
+        space = {
+            'num_leaves': {'type': 'ordinal', 'values': [15, 31, 63, 127, 255]},
+            'learning_rate': {'type': 'continuous', 'bounds': [0.001, 0.3], 'log': True},
+            'feature_fraction': {'type': 'continuous', 'bounds': [0.5, 1.0]},
+            'bagging_fraction': {'type': 'continuous', 'bounds': [0.5, 1.0]},
+            'bagging_freq': {'type': 'ordinal', 'values': [0, 1, 5, 10]},
+            'min_child_samples': {'type': 'ordinal', 'values': [5, 10, 20, 50]},
+        }
         
         bounds = np.array([
             [15, 255],
@@ -451,17 +423,8 @@ class RealWorldProblems:
         
         X, y = load_digits(return_X_y=True)
         
-        def func(params, batch_size: int = None):
-            if isinstance(params, dict):
-                hidden_size = params['hidden_size']
-                alpha = params['alpha']
-                learning_rate_init = params['learning_rate_init']
-                activation = params['activation']
-            else:
-                hidden_size = int(params[0])
-                alpha = params[1]
-                learning_rate_init = params[2]
-                activation = ['relu', 'tanh', 'logistic'][int(params[3]) % 3]
+        def func(hidden_size, alpha, learning_rate_init, activation, batch_size: int = None):
+            hidden_size = int(hidden_size)
             
             # Progressive evaluation
             if batch_size is not None and batch_size > 0:
@@ -501,12 +464,12 @@ class RealWorldProblems:
             except:
                 return 1e10
         
-        space = [
-            {'name': 'hidden_size', 'type': 'ordinal', 'values': [32, 64, 128, 256]},
-            {'name': 'alpha', 'type': 'continuous', 'bounds': [1e-5, 1e-1], 'log': True},
-            {'name': 'learning_rate_init', 'type': 'continuous', 'bounds': [1e-4, 1e-1], 'log': True},
-            {'name': 'activation', 'type': 'categorical', 'values': ['relu', 'tanh', 'logistic']},
-        ]
+        space = {
+            'hidden_size': {'type': 'ordinal', 'values': [32, 64, 128, 256]},
+            'alpha': {'type': 'continuous', 'bounds': [1e-5, 1e-1], 'log': True},
+            'learning_rate_init': {'type': 'continuous', 'bounds': [1e-4, 1e-1], 'log': True},
+            'activation': {'type': 'categorical', 'values': ['relu', 'tanh', 'logistic']},
+        }
         
         bounds = np.array([
             [32, 256],
@@ -546,16 +509,14 @@ class RealWorldProblems:
         mean_returns = returns.mean(axis=0)
         cov_matrix = np.cov(returns.T)
         
-        def func(params, batch_size: int = None):
+        def func(**kwargs):
             """
             Portfolio Sharpe ratio.
             
             batch_size: number of periods to use for estimation
             """
-            if isinstance(params, dict):
-                weights = np.array([params[f'w{i}'] for i in range(n_assets)])
-            else:
-                weights = params
+            batch_size = kwargs.pop('batch_size', None)
+            weights = np.array([kwargs[f'w{i}'] for i in range(n_assets)])
             
             # Normalize
             weights = np.abs(weights)
@@ -581,10 +542,10 @@ class RealWorldProblems:
             
             return -sharpe  # Minimize negative Sharpe
         
-        space = [
-            {'name': f'w{i}', 'type': 'continuous', 'bounds': [0.0, 1.0]}
+        space = {
+            f'w{i}': {'type': 'continuous', 'bounds': [0.0, 1.0]}
             for i in range(n_assets)
-        ]
+        }
         
         bounds = np.array([[0.0, 1.0]] * n_assets)
         
@@ -618,15 +579,7 @@ class RealWorldProblems:
         
         X, y = load_digits(return_X_y=True)
         
-        def func(params, batch_size: int = None):
-            if isinstance(params, dict):
-                C = params['C']
-                gamma = params['gamma']
-                kernel = params['kernel']
-            else:
-                C = params[0]
-                gamma = params[1]
-                kernel = ['rbf', 'poly', 'sigmoid'][int(params[2]) % 3]
+        def func(C, gamma, kernel, batch_size: int = None):
             
             # Progressive evaluation
             if batch_size is not None and batch_size > 0:
@@ -658,11 +611,11 @@ class RealWorldProblems:
             except:
                 return 1e10
         
-        space = [
-            {'name': 'C', 'type': 'continuous', 'bounds': [0.1, 100.0], 'log': True},
-            {'name': 'gamma', 'type': 'continuous', 'bounds': [1e-4, 1.0], 'log': True},
-            {'name': 'kernel', 'type': 'categorical', 'values': ['rbf', 'poly', 'sigmoid']},
-        ]
+        space = {
+            'C': {'type': 'continuous', 'bounds': [0.1, 100.0], 'log': True},
+            'gamma': {'type': 'continuous', 'bounds': [1e-4, 1.0], 'log': True},
+            'kernel': {'type': 'categorical', 'values': ['rbf', 'poly', 'sigmoid']},
+        }
         
         bounds = np.array([
             [0.1, 100.0],
@@ -698,17 +651,10 @@ class RealWorldProblems:
         
         X, y = load_breast_cancer(return_X_y=True)
         
-        def func(params, batch_size: int = None):
-            if isinstance(params, dict):
-                n_estimators = params['n_estimators']
-                max_depth = params['max_depth']
-                min_samples_split = params['min_samples_split']
-                max_features = params['max_features']
-            else:
-                n_estimators = int(params[0])
-                max_depth = int(params[1]) if params[1] > 0 else None
-                min_samples_split = int(params[2])
-                max_features = params[3]
+        def func(n_estimators, max_depth, min_samples_split, max_features, batch_size: int = None):
+            n_estimators = int(n_estimators)
+            max_depth = int(max_depth) if max_depth > 0 else None
+            min_samples_split = int(min_samples_split)
             
             # Progressive evaluation
             if batch_size is not None and batch_size > 0:
@@ -747,12 +693,12 @@ class RealWorldProblems:
             except:
                 return 1e10
         
-        space = [
-            {'name': 'n_estimators', 'type': 'ordinal', 'values': [10, 50, 100, 200, 500]},
-            {'name': 'max_depth', 'type': 'ordinal', 'values': [5, 10, 20, 30, -1]},  # -1 = None
-            {'name': 'min_samples_split', 'type': 'continuous', 'bounds': [2.0, 20.0]},
-            {'name': 'max_features', 'type': 'continuous', 'bounds': [0.1, 1.0]},
-        ]
+        space = {
+            'n_estimators': {'type': 'ordinal', 'values': [10, 50, 100, 200, 500]},
+            'max_depth': {'type': 'ordinal', 'values': [5, 10, 20, 30, -1]},  # -1 = None
+            'min_samples_split': {'type': 'continuous', 'bounds': [2.0, 20.0]},
+            'max_features': {'type': 'continuous', 'bounds': [0.1, 1.0]},
+        }
         
         bounds = np.array([
             [10, 500],
@@ -1653,7 +1599,8 @@ def generate_comprehensive_tables(df: pd.DataFrame, analysis_df: pd.DataFrame, o
     cost_pivot = analysis_df.pivot_table(
         values='mean_value',
         index='cost_class',
-        columns='optimizer).round(4)
+        columns='optimizer'
+    ).round(4)
     
     latex = cost_pivot.to_latex(
         caption="Mean performance by evaluation cost class",

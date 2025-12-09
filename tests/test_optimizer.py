@@ -13,18 +13,18 @@ class TestRAGDAOptimizer:
     @pytest.fixture
     def simple_space(self):
         """Simple 2D continuous space."""
-        return [
-            {'name': 'x', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-            {'name': 'y', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-        ]
+        return {
+            'x': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            'y': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+        }
     
     @pytest.fixture
     def mixed_space(self):
         """Mixed continuous and categorical space."""
-        return [
-            {'name': 'x', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-            {'name': 'cat', 'type': 'categorical', 'values': ['A', 'B', 'C']},
-        ]
+        return {
+            'x': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            'cat': {'type': 'categorical', 'values': ['A', 'B', 'C']},
+        }
     
     def test_init_basic(self, simple_space):
         """Test basic initialization."""
@@ -44,8 +44,8 @@ class TestRAGDAOptimizer:
     
     def test_optimize_sphere(self, simple_space):
         """Test optimization on sphere function."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(simple_space, n_workers=2, random_state=42)
         result = opt.optimize(sphere, n_trials=50, verbose=False)
@@ -57,9 +57,9 @@ class TestRAGDAOptimizer:
     
     def test_optimize_with_categorical(self, mixed_space):
         """Test optimization with categorical variables."""
-        def objective(params):
+        def objective(x, cat):
             offsets = {'A': 0, 'B': 1, 'C': 2}
-            return params['x']**2 + offsets[params['cat']]
+            return x**2 + offsets[cat]
         
         opt = RAGDAOptimizer(mixed_space, n_workers=2, random_state=42)
         result = opt.optimize(objective, n_trials=50, verbose=False)
@@ -69,8 +69,8 @@ class TestRAGDAOptimizer:
     
     def test_maximize(self, simple_space):
         """Test maximization direction."""
-        def negative_sphere(params):
-            return -(params['x']**2 + params['y']**2)  # Minimum at 0
+        def negative_sphere(x, y):
+            return -(x**2 + y**2)  # Minimum at 0
         
         opt = RAGDAOptimizer(simple_space, direction='maximize', n_workers=2, random_state=42)
         result = opt.optimize(negative_sphere, n_trials=50, verbose=False)
@@ -80,8 +80,8 @@ class TestRAGDAOptimizer:
     @pytest.mark.parametrize("n_workers", [1, 2, 4, 8])
     def test_different_worker_counts(self, simple_space, n_workers):
         """Test with different worker counts."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(simple_space, n_workers=n_workers, random_state=42)
         result = opt.optimize(sphere, n_trials=30, verbose=False)
@@ -91,8 +91,8 @@ class TestRAGDAOptimizer:
     @pytest.mark.parametrize("n_trials", [10, 25, 50, 100])
     def test_different_trial_counts(self, simple_space, n_trials):
         """Test with different trial counts."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(simple_space, n_workers=2, random_state=42)
         result = opt.optimize(sphere, n_trials=n_trials, verbose=False)
@@ -101,8 +101,8 @@ class TestRAGDAOptimizer:
     
     def test_custom_x0(self, simple_space):
         """Test with custom starting point."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         x0 = {'x': 1.0, 'y': 1.0}
         opt = RAGDAOptimizer(simple_space, n_workers=2, random_state=42)
@@ -112,8 +112,8 @@ class TestRAGDAOptimizer:
     
     def test_early_stopping(self, simple_space):
         """Test early stopping behavior."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(simple_space, n_workers=2, random_state=42)
         result = opt.optimize(
@@ -129,8 +129,8 @@ class TestRAGDAOptimizer:
     
     def test_shrinking(self, simple_space):
         """Test shrinking mechanism."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(simple_space, n_workers=2, random_state=42)
         result = opt.optimize(
@@ -149,10 +149,10 @@ class TestMinibatch:
     
     @pytest.fixture
     def space(self):
-        return [
-            {'name': 'w1', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-            {'name': 'w2', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-        ]
+        return {
+            'w1': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            'w2': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+        }
     
     def test_minibatch_optimization(self, space):
         """Test optimization with minibatch."""
@@ -161,8 +161,8 @@ class TestMinibatch:
         X = np.random.randn(1000, 2)
         y = 2 * X[:, 0] + 3 * X[:, 1] + np.random.randn(1000) * 0.1
         
-        def mse_objective(params, batch_size=-1):
-            w = np.array([params['w1'], params['w2']])
+        def mse_objective(w1, w2, batch_size=-1):
+            w = np.array([w1, w2])
             if batch_size > 0 and batch_size < len(X):
                 idx = np.random.choice(len(X), batch_size, replace=False)
                 pred = X[idx] @ w
@@ -191,8 +191,8 @@ class TestMinibatch:
         Regression test: Previously, passing minibatch_start/minibatch_end with
         use_minibatch=False would cause 'Unknown minibatch_schedule: None' error.
         """
-        def simple_objective(params):
-            return params['w1']**2 + params['w2']**2
+        def simple_objective(w1, w2):
+            return w1**2 + w2**2
         
         opt = RAGDAOptimizer(space, n_workers=2, random_state=42)
         
@@ -255,10 +255,10 @@ class TestEdgeCases:
     
     def test_single_dimension(self):
         """Test 1D optimization."""
-        space = [{'name': 'x', 'type': 'continuous', 'bounds': [-10.0, 10.0]}]
+        space = {'x': {'type': 'continuous', 'bounds': [-10.0, 10.0]}}
         
-        def objective(params):
-            return (params['x'] - 3)**2
+        def objective(x):
+            return (x - 3)**2
         
         opt = RAGDAOptimizer(space, n_workers=2, random_state=42)
         result = opt.optimize(objective, n_trials=50, verbose=False)
@@ -268,13 +268,13 @@ class TestEdgeCases:
     def test_high_dimension(self):
         """Test high-dimensional optimization."""
         n_dims = 10
-        space = [
-            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+        space = {
+            f'x{i}': {'type': 'continuous', 'bounds': [-5.0, 5.0]}
             for i in range(n_dims)
-        ]
+        }
         
-        def sphere(params):
-            return sum(params[f'x{i}']**2 for i in range(n_dims))
+        def sphere(x0, x1, x2, x3, x4, x5, x6, x7, x8, x9):
+            return x0**2 + x1**2 + x2**2 + x3**2 + x4**2 + x5**2 + x6**2 + x7**2 + x8**2 + x9**2
         
         opt = RAGDAOptimizer(space, n_workers=4, random_state=42)
         result = opt.optimize(objective=sphere, n_trials=100, verbose=False)
@@ -283,13 +283,13 @@ class TestEdgeCases:
     
     def test_many_categories(self):
         """Test with many categorical values."""
-        space = [
-            {'name': 'cat', 'type': 'categorical', 'values': [f'val_{i}' for i in range(20)]},
-        ]
+        space = {
+            'cat': {'type': 'categorical', 'values': [f'val_{i}' for i in range(20)]},
+        }
         
-        def objective(params):
+        def objective(cat):
             # Best is val_0
-            return int(params['cat'].split('_')[1])
+            return int(cat.split('_')[1])
         
         opt = RAGDAOptimizer(space, n_workers=2, random_state=42)
         result = opt.optimize(objective, n_trials=50, verbose=False)
@@ -299,14 +299,14 @@ class TestEdgeCases:
     
     def test_exception_in_objective(self):
         """Test handling of exceptions in objective."""
-        space = [{'name': 'x', 'type': 'continuous', 'bounds': [-5.0, 5.0]}]
+        space = {'x': {'type': 'continuous', 'bounds': [-5.0, 5.0]}}
         
         call_count = [0]
-        def flaky_objective(params):
+        def flaky_objective(x):
             call_count[0] += 1
             if call_count[0] % 10 == 0:
                 raise ValueError("Random failure")
-            return params['x']**2
+            return x**2
         
         opt = RAGDAOptimizer(space, n_workers=1, random_state=42)
         # Should not crash, should handle exceptions gracefully
@@ -316,14 +316,14 @@ class TestEdgeCases:
     
     def test_ordinal_variables(self):
         """Test ordinal variable handling."""
-        space = [
-            {'name': 'level', 'type': 'ordinal', 'values': [1, 2, 3, 4, 5]},
-            {'name': 'x', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-        ]
+        space = {
+            'level': {'type': 'ordinal', 'values': [1, 2, 3, 4, 5]},
+            'x': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+        }
         
-        def objective(params):
+        def objective(level, x):
             # Best at level=3, x=0
-            return (params['level'] - 3)**2 + params['x']**2
+            return (level - 3)**2 + x**2
         
         opt = RAGDAOptimizer(space, n_workers=2, random_state=42)
         result = opt.optimize(objective, n_trials=50, verbose=False)
@@ -336,15 +336,15 @@ class TestLambdaSchedules:
     
     @pytest.fixture
     def space(self):
-        return [
-            {'name': 'x', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-            {'name': 'y', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-        ]
+        return {
+            'x': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            'y': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+        }
     
     def test_default_lambda(self, space):
         """Test with default lambda settings."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space, n_workers=2, random_state=42)
         result = opt.optimize(sphere, n_trials=50, verbose=False)
@@ -353,8 +353,8 @@ class TestLambdaSchedules:
     
     def test_custom_lambda_start_end(self, space):
         """Test with custom lambda_start and lambda_end."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space, n_workers=2, random_state=42)
         result = opt.optimize(
@@ -369,8 +369,8 @@ class TestLambdaSchedules:
     
     def test_small_lambda(self, space):
         """Test with small lambda values."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space, n_workers=2, random_state=42)
         result = opt.optimize(
@@ -385,8 +385,8 @@ class TestLambdaSchedules:
     
     def test_large_lambda(self, space):
         """Test with large lambda values."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space, n_workers=2, random_state=42)
         result = opt.optimize(
@@ -401,8 +401,8 @@ class TestLambdaSchedules:
     
     def test_constant_lambda(self, space):
         """Test with constant lambda (start = end)."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space, n_workers=2, random_state=42)
         result = opt.optimize(
@@ -418,8 +418,8 @@ class TestLambdaSchedules:
     @pytest.mark.parametrize("decay_rate", [1.0, 3.0, 5.0, 10.0])
     def test_different_lambda_decay_rates(self, space, decay_rate):
         """Test with different lambda decay rates."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space, n_workers=2, random_state=42)
         result = opt.optimize(
@@ -437,17 +437,17 @@ class TestInitialGuesses:
     
     @pytest.fixture
     def space(self):
-        return [
-            {'name': 'x', 'type': 'continuous', 'bounds': [-10.0, 10.0]},
-            {'name': 'y', 'type': 'continuous', 'bounds': [-10.0, 10.0]},
-            {'name': 'cat', 'type': 'categorical', 'values': ['A', 'B', 'C']},
-        ]
+        return {
+            'x': {'type': 'continuous', 'bounds': [-10.0, 10.0]},
+            'y': {'type': 'continuous', 'bounds': [-10.0, 10.0]},
+            'cat': {'type': 'categorical', 'values': ['A', 'B', 'C']},
+        }
     
     def test_no_initial_guess(self, space):
         """Test with no initial guess (x0=None)."""
-        def objective(params):
-            offset = {'A': 0, 'B': 1, 'C': 2}[params['cat']]
-            return params['x']**2 + params['y']**2 + offset
+        def objective(x, y, cat):
+            offset = {'A': 0, 'B': 1, 'C': 2}[cat]
+            return x**2 + y**2 + offset
         
         opt = RAGDAOptimizer(space, n_workers=4, random_state=42)
         result = opt.optimize(objective, n_trials=50, x0=None, verbose=False)
@@ -456,9 +456,9 @@ class TestInitialGuesses:
     
     def test_full_initial_guess(self, space):
         """Test with complete initial guess for all params."""
-        def objective(params):
-            offset = {'A': 0, 'B': 1, 'C': 2}[params['cat']]
-            return (params['x'] - 5)**2 + (params['y'] + 3)**2 + offset
+        def objective(x, y, cat):
+            offset = {'A': 0, 'B': 1, 'C': 2}[cat]
+            return (x - 5)**2 + (y + 3)**2 + offset
         
         x0 = {'x': 4.0, 'y': -2.0, 'cat': 'A'}
         
@@ -469,14 +469,14 @@ class TestInitialGuesses:
     
     def test_partial_continuous_guess(self):
         """Test with partial initial guess (only some continuous params)."""
-        space = [
-            {'name': 'x', 'type': 'continuous', 'bounds': [-10.0, 10.0]},
-            {'name': 'y', 'type': 'continuous', 'bounds': [-10.0, 10.0]},
-            {'name': 'z', 'type': 'continuous', 'bounds': [-10.0, 10.0]},
-        ]
+        space = {
+            'x': {'type': 'continuous', 'bounds': [-10.0, 10.0]},
+            'y': {'type': 'continuous', 'bounds': [-10.0, 10.0]},
+            'z': {'type': 'continuous', 'bounds': [-10.0, 10.0]},
+        }
         
-        def objective(params):
-            return (params['x'] - 5)**2 + (params['y'] + 3)**2 + params['z']**2
+        def objective(x, y, z):
+            return (x - 5)**2 + (y + 3)**2 + z**2
         
         # Full guess required by current API, but we test near-optimal partial knowledge
         x0 = {'x': 5.0, 'y': -3.0, 'z': 0.0}  # Perfect starting point
@@ -488,9 +488,9 @@ class TestInitialGuesses:
     
     def test_multiple_initial_guesses(self, space):
         """Test with list of multiple initial guesses."""
-        def objective(params):
-            offset = {'A': 0, 'B': 1, 'C': 2}[params['cat']]
-            return params['x']**2 + params['y']**2 + offset
+        def objective(x, y, cat):
+            offset = {'A': 0, 'B': 1, 'C': 2}[cat]
+            return x**2 + y**2 + offset
         
         x0_list = [
             {'x': 1.0, 'y': 1.0, 'cat': 'A'},
@@ -504,9 +504,9 @@ class TestInitialGuesses:
     
     def test_more_guesses_than_workers(self, space):
         """Test with more initial guesses than workers."""
-        def objective(params):
-            offset = {'A': 0, 'B': 1, 'C': 2}[params['cat']]
-            return params['x']**2 + params['y']**2 + offset
+        def objective(x, y, cat):
+            offset = {'A': 0, 'B': 1, 'C': 2}[cat]
+            return x**2 + y**2 + offset
         
         x0_list = [
             {'x': 0.5, 'y': 0.5, 'cat': 'A'},
@@ -523,9 +523,9 @@ class TestInitialGuesses:
     
     def test_fewer_guesses_than_workers(self, space):
         """Test with fewer initial guesses than workers."""
-        def objective(params):
-            offset = {'A': 0, 'B': 1, 'C': 2}[params['cat']]
-            return params['x']**2 + params['y']**2 + offset
+        def objective(x, y, cat):
+            offset = {'A': 0, 'B': 1, 'C': 2}[cat]
+            return x**2 + y**2 + offset
         
         x0_list = [
             {'x': 0.5, 'y': 0.5, 'cat': 'A'},
@@ -538,9 +538,9 @@ class TestInitialGuesses:
     
     def test_initial_guess_at_optimum(self, space):
         """Test starting exactly at the optimum."""
-        def objective(params):
-            offset = {'A': 0, 'B': 1, 'C': 2}[params['cat']]
-            return params['x']**2 + params['y']**2 + offset
+        def objective(x, y, cat):
+            offset = {'A': 0, 'B': 1, 'C': 2}[cat]
+            return x**2 + y**2 + offset
         
         x0 = {'x': 0.0, 'y': 0.0, 'cat': 'A'}  # Optimal point
         
@@ -551,9 +551,9 @@ class TestInitialGuesses:
     
     def test_initial_guess_far_from_optimum(self, space):
         """Test starting far from the optimum."""
-        def objective(params):
-            offset = {'A': 0, 'B': 1, 'C': 2}[params['cat']]
-            return params['x']**2 + params['y']**2 + offset
+        def objective(x, y, cat):
+            offset = {'A': 0, 'B': 1, 'C': 2}[cat]
+            return x**2 + y**2 + offset
         
         x0 = {'x': 9.9, 'y': -9.9, 'cat': 'C'}  # Far from optimal (0, 0, A)
         
@@ -569,17 +569,17 @@ class TestOptimizerArgs:
     
     @pytest.fixture
     def space(self):
-        return [
-            {'name': 'x', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-            {'name': 'y', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-        ]
+        return {
+            'x': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            'y': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+        }
     
     # Sigma (step size) configurations
     @pytest.mark.parametrize("sigma_init", [0.1, 0.3, 0.5, 0.8])
     def test_different_sigma_init(self, space, sigma_init):
         """Test with different initial sigma values."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space, n_workers=2, random_state=42)
         result = opt.optimize(
@@ -594,8 +594,8 @@ class TestOptimizerArgs:
     @pytest.mark.parametrize("sigma_final_fraction", [0.1, 0.2, 0.5, 0.8])
     def test_different_sigma_final_fraction(self, space, sigma_final_fraction):
         """Test with different sigma final fractions."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space, n_workers=2, random_state=42)
         result = opt.optimize(
@@ -610,8 +610,8 @@ class TestOptimizerArgs:
     @pytest.mark.parametrize("sigma_schedule", ['exponential', 'linear', 'cosine'])
     def test_different_sigma_schedules(self, space, sigma_schedule):
         """Test different sigma decay schedules."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space, n_workers=2, random_state=42)
         result = opt.optimize(
@@ -632,8 +632,8 @@ class TestOptimizerArgs:
     ])
     def test_different_top_n_ranges(self, space, top_n_min, top_n_max):
         """Test with different top_n fraction ranges."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space, n_workers=4, random_state=42)
         result = opt.optimize(
@@ -649,8 +649,8 @@ class TestOptimizerArgs:
     @pytest.mark.parametrize("weight_decay", [0.8, 0.9, 0.95, 0.99, 1.0])
     def test_different_weight_decay(self, space, weight_decay):
         """Test with different weight decay values."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space, n_workers=2, random_state=42)
         result = opt.optimize(
@@ -664,8 +664,8 @@ class TestOptimizerArgs:
     
     def test_no_improvement_weights(self, space):
         """Test with use_improvement_weights=False."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space, n_workers=2, random_state=42)
         result = opt.optimize(
@@ -681,8 +681,8 @@ class TestOptimizerArgs:
     @pytest.mark.parametrize("lr", [0.0001, 0.001, 0.01, 0.1])
     def test_different_adam_learning_rates(self, space, lr):
         """Test with different ADAM learning rates."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space, n_workers=2, random_state=42)
         result = opt.optimize(
@@ -701,8 +701,8 @@ class TestOptimizerArgs:
     ])
     def test_different_adam_betas(self, space, beta1, beta2):
         """Test with different ADAM beta values."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space, n_workers=2, random_state=42)
         result = opt.optimize(
@@ -719,8 +719,8 @@ class TestOptimizerArgs:
     @pytest.mark.parametrize("sync_freq", [10, 50, 100, 500])
     def test_different_sync_frequencies(self, space, sync_freq):
         """Test with different worker sync frequencies."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space, n_workers=4, random_state=42)
         result = opt.optimize(
@@ -735,8 +735,8 @@ class TestOptimizerArgs:
     # Combined configurations
     def test_aggressive_exploration(self, space):
         """Test configuration favoring exploration."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space, n_workers=4, random_state=42)
         result = opt.optimize(
@@ -756,8 +756,8 @@ class TestOptimizerArgs:
     
     def test_aggressive_exploitation(self, space):
         """Test configuration favoring exploitation."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space, n_workers=4, random_state=42)
         result = opt.optimize(
@@ -778,8 +778,8 @@ class TestOptimizerArgs:
     
     def test_all_default_args(self, space):
         """Test with all default arguments."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space)
         result = opt.optimize(sphere, verbose=False)
@@ -792,9 +792,9 @@ class TestConstructorArgs:
     
     @pytest.fixture
     def space(self):
-        return [
-            {'name': 'x', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-        ]
+        return {
+            'x': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+        }
     
     def test_default_constructor(self, space):
         """Test with default constructor args."""
@@ -868,42 +868,42 @@ class TestOutputValidation:
     @pytest.fixture
     def continuous_space(self):
         """Continuous params with various bound ranges."""
-        return [
-            {'name': 'a', 'type': 'continuous', 'bounds': [-100.0, 100.0]},
-            {'name': 'b', 'type': 'continuous', 'bounds': [0.0, 1.0]},
-            {'name': 'c', 'type': 'continuous', 'bounds': [1e-6, 1e-1], 'log': True},
-            {'name': 'd', 'type': 'continuous', 'bounds': [0.001, 1000.0]},
-            {'name': 'e', 'type': 'continuous', 'bounds': [-1.5, 1.5]},
-        ]
+        return {
+            'a': {'type': 'continuous', 'bounds': [-100.0, 100.0]},
+            'b': {'type': 'continuous', 'bounds': [0.0, 1.0]},
+            'c': {'type': 'continuous', 'bounds': [1e-6, 1e-1], 'log': True},
+            'd': {'type': 'continuous', 'bounds': [0.001, 1000.0]},
+            'e': {'type': 'continuous', 'bounds': [-1.5, 1.5]},
+        }
     
     @pytest.fixture
     def categorical_space(self):
         """Categorical params with various value types."""
-        return [
-            {'name': 'x', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-            {'name': 'cat_str', 'type': 'categorical', 'values': ['A', 'B', 'C', 'D']},
-            {'name': 'cat_int', 'type': 'categorical', 'values': [1, 2, 3, 4, 5]},
-            {'name': 'cat_float', 'type': 'categorical', 'values': [0.1, 0.5, 1.0, 2.0]},
-        ]
+        return {
+            'x': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            'cat_str': {'type': 'categorical', 'values': ['A', 'B', 'C', 'D']},
+            'cat_int': {'type': 'categorical', 'values': [1, 2, 3, 4, 5]},
+            'cat_float': {'type': 'categorical', 'values': [0.1, 0.5, 1.0, 2.0]},
+        }
     
     @pytest.fixture
     def ordinal_space(self):
         """Ordinal params with ordered values."""
-        return [
-            {'name': 'x', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-            {'name': 'ord_int', 'type': 'ordinal', 'values': [1, 2, 4, 8, 16, 32]},
-            {'name': 'ord_float', 'type': 'ordinal', 'values': [0.001, 0.01, 0.1, 1.0]},
-        ]
+        return {
+            'x': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            'ord_int': {'type': 'ordinal', 'values': [1, 2, 4, 8, 16, 32]},
+            'ord_float': {'type': 'ordinal', 'values': [0.001, 0.01, 0.1, 1.0]},
+        }
     
     @pytest.fixture
     def mixed_space(self):
         """Mixed space with all param types."""
-        return [
-            {'name': 'lr', 'type': 'continuous', 'bounds': [1e-5, 1.0], 'log': True},
-            {'name': 'momentum', 'type': 'continuous', 'bounds': [0.0, 0.99]},
-            {'name': 'batch_size', 'type': 'ordinal', 'values': [16, 32, 64, 128, 256]},
-            {'name': 'optimizer', 'type': 'categorical', 'values': ['adam', 'sgd', 'rmsprop']},
-        ]
+        return {
+            'lr': {'type': 'continuous', 'bounds': [1e-5, 1.0], 'log': True},
+            'momentum': {'type': 'continuous', 'bounds': [0.0, 0.99]},
+            'batch_size': {'type': 'ordinal', 'values': [16, 32, 64, 128, 256]},
+            'optimizer': {'type': 'categorical', 'values': ['adam', 'sgd', 'rmsprop']},
+        }
     
     def _optimize(self, obj, space, n_trials=100, **kwargs):
         """Helper to run optimization with the class-based API."""
@@ -912,13 +912,12 @@ class TestOutputValidation:
     
     def test_continuous_params_within_bounds(self, continuous_space):
         """Test that all continuous params are within declared bounds."""
-        def obj(params):
+        def obj(**params):
             return sum(v**2 if isinstance(v, (int, float)) else 0 for v in params.values())
         
         result = self._optimize(obj, continuous_space, n_trials=100)
         
-        for param_def in continuous_space:
-            name = param_def['name']
+        for name, param_def in continuous_space.items():
             lower, upper = param_def['bounds']
             value = result.best_params[name]
             
@@ -929,15 +928,14 @@ class TestOutputValidation:
     
     def test_log_scale_params_positive(self, continuous_space):
         """Test that log-scale params are positive and within bounds."""
-        def obj(params):
+        def obj(**params):
             return sum(v**2 if isinstance(v, (int, float)) else 0 for v in params.values())
         
         result = self._optimize(obj, continuous_space, n_trials=100)
         
         # Find log-scale param (c)
-        for param_def in continuous_space:
+        for name, param_def in continuous_space.items():
             if param_def.get('log', False):
-                name = param_def['name']
                 value = result.best_params[name]
                 lower, upper = param_def['bounds']
                 
@@ -947,22 +945,21 @@ class TestOutputValidation:
     
     def test_categorical_params_valid_values(self, categorical_space):
         """Test that categorical params have valid values from the list."""
-        def obj(params):
+        def obj(x, cat_str, cat_int, cat_float):
             # Different values for different categories
             cat_penalty = 0
-            if params['cat_str'] == 'A':
+            if cat_str == 'A':
                 cat_penalty = 0
-            elif params['cat_str'] == 'B':
+            elif cat_str == 'B':
                 cat_penalty = 1
             else:
                 cat_penalty = 2
-            return params['x']**2 + cat_penalty
+            return x**2 + cat_penalty
         
         result = self._optimize(obj, categorical_space, n_trials=100)
         
-        for param_def in categorical_space:
+        for name, param_def in categorical_space.items():
             if param_def['type'] == 'categorical':
-                name = param_def['name']
                 value = result.best_params[name]
                 valid_values = param_def['values']
                 
@@ -971,14 +968,13 @@ class TestOutputValidation:
     
     def test_ordinal_params_valid_values(self, ordinal_space):
         """Test that ordinal params have valid values from the list."""
-        def obj(params):
-            return params['x']**2 + params['ord_int'] * 0.01
+        def obj(x, ord_int, ord_float):
+            return x**2 + ord_int * 0.01
         
         result = self._optimize(obj, ordinal_space, n_trials=100)
         
-        for param_def in ordinal_space:
+        for name, param_def in ordinal_space.items():
             if param_def['type'] == 'ordinal':
-                name = param_def['name']
                 value = result.best_params[name]
                 valid_values = param_def['values']
                 
@@ -987,14 +983,13 @@ class TestOutputValidation:
     
     def test_mixed_space_all_valid(self, mixed_space):
         """Test that all params in mixed space are valid."""
-        def obj(params):
-            return params['lr'] * 1000 + (1 - params['momentum']) + params['batch_size'] / 256
+        def obj(lr, momentum, batch_size, optimizer):
+            return lr * 1000 + (1 - momentum) + batch_size / 256
         
         result = self._optimize(obj, mixed_space, n_trials=200)
         
         # Validate each param type
-        for param_def in mixed_space:
-            name = param_def['name']
+        for name, param_def in mixed_space.items():
             value = result.best_params[name]
             ptype = param_def['type']
             
@@ -1010,13 +1005,13 @@ class TestOutputValidation:
     
     def test_best_params_consistent_with_best_value(self, continuous_space):
         """Test that best_value is the objective evaluated at best_params."""
-        def obj(params):
-            return sum((params[p['name']])**2 for p in continuous_space)
+        def obj(a, b, c, d, e):
+            return a**2 + b**2 + c**2 + d**2 + e**2
         
         result = self._optimize(obj, continuous_space, n_trials=100)
         
         # Re-evaluate objective at best_params
-        recalculated = obj(result.best_params)
+        recalculated = obj(**result.best_params)
         
         # Should be very close (might differ slightly due to full sample re-evaluation)
         assert abs(result.best_value - recalculated) < 1e-6, \
@@ -1024,7 +1019,7 @@ class TestOutputValidation:
     
     def test_result_object_has_all_fields(self, continuous_space):
         """Test that result object has all required fields populated."""
-        def obj(params):
+        def obj(**params):
             return sum(v**2 if isinstance(v, (int, float)) else 0 for v in params.values())
         
         result = self._optimize(obj, continuous_space, n_trials=100)
@@ -1048,12 +1043,12 @@ class TestOutputValidation:
     
     def test_result_best_params_has_all_param_names(self, mixed_space):
         """Test that best_params contains all declared parameters."""
-        def obj(params):
+        def obj(lr, momentum, batch_size, optimizer):
             return 1.0
         
         result = self._optimize(obj, mixed_space, n_trials=50)
         
-        expected_names = {p['name'] for p in mixed_space}
+        expected_names = set(mixed_space.keys())
         actual_names = set(result.best_params.keys())
         
         assert expected_names == actual_names, \
@@ -1061,16 +1056,15 @@ class TestOutputValidation:
     
     def test_trials_all_have_valid_params(self, mixed_space):
         """Test that all trials in history have valid params."""
-        def obj(params):
-            return params['lr'] + params['momentum']
+        def obj(lr, momentum, batch_size, optimizer):
+            return lr + momentum
         
         result = self._optimize(obj, mixed_space, n_trials=100)
         
         for trial in result.trials:
             params = trial.params
             
-            for param_def in mixed_space:
-                name = param_def['name']
+            for name, param_def in mixed_space.items():
                 ptype = param_def['type']
                 value = params[name]
                 
@@ -1086,15 +1080,15 @@ class TestOutputValidation:
     
     def test_descaling_asymmetric_bounds(self):
         """Test descaling with asymmetric bounds like [-100, 50]."""
-        space = [
-            {'name': 'a', 'type': 'continuous', 'bounds': [-100.0, 50.0]},
-            {'name': 'b', 'type': 'continuous', 'bounds': [-0.5, 10.0]},
-        ]
+        space = {
+            'a': {'type': 'continuous', 'bounds': [-100.0, 50.0]},
+            'b': {'type': 'continuous', 'bounds': [-0.5, 10.0]},
+        }
         
         # Objective with known optimum at bounds edge
-        def obj(params):
+        def obj(a, b):
             # Optimum at a=-100, b=-0.5
-            return (params['a'] + 100)**2 + (params['b'] + 0.5)**2
+            return (a + 100)**2 + (b + 0.5)**2
         
         result = self._optimize(obj, space, n_trials=200)
         
@@ -1104,13 +1098,13 @@ class TestOutputValidation:
     
     def test_maximize_direction_output(self):
         """Test that maximize direction returns correctly."""
-        space = [
-            {'name': 'x', 'type': 'continuous', 'bounds': [0.0, 10.0]},
-        ]
+        space = {
+            'x': {'type': 'continuous', 'bounds': [0.0, 10.0]},
+        }
         
         # Objective: maximize x (optimal at x=10)
-        def obj(params):
-            return params['x']
+        def obj(x):
+            return x
         
         opt = RAGDAOptimizer(space, direction='maximize')
         result = opt.optimize(obj, n_trials=100, verbose=False)
@@ -1122,12 +1116,12 @@ class TestOutputValidation:
     
     def test_single_param_output(self):
         """Test with single parameter space."""
-        space = [
-            {'name': 'x', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-        ]
+        space = {
+            'x': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+        }
         
-        def obj(params):
-            return params['x']**2
+        def obj(x):
+            return x**2
         
         result = self._optimize(obj, space, n_trials=100)
         
@@ -1137,17 +1131,17 @@ class TestOutputValidation:
     
     def test_categorical_only_space(self):
         """Test space with only categorical params."""
-        space = [
-            {'name': 'a', 'type': 'categorical', 'values': ['X', 'Y', 'Z']},
-            {'name': 'b', 'type': 'categorical', 'values': [1, 2, 3]},
-        ]
+        space = {
+            'a': {'type': 'categorical', 'values': ['X', 'Y', 'Z']},
+            'b': {'type': 'categorical', 'values': [1, 2, 3]},
+        }
         
-        def obj(params):
+        def obj(a, b):
             # X+1 is best
             val = 0
-            if params['a'] == 'X':
+            if a == 'X':
                 val -= 1
-            if params['b'] == 1:
+            if b == 1:
                 val -= 1
             return val
         
@@ -1161,14 +1155,14 @@ class TestOutputValidation:
     
     def test_ordinal_only_space(self):
         """Test space with only ordinal params."""
-        space = [
-            {'name': 'n_layers', 'type': 'ordinal', 'values': [1, 2, 4, 8]},
-            {'name': 'n_units', 'type': 'ordinal', 'values': [32, 64, 128, 256]},
-        ]
+        space = {
+            'n_layers': {'type': 'ordinal', 'values': [1, 2, 4, 8]},
+            'n_units': {'type': 'ordinal', 'values': [32, 64, 128, 256]},
+        }
         
-        def obj(params):
+        def obj(n_layers, n_units):
             # Prefer smaller
-            return params['n_layers'] + params['n_units'] / 256
+            return n_layers + n_units / 256
         
         result = self._optimize(obj, space, n_trials=100)
         
@@ -1177,13 +1171,13 @@ class TestOutputValidation:
     
     def test_wide_bounds_descaling(self):
         """Test descaling with very wide bounds."""
-        space = [
-            {'name': 'x', 'type': 'continuous', 'bounds': [-1e6, 1e6]},
-            {'name': 'y', 'type': 'continuous', 'bounds': [1e-10, 1e10], 'log': True},
-        ]
+        space = {
+            'x': {'type': 'continuous', 'bounds': [-1e6, 1e6]},
+            'y': {'type': 'continuous', 'bounds': [1e-10, 1e10], 'log': True},
+        }
         
-        def obj(params):
-            return abs(params['x']) + np.log10(params['y']) / 10
+        def obj(x, y):
+            return abs(x) + np.log10(y) / 10
         
         result = self._optimize(obj, space, n_trials=200)
         
@@ -1193,12 +1187,12 @@ class TestOutputValidation:
     
     def test_narrow_bounds_precision(self):
         """Test that narrow bounds maintain precision."""
-        space = [
-            {'name': 'x', 'type': 'continuous', 'bounds': [0.5, 0.500001]},
-        ]
+        space = {
+            'x': {'type': 'continuous', 'bounds': [0.5, 0.500001]},
+        }
         
-        def obj(params):
-            return (params['x'] - 0.5000005)**2
+        def obj(x):
+            return (x - 0.5000005)**2
         
         result = self._optimize(obj, space, n_trials=100)
         
@@ -1207,7 +1201,7 @@ class TestOutputValidation:
     
     def test_best_trial_consistency(self, continuous_space):
         """Test that best_trial matches best_params and best_value."""
-        def obj(params):
+        def obj(**params):
             return sum(v**2 if isinstance(v, (int, float)) else 0 for v in params.values())
         
         result = self._optimize(obj, continuous_space, n_trials=100)
@@ -1230,7 +1224,7 @@ class TestOutputValidation:
     
     def test_trials_df_structure(self, mixed_space):
         """Test that trials_df has correct structure."""
-        def obj(params):
+        def obj(lr, momentum, batch_size, optimizer):
             return 1.0
         
         result = self._optimize(obj, mixed_space, n_trials=50)
@@ -1244,13 +1238,13 @@ class TestOutputValidation:
         assert 'value' in df.columns
         
         # Should have all param columns
-        for param_def in mixed_space:
-            assert param_def['name'] in df.columns, \
-                f"Missing column for param '{param_def['name']}'"
+        for name in mixed_space.keys():
+            assert name in df.columns, \
+                f"Missing column for param '{name}'"
     
     def test_n_trials_matches_history(self, continuous_space):
         """Test that n_trials count matches trials list length."""
-        def obj(params):
+        def obj(**params):
             return 1.0
         
         result = self._optimize(obj, continuous_space, n_trials=100)

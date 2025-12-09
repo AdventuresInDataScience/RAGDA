@@ -49,16 +49,16 @@ def create_lightgbm_problem(dataset: str = 'breast_cancer') -> Optional[MLProble
     X, y = datasets[dataset](return_X_y=True)
     n_classes = len(np.unique(y))
     
-    def func(params, batch_size: int = -1):
+    def func(num_leaves, learning_rate, feature_fraction, bagging_fraction, bagging_freq, min_child_samples, batch_size: int = -1):
         lgb_params = {
             'objective': 'multiclass' if n_classes > 2 else 'binary',
             'num_class': n_classes if n_classes > 2 else None,
-            'num_leaves': int(params['num_leaves']),
-            'learning_rate': params['learning_rate'],
-            'feature_fraction': params['feature_fraction'],
-            'bagging_fraction': params['bagging_fraction'],
-            'bagging_freq': int(params['bagging_freq']),
-            'min_child_samples': int(params['min_child_samples']),
+            'num_leaves': int(num_leaves),
+            'learning_rate': learning_rate,
+            'feature_fraction': feature_fraction,
+            'bagging_fraction': bagging_fraction,
+            'bagging_freq': int(bagging_freq),
+            'min_child_samples': int(min_child_samples),
             'verbose': -1, 'n_jobs': 1
         }
         if lgb_params['num_class'] is None:
@@ -80,14 +80,14 @@ def create_lightgbm_problem(dataset: str = 'breast_cancer') -> Optional[MLProble
         except:
             return 1.0
     
-    space = [
-        {'name': 'num_leaves', 'type': 'ordinal', 'values': [15, 31, 63, 127, 255]},
-        {'name': 'learning_rate', 'type': 'continuous', 'bounds': [0.001, 0.3], 'log': True},
-        {'name': 'feature_fraction', 'type': 'continuous', 'bounds': [0.5, 1.0]},
-        {'name': 'bagging_fraction', 'type': 'continuous', 'bounds': [0.5, 1.0]},
-        {'name': 'bagging_freq', 'type': 'ordinal', 'values': [0, 1, 5, 10]},
-        {'name': 'min_child_samples', 'type': 'ordinal', 'values': [5, 10, 20, 50]},
-    ]
+    space = {
+        'num_leaves': {'type': 'ordinal', 'values': [15, 31, 63, 127, 255]},
+        'learning_rate': {'type': 'continuous', 'bounds': [0.001, 0.3], 'log': True},
+        'feature_fraction': {'type': 'continuous', 'bounds': [0.5, 1.0]},
+        'bagging_fraction': {'type': 'continuous', 'bounds': [0.5, 1.0]},
+        'bagging_freq': {'type': 'ordinal', 'values': [0, 1, 5, 10]},
+        'min_child_samples': {'type': 'ordinal', 'values': [5, 10, 20, 50]},
+    }
     
     return MLProblem(
         name=f'LightGBM-{dataset}', func=func, space=space, dim=6,
@@ -108,14 +108,14 @@ def create_xgboost_problem(dataset: str = 'breast_cancer') -> Optional[MLProblem
     datasets = {'breast_cancer': load_breast_cancer, 'digits': load_digits}
     X, y = datasets.get(dataset, load_breast_cancer)(return_X_y=True)
     
-    def func(params, batch_size: int = -1):
+    def func(max_depth, learning_rate, subsample, colsample_bytree, min_child_weight, gamma, batch_size: int = -1):
         xgb_params = {
-            'max_depth': int(params['max_depth']),
-            'learning_rate': params['learning_rate'],
-            'subsample': params['subsample'],
-            'colsample_bytree': params['colsample_bytree'],
-            'min_child_weight': params['min_child_weight'],
-            'gamma': params['gamma'],
+            'max_depth': int(max_depth),
+            'learning_rate': learning_rate,
+            'subsample': subsample,
+            'colsample_bytree': colsample_bytree,
+            'min_child_weight': min_child_weight,
+            'gamma': gamma,
             'verbosity': 0, 'n_jobs': 1, 'random_state': 42
         }
         
@@ -134,14 +134,14 @@ def create_xgboost_problem(dataset: str = 'breast_cancer') -> Optional[MLProblem
         except:
             return 1.0
     
-    space = [
-        {'name': 'max_depth', 'type': 'ordinal', 'values': [3, 5, 7, 9, 11]},
-        {'name': 'learning_rate', 'type': 'continuous', 'bounds': [0.001, 0.3], 'log': True},
-        {'name': 'subsample', 'type': 'continuous', 'bounds': [0.5, 1.0]},
-        {'name': 'colsample_bytree', 'type': 'continuous', 'bounds': [0.5, 1.0]},
-        {'name': 'min_child_weight', 'type': 'continuous', 'bounds': [1, 10]},
-        {'name': 'gamma', 'type': 'continuous', 'bounds': [0, 5]},
-    ]
+    space = {
+        'max_depth': {'type': 'ordinal', 'values': [3, 5, 7, 9, 11]},
+        'learning_rate': {'type': 'continuous', 'bounds': [0.001, 0.3], 'log': True},
+        'subsample': {'type': 'continuous', 'bounds': [0.5, 1.0]},
+        'colsample_bytree': {'type': 'continuous', 'bounds': [0.5, 1.0]},
+        'min_child_weight': {'type': 'continuous', 'bounds': [1, 10]},
+        'gamma': {'type': 'continuous', 'bounds': [0, 5]},
+    }
     
     return MLProblem(
         name=f'XGBoost-{dataset}', func=func, space=space, dim=6,
@@ -165,13 +165,13 @@ def create_random_forest_problem(dataset: str = 'breast_cancer') -> Optional[MLP
         dataset = 'breast_cancer'
     X, y = datasets[dataset](return_X_y=True)
     
-    def func(params, batch_size: int = -1):
+    def func(n_estimators, max_depth, min_samples_split, min_samples_leaf, max_features, batch_size: int = -1):
         rf_params = {
-            'n_estimators': int(params['n_estimators']),
-            'max_depth': int(params['max_depth']) if params['max_depth'] > 0 else None,
-            'min_samples_split': int(params['min_samples_split']),
-            'min_samples_leaf': int(params['min_samples_leaf']),
-            'max_features': params['max_features'],
+            'n_estimators': int(n_estimators),
+            'max_depth': int(max_depth) if max_depth > 0 else None,
+            'min_samples_split': int(min_samples_split),
+            'min_samples_leaf': int(min_samples_leaf),
+            'max_features': max_features,
             'random_state': 42, 'n_jobs': 1
         }
         
@@ -191,13 +191,13 @@ def create_random_forest_problem(dataset: str = 'breast_cancer') -> Optional[MLP
         except:
             return 1.0
     
-    space = [
-        {'name': 'n_estimators', 'type': 'ordinal', 'values': [20, 50, 100]},  # Reduced
-        {'name': 'max_depth', 'type': 'ordinal', 'values': [5, 10, 20, -1]},  # -1 = None
-        {'name': 'min_samples_split', 'type': 'ordinal', 'values': [2, 5, 10]},
-        {'name': 'min_samples_leaf', 'type': 'ordinal', 'values': [1, 2, 4]},
-        {'name': 'max_features', 'type': 'continuous', 'bounds': [0.3, 1.0]},
-    ]
+    space = {
+        'n_estimators': {'type': 'ordinal', 'values': [20, 50, 100]},  # Reduced
+        'max_depth': {'type': 'ordinal', 'values': [5, 10, 20, -1]},  # -1 = None
+        'min_samples_split': {'type': 'ordinal', 'values': [2, 5, 10]},
+        'min_samples_leaf': {'type': 'ordinal', 'values': [1, 2, 4]},
+        'max_features': {'type': 'continuous', 'bounds': [0.3, 1.0]},
+    }
     
     return MLProblem(
         name=f'RandomForest-{dataset}', func=func, space=space, dim=5,
@@ -221,11 +221,11 @@ def create_svm_problem(dataset: str = 'breast_cancer') -> Optional[MLProblem]:
     scaler = StandardScaler()
     X = scaler.fit_transform(X)
     
-    def func(params, batch_size: int = -1):
+    def func(C, gamma, kernel, batch_size: int = -1):
         svm_params = {
-            'C': params['C'],
-            'gamma': params['gamma'],
-            'kernel': params['kernel'],
+            'C': C,
+            'gamma': gamma,
+            'kernel': kernel,
             'random_state': 42
         }
         
@@ -246,11 +246,11 @@ def create_svm_problem(dataset: str = 'breast_cancer') -> Optional[MLProblem]:
         except:
             return 1.0
     
-    space = [
-        {'name': 'C', 'type': 'continuous', 'bounds': [0.01, 100], 'log': True},
-        {'name': 'gamma', 'type': 'continuous', 'bounds': [1e-4, 10], 'log': True},
-        {'name': 'kernel', 'type': 'categorical', 'values': ['rbf', 'poly', 'sigmoid']},
-    ]
+    space = {
+        'C': {'type': 'continuous', 'bounds': [0.01, 100], 'log': True},
+        'gamma': {'type': 'continuous', 'bounds': [1e-4, 10], 'log': True},
+        'kernel': {'type': 'categorical', 'values': ['rbf', 'poly', 'sigmoid']},
+    }
     
     return MLProblem(
         name=f'SVM-{dataset}', func=func, space=space, dim=3,
@@ -274,14 +274,14 @@ def create_mlp_problem(dataset: str = 'digits') -> Optional[MLProblem]:
     scaler = StandardScaler()
     X = scaler.fit_transform(X)
     
-    def func(params, batch_size: int = -1):
-        hidden_size = int(params['hidden_size'])
+    def func(hidden_size, alpha, learning_rate_init, activation, batch_size: int = -1):
+        hidden_size = int(hidden_size)
         
         mlp_params = {
             'hidden_layer_sizes': (hidden_size, hidden_size // 2) if hidden_size > 32 else (hidden_size,),
-            'alpha': params['alpha'],
-            'learning_rate_init': params['learning_rate_init'],
-            'activation': params['activation'],
+            'alpha': alpha,
+            'learning_rate_init': learning_rate_init,
+            'activation': activation,
             'random_state': 42
         }
         
@@ -302,12 +302,12 @@ def create_mlp_problem(dataset: str = 'digits') -> Optional[MLProblem]:
         except:
             return 1.0
     
-    space = [
-        {'name': 'hidden_size', 'type': 'ordinal', 'values': [32, 64, 128, 256, 512]},
-        {'name': 'alpha', 'type': 'continuous', 'bounds': [1e-5, 1e-1], 'log': True},
-        {'name': 'learning_rate_init', 'type': 'continuous', 'bounds': [1e-4, 1e-1], 'log': True},
-        {'name': 'activation', 'type': 'categorical', 'values': ['relu', 'tanh', 'logistic']},
-    ]
+    space = {
+        'hidden_size': {'type': 'ordinal', 'values': [32, 64, 128, 256, 512]},
+        'alpha': {'type': 'continuous', 'bounds': [1e-5, 1e-1], 'log': True},
+        'learning_rate_init': {'type': 'continuous', 'bounds': [1e-4, 1e-1], 'log': True},
+        'activation': {'type': 'categorical', 'values': ['relu', 'tanh', 'logistic']},
+    }
     
     return MLProblem(
         name=f'MLP-{dataset}', func=func, space=space, dim=4,
@@ -337,13 +337,13 @@ def create_gradient_boosting_regressor(dataset: str = 'diabetes') -> Optional[ML
         idx = np.random.choice(len(X), min(5000, len(X)), replace=False)
         X, y = X[idx], y[idx]
     
-    def func(params, batch_size: int = -1):
+    def func(n_estimators, max_depth, learning_rate, subsample, min_samples_split, batch_size: int = -1):
         gbr_params = {
-            'n_estimators': int(params['n_estimators']),
-            'max_depth': int(params['max_depth']),
-            'learning_rate': params['learning_rate'],
-            'subsample': params['subsample'],
-            'min_samples_split': int(params['min_samples_split']),
+            'n_estimators': int(n_estimators),
+            'max_depth': int(max_depth),
+            'learning_rate': learning_rate,
+            'subsample': subsample,
+            'min_samples_split': int(min_samples_split),
             'random_state': 42
         }
         
@@ -363,13 +363,13 @@ def create_gradient_boosting_regressor(dataset: str = 'diabetes') -> Optional[ML
         except:
             return 1e10
     
-    space = [
-        {'name': 'n_estimators', 'type': 'ordinal', 'values': [50, 100, 200, 300]},
-        {'name': 'max_depth', 'type': 'ordinal', 'values': [3, 5, 7, 9]},
-        {'name': 'learning_rate', 'type': 'continuous', 'bounds': [0.01, 0.3], 'log': True},
-        {'name': 'subsample', 'type': 'continuous', 'bounds': [0.5, 1.0]},
-        {'name': 'min_samples_split', 'type': 'ordinal', 'values': [2, 5, 10, 20]},
-    ]
+    space = {
+        'n_estimators': {'type': 'ordinal', 'values': [50, 100, 200, 300]},
+        'max_depth': {'type': 'ordinal', 'values': [3, 5, 7, 9]},
+        'learning_rate': {'type': 'continuous', 'bounds': [0.01, 0.3], 'log': True},
+        'subsample': {'type': 'continuous', 'bounds': [0.5, 1.0]},
+        'min_samples_split': {'type': 'ordinal', 'values': [2, 5, 10]},
+    }
     
     return MLProblem(
         name=f'GBRegressor-{dataset}', func=func, space=space, dim=5,
@@ -392,10 +392,10 @@ def create_elastic_net_problem(dataset: str = 'diabetes') -> Optional[MLProblem]
     scaler = StandardScaler()
     X = scaler.fit_transform(X)
     
-    def func(params, batch_size: int = -1):
+    def func(alpha, l1_ratio, batch_size: int = -1):
         en_params = {
-            'alpha': params['alpha'],
-            'l1_ratio': params['l1_ratio'],
+            'alpha': alpha,
+            'l1_ratio': l1_ratio,
             'max_iter': 1000, 'random_state': 42
         }
         
@@ -414,10 +414,10 @@ def create_elastic_net_problem(dataset: str = 'diabetes') -> Optional[MLProblem]
         except:
             return 1e10
     
-    space = [
-        {'name': 'alpha', 'type': 'continuous', 'bounds': [1e-5, 10], 'log': True},
-        {'name': 'l1_ratio', 'type': 'continuous', 'bounds': [0.0, 1.0]},
-    ]
+    space = {
+        'alpha': {'type': 'continuous', 'bounds': [1e-5, 10], 'log': True},
+        'l1_ratio': {'type': 'continuous', 'bounds': [0.0, 1.0]},
+    }
     
     return MLProblem(
         name=f'ElasticNet-{dataset}', func=func, space=space, dim=2,
@@ -443,8 +443,9 @@ def create_portfolio_problem(n_assets: int = 10, n_periods: int = 252) -> MLProb
     mean_returns = returns.mean(axis=0)
     cov_matrix = np.cov(returns.T)
     
-    def func(params, batch_size: int = -1):
-        weights = np.array([params[f'w{i}'] for i in range(n_assets)])
+    def func(**kwargs):
+        batch_size = kwargs.pop('batch_size', -1)
+        weights = np.array([kwargs[f'w{i}'] for i in range(n_assets)])
         weights = np.abs(weights)
         weights = weights / (weights.sum() + 1e-10)
         
@@ -466,7 +467,7 @@ def create_portfolio_problem(n_assets: int = 10, n_periods: int = 252) -> MLProb
         sharpe = portfolio_return / portfolio_risk
         return -sharpe  # Maximize Sharpe
     
-    space = [{'name': f'w{i}', 'type': 'continuous', 'bounds': [0.0, 1.0]} for i in range(n_assets)]
+    space = {f'w{i}': {'type': 'continuous', 'bounds': [0.0, 1.0]} for i in range(n_assets)}
     
     return MLProblem(
         name=f'Portfolio-{n_assets}assets', func=func, space=space, dim=n_assets,

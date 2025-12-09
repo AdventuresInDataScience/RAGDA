@@ -37,6 +37,14 @@ from .highdim import (
     DimensionalityReducer
 )
 
+# Import API compatibility layers (Optuna-style, Scipy-style)
+from .api_compat import (
+    create_study,
+    Study,
+    minimize,
+    maximize
+)
+
 __all__ = [
     # Main classes - just use RAGDAOptimizer, it handles high-dim automatically
     "RAGDAOptimizer",
@@ -46,6 +54,11 @@ __all__ = [
     "Parameter",
     # Convenience functions
     "ragda_optimize",
+    # API compatibility
+    "create_study",
+    "Study",
+    "minimize",
+    "maximize",
     # Core modules
     "core",
     # Version and availability

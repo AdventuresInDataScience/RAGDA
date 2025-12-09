@@ -5,10 +5,10 @@ import numpy as np
 
 # Test 1: Basic greedy strategy (default)
 print('Test 1: Greedy strategy (default)')
-space = [{'name': 'x', 'type': 'continuous', 'bounds': [-5, 5]}]
+space = {'x': {'type': 'continuous', 'bounds': [-5, 5]}}
 
-def objective(params):
-    return params['x']**2
+def objective(x):
+    return x**2
 
 optimizer = RAGDAOptimizer(space, n_workers=2, random_state=42)
 result = optimizer.optimize(objective, n_trials=50, verbose=False)

@@ -17,8 +17,8 @@ from ragda import RAGDAOptimizer, ragda_optimize
 # TEST FIXTURES AND HELPERS
 # =============================================================================
 
-def sphere_dict(params):
-    """Sphere function for dict-based API."""
+def sphere_dict(**params):
+    """Sphere function for kwargs API."""
     return sum(v**2 for v in params.values() if isinstance(v, (int, float)))
 
 
@@ -27,8 +27,8 @@ def sphere_array(x):
     return np.sum(np.array(x) ** 2)
 
 
-def rastrigin_dict(params):
-    """Rastrigin function - multimodal test function (dict API)."""
+def rastrigin_dict(**params):
+    """Rastrigin function - multimodal test function (kwargs API)."""
     A = 10
     vals = [v for v in params.values() if isinstance(v, (int, float))]
     n = len(vals)
@@ -42,8 +42,8 @@ def rastrigin_array(x):
     return A * n + sum([(xi**2 - A * np.cos(2 * np.pi * xi)) for xi in x])
 
 
-def rosenbrock_dict(params):
-    """Rosenbrock function - classic optimization test (dict API)."""
+def rosenbrock_dict(**params):
+    """Rosenbrock function - classic optimization test (kwargs API)."""
     vals = sorted([(k, v) for k, v in params.items()], key=lambda x: x[0])
     x = [v for k, v in vals]
     return sum(100.0 * (x[i+1] - x[i]**2)**2 + (1 - x[i])**2 for i in range(len(x)-1))
@@ -56,10 +56,10 @@ def rosenbrock_array(x):
 
 def get_simple_space(dim=2, low=-5.0, high=5.0):
     """Create a simple search space for dict API."""
-    return [
-        {'name': f'x{i}', 'type': 'continuous', 'bounds': [low, high]}
+    return {
+        f'x{i}': {'type': 'continuous', 'bounds': [low, high]}
         for i in range(dim)
-    ]
+    }
 
 
 def get_simple_bounds(dim=2, low=-5.0, high=5.0):
@@ -495,7 +495,7 @@ class TestEdgeCases:
     
     def test_single_dimension(self):
         """Test with 1D problem."""
-        space = [{'name': 'x0', 'type': 'continuous', 'bounds': [-10.0, 10.0]}]
+        space = {'x0': {'type': 'continuous', 'bounds': [-10.0, 10.0]}}
         opt = RAGDAOptimizer(space, n_workers=4, random_state=42)
         result = opt.optimize(
             sphere_dict,
@@ -519,11 +519,11 @@ class TestEdgeCases:
     
     def test_asymmetric_bounds(self):
         """Test with asymmetric bounds."""
-        space = [
-            {'name': 'x0', 'type': 'continuous', 'bounds': [-10.0, 5.0]},
-            {'name': 'x1', 'type': 'continuous', 'bounds': [-2.0, 8.0]},
-            {'name': 'x2', 'type': 'continuous', 'bounds': [0.0, 100.0]},
-        ]
+        space = {
+            'x0': {'type': 'continuous', 'bounds': [-10.0, 5.0]},
+            'x1': {'type': 'continuous', 'bounds': [-2.0, 8.0]},
+            'x2': {'type': 'continuous', 'bounds': [0.0, 100.0]},
+        }
         opt = RAGDAOptimizer(space, n_workers=4, random_state=42)
         result = opt.optimize(
             sphere_dict,
@@ -895,11 +895,11 @@ class TestResultConsistency:
     
     def test_params_within_bounds(self):
         """Verify best params are within bounds."""
-        space = [
-            {'name': 'a', 'type': 'continuous', 'bounds': [-3.0, 7.0]},
-            {'name': 'b', 'type': 'continuous', 'bounds': [-10.0, 2.0]},
-            {'name': 'c', 'type': 'continuous', 'bounds': [0.0, 100.0]},
-        ]
+        space = {
+            'a': {'type': 'continuous', 'bounds': [-3.0, 7.0]},
+            'b': {'type': 'continuous', 'bounds': [-10.0, 2.0]},
+            'c': {'type': 'continuous', 'bounds': [0.0, 100.0]},
+        }
         
         for strategy in ['greedy', 'dynamic']:
             opt = RAGDAOptimizer(space, n_workers=4, random_state=42)

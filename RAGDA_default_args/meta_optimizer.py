@@ -160,29 +160,29 @@ def load_all_problems(use_cache: bool = True) -> Dict[str, List[dict]]:
     
     # Load synthetic functions
     for key, tf in get_all_functions().items():
-        # Create space in RAGDA format
-        space = [
-            {'name': f'x{i}', 'type': 'continuous', 'bounds': list(tf.bounds[i])}
+        # Create space in RAGDA format (dict-based)
+        space = {
+            f'x{i}': {'type': 'continuous', 'bounds': list(tf.bounds[i])}
             for i in range(tf.dim)
-        ]
+        }
         
-        # Create wrapper that takes dict params
-        def make_dict_wrapper(orig_func, dim):
-            def wrapper(params):
+        # Create wrapper that converts kwargs to array
+        def make_kwargs_wrapper(orig_func, dim):
+            def wrapper(**params):
                 x = np.array([params[f'x{i}'] for i in range(dim)])
                 return orig_func(x)
             return wrapper
         
         all_problems.append({
             'name': tf.name,
-            'func': make_dict_wrapper(tf.func, tf.dim),
+            'func': make_kwargs_wrapper(tf.func, tf.dim),
             'space': space,
             'bounds': np.array(tf.bounds),
             'dim': tf.dim,
             'source': 'synthetic',
         })
     
-    # Load ML problems (already use dict params)
+    # Load ML problems (already migrated to kwargs in benchmark files)
     for key, mp in get_all_ml_problems().items():
         all_problems.append({
             'name': mp.name,
@@ -195,22 +195,22 @@ def load_all_problems(use_cache: bool = True) -> Dict[str, List[dict]]:
     
     # Load real-world problems
     for gp in get_all_genuine_problems():
-        # Create space in RAGDA format
-        space = [
-            {'name': f'x{i}', 'type': 'continuous', 'bounds': list(gp.bounds[i])}
+        # Create space in RAGDA format (dict-based)
+        space = {
+            f'x{i}': {'type': 'continuous', 'bounds': list(gp.bounds[i])}
             for i in range(gp.dim)
-        ]
+        }
         
-        # Create wrapper that takes dict params
-        def make_dict_wrapper2(orig_func, dim):
-            def wrapper(params):
+        # Create wrapper that converts kwargs to array
+        def make_kwargs_wrapper2(orig_func, dim):
+            def wrapper(**params):
                 x = np.array([params[f'x{i}'] for i in range(dim)])
                 return orig_func(x)
             return wrapper
         
         all_problems.append({
             'name': gp.name,
-            'func': make_dict_wrapper2(gp.func, gp.dim),
+            'func': make_kwargs_wrapper2(gp.func, gp.dim),
             'space': space,
             'bounds': np.array(gp.bounds),
             'dim': gp.dim,
@@ -236,13 +236,21 @@ def load_all_problems(use_cache: bool = True) -> Dict[str, List[dict]]:
                 if p['bounds'] is not None:
                     bounds = p['bounds']
                 else:
+                    # Extract bounds from dict-based space
                     bounds = np.array([
-                        s.get('bounds', [0, 1]) for s in p['space'] if s['type'] == 'continuous'
+                        spec.get('bounds', [0, 1]) for param_name, spec in p['space'].items() 
+                        if spec['type'] == 'continuous'
                     ])
+                
+                # Create array-based wrapper for classifier (it expects array input)
+                def array_wrapper(x):
+                    # Convert array to kwargs dict for the problem func
+                    kwargs = {f'x{i}': x[i] for i in range(len(x))}
+                    return p['func'](**kwargs)
                 
                 cp = classify_problem(
                     name=p['name'],
-                    func=lambda x: p['func']({f'x{i}': x[i] for i in range(len(x))}),
+                    func=array_wrapper,
                     bounds=bounds,
                     dim=p['dim'],
                     category=p['source'],

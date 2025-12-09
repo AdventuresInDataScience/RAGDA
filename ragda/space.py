@@ -6,7 +6,7 @@ Latin Hypercube Sampling and proper transformations.
 """
 
 import numpy as np
-from typing import Any, Dict, List, Optional, Union, Literal
+from typing import Any, Dict, List, Optional, Literal
 from dataclasses import dataclass
 
 
@@ -143,26 +143,30 @@ class SearchSpace:
     
     Parameters
     ----------
-    parameters : list of dict
-        List of parameter definitions. Each dict should have:
-        - 'name': str - parameter name
-        - 'type': str - 'continuous', 'ordinal', or 'categorical'
-        - 'bounds': tuple - (lower, upper) for continuous
-        - 'values': list - values for ordinal/categorical
-        - 'log': bool - log-scale for continuous (optional)
-    
-    Example
-    -------
-    >>> space = SearchSpace([
-    ...     {'name': 'learning_rate', 'type': 'continuous', 'bounds': [1e-5, 1e-1], 'log': True},
-    ...     {'name': 'n_layers', 'type': 'ordinal', 'values': [1, 2, 4, 8, 16]},
-    ...     {'name': 'optimizer', 'type': 'categorical', 'values': ['adam', 'sgd', 'rmsprop']},
-    ... ])
+    parameters : dict
+        Search space definition where keys are parameter names and values are parameter definitions.
+        
+        Example
+        -------
+        >>> space = SearchSpace({
+        ...     'learning_rate': {'type': 'continuous', 'bounds': [1e-5, 1e-1], 'log': True},
+        ...     'n_layers': {'type': 'ordinal', 'values': [1, 2, 4, 8, 16]},
+        ...     'optimizer': {'type': 'categorical', 'values': ['adam', 'sgd', 'rmsprop']},
+        ... })
     """
     
-    def __init__(self, parameters: List[Dict[str, Any]]):
+    def __init__(self, parameters: Dict[str, Dict[str, Any]]):
         if not parameters:
             raise ValueError("Search space cannot be empty")
+        
+        if not isinstance(parameters, dict):
+            raise TypeError(
+                f"parameters must be dict, got {type(parameters).__name__}. "
+                "Use format: {'param1': {'type': ..., 'bounds': ...}, 'param2': {...}}"
+            )
+        
+        # Convert to list format internally for processing
+        parameters = self._dict_to_list(parameters)
         
         self.parameters = []
         self._param_names = []
@@ -434,6 +438,71 @@ class SearchSpace:
             np.random.shuffle(samples[:, j])
         
         return samples
+    
+    @staticmethod
+    def _dict_to_list(space_dict: Dict[str, Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        Convert dict-based space to list-based format (internal representation).
+        
+        Parameters
+        ----------
+        space_dict : dict
+            Dict where keys are parameter names, values are parameter specs
+        
+        Returns
+        -------
+        space_list : list of dict
+            List format with 'name' key added to each parameter
+        """
+        space_list = []
+        for name, spec in space_dict.items():
+            param_dict = {'name': name}
+            param_dict.update(spec)
+            space_list.append(param_dict)
+        return space_list
+    
+    @staticmethod
+    def _list_to_dict(space_list: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+        """
+        Convert list-based space to dict-based format.
+        
+        Parameters
+        ----------
+        space_list : list of dict
+            List format with 'name' key in each parameter
+        
+        Returns
+        -------
+        space_dict : dict
+            Dict where keys are parameter names
+        """
+        space_dict = {}
+        for param in space_list:
+            name = param['name']
+            spec = {k: v for k, v in param.items() if k != 'name'}
+            space_dict[name] = spec
+        return space_dict
+    
+    def to_dict(self) -> Dict[str, Dict[str, Any]]:
+        """
+        Export search space as dict format.
+        
+        Returns
+        -------
+        space_dict : dict
+            Dict-based space definition
+        """
+        space_dict = {}
+        for param in self.parameters:
+            spec = {'type': param.type}
+            if param.bounds is not None:
+                spec['bounds'] = list(param.bounds)
+            if param.values is not None:
+                spec['values'] = list(param.values)
+            if param.log:
+                spec['log'] = True
+            space_dict[param.name] = spec
+        return space_dict
     
     def _sample_random(self, n: int) -> List[Dict[str, Any]]:
         """Uniform random sampling."""

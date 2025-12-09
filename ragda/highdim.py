@@ -870,8 +870,8 @@ class HighDimRAGDAOptimizer:
     ):
         """Run standard RAGDA optimization without dimensionality reduction."""
         optimizer = RAGDAOptimizer(
-            [{'name': p.name, 'type': p.type, 'bounds': p.bounds, 'values': p.values, 'log': p.log}
-             for p in self.space.parameters],
+            {p.name: {'type': p.type, 'bounds': p.bounds, 'values': p.values, 'log': p.log}
+             for p in self.space.parameters},
             direction=self.direction,
             n_workers=self.n_workers,
             random_state=self.random_state
@@ -908,12 +908,12 @@ class HighDimRAGDAOptimizer:
             verbose=verbose
         )
     
-    def _create_reduced_space(self, n_components: int) -> List[Dict[str, Any]]:
+    def _create_reduced_space(self, n_components: int) -> Dict[str, Dict[str, Any]]:
         """Create a search space for the reduced dimensions."""
-        return [
-            {'name': f'z{i}', 'type': 'continuous', 'bounds': [-3.0, 3.0]}
+        return {
+            f'z{i}': {'type': 'continuous', 'bounds': [-3.0, 3.0]}
             for i in range(n_components)
-        ]
+        }
     
     def _create_reduced_objective(
         self,
@@ -1091,12 +1091,12 @@ def highdim_ragda_optimize(
     
     n_dims = len(bounds)
     
-    space = [
-        {'name': f'x{i}', 'type': 'continuous', 'bounds': [float(bounds[i, 0]), float(bounds[i, 1])]}
+    space = {
+        f'x{i}': {'type': 'continuous', 'bounds': [float(bounds[i, 0]), float(bounds[i, 1])]}
         for i in range(n_dims)
-    ]
+    }
     
-    def objective_dict(params):
+    def objective_dict(**params):
         x = np.array([params[f'x{i}'] for i in range(n_dims)])
         return objective(x)
     

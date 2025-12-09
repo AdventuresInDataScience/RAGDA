@@ -77,9 +77,9 @@ def _run_worker_task_loky(task: _WorkerTask):
         try:
             params = space.from_split_vectors(x_cont, x_cat)
             if supports_batch and batch_size > 0:
-                value = objective(params, batch_size=batch_size)
+                value = objective(**params, batch_size=batch_size)
             else:
-                value = objective(params)
+                value = objective(**params)
             return float(sign * value)
         except Exception:
             return 1e10
@@ -122,9 +122,9 @@ class _ObjectiveWrapper:
             params = self.space.from_split_vectors(x_cont, x_cat)
             
             if self.supports_batch_size and batch_size > 0:
-                value = self.objective(params, batch_size=batch_size)
+                value = self.objective(**params, batch_size=batch_size)
             else:
-                value = self.objective(params)
+                value = self.objective(**params)
             
             return float(self._sign * value)
         except Exception:
@@ -228,13 +228,13 @@ class RAGDAOptimizer:
     Example:
         >>> from ragda import RAGDAOptimizer
         >>> 
-        >>> def objective(params):
-        ...     return (params['x'] - 2)**2 + (params['y'] - 3)**2
+        >>> def objective(x, y):
+        ...     return (x - 2)**2 + (y - 3)**2
         >>> 
-        >>> space = [
-        ...     {'name': 'x', 'type': 'continuous', 'bounds': [-5, 5]},
-        ...     {'name': 'y', 'type': 'continuous', 'bounds': [-5, 5]}
-        ... ]
+        >>> space = {
+        ...     'x': {'type': 'continuous', 'bounds': [-5, 5]},
+        ...     'y': {'type': 'continuous', 'bounds': [-5, 5]}
+        ... }
         >>> 
         >>> optimizer = RAGDAOptimizer(space, direction='minimize')
         >>> result = optimizer.optimize(objective, n_trials=100)
@@ -254,7 +254,7 @@ class RAGDAOptimizer:
     
     def __init__(
         self,
-        space: List[Dict[str, Any]],
+        space: Dict[str, Dict[str, Any]],
         direction: Literal['minimize', 'maximize'] = 'minimize',
         n_workers: Optional[int] = None,
         max_parallel_workers: Optional[int] = None,
@@ -269,13 +269,13 @@ class RAGDAOptimizer:
         
         Parameters
         ----------
-        space : list of dict
-            Search space definition. Each dict has:
-            - name: str, parameter name
+        space : dict
+            Search space definition where keys are parameter names and values are parameter specs:
             - type: 'continuous', 'ordinal', or 'categorical'
             - bounds: [lower, upper] for continuous/ordinal
             - values: list for categorical
             - log: bool, log-scale for continuous (optional)
+            Example: {'x': {'type': 'continuous', 'bounds': [-5, 5]}}
         direction : str
             'minimize' or 'maximize'
         n_workers : int, optional
@@ -536,6 +536,10 @@ class RAGDAOptimizer:
         early_stop_threshold: float = 1e-12,
         early_stop_patience: int = 50,
         
+        # Constraints
+        constraints: Optional[List[str]] = None,
+        constraint_penalty: float = 1e10,
+        
         # Other
         verbose: bool = True
     ) -> OptimizationResult:
@@ -545,9 +549,9 @@ class RAGDAOptimizer:
         Parameters
         ----------
         objective : callable
-            Function to optimize. Takes dict of params, returns float.
+            Function to optimize. Takes parameters as keyword arguments, returns float.
             For mini-batch mode, add batch_size parameter:
-            def objective(params, batch_size=None): ...
+            def objective(x, y, batch_size=None): ...
         n_trials : int
             Number of iterations per worker
         x0 : dict or list of dict, optional
@@ -741,6 +745,8 @@ class RAGDAOptimizer:
             adam_epsilon=adam_epsilon,
             early_stop_threshold=early_stop_threshold,
             early_stop_patience=early_stop_patience,
+            constraints=constraints,
+            constraint_penalty=constraint_penalty,
             verbose=verbose
         )
     
@@ -1105,6 +1111,8 @@ class RAGDAOptimizer:
         adam_epsilon = kwargs.get('adam_epsilon', 1e-8)
         early_stop_threshold = kwargs.get('early_stop_threshold', 1e-12)
         early_stop_patience = kwargs.get('early_stop_patience', 50)
+        constraints = kwargs.get('constraints', None)
+        constraint_penalty = kwargs.get('constraint_penalty', 1e10)
         
         # Dynamic worker strategy parameters
         worker_strategy = kwargs.get('worker_strategy', 'greedy')
@@ -1133,6 +1141,12 @@ class RAGDAOptimizer:
         )
         
         worker_strategies = self._generate_worker_strategies(self.n_workers, top_n_min, top_n_max)
+        
+        # Apply constraint wrapping if constraints are provided
+        if constraints:
+            from ragda.constraints import parse_constraints, create_constraint_wrapper
+            constraint_fns = parse_constraints(constraints, self.space.param_names)
+            objective = create_constraint_wrapper(objective, constraint_fns, penalty=constraint_penalty)
         
         objective_wrapper = _ObjectiveWrapper(objective, self.space, self.direction)
         
@@ -1257,9 +1271,9 @@ class RAGDAOptimizer:
             try:
                 sig = inspect.signature(objective)
                 if 'batch_size' in sig.parameters:
-                    f_best_full = objective(x_best, batch_size=-1)
+                    f_best_full = objective(**x_best, batch_size=-1)
                 else:
-                    f_best_full = objective(x_best)
+                    f_best_full = objective(**x_best)
                 
                 if self.direction == 'maximize':
                     f_best_full = -f_best_full
@@ -1381,16 +1395,7 @@ class RAGDAOptimizer:
                 early_stop_threshold=early_stop_threshold,
                 early_stop_patience=early_stop_patience,
                 objective=objective_wrapper.objective,
-                space_params=[
-                    {
-                        'name': p.name,
-                        'type': p.type,
-                        'bounds': list(p.bounds) if p.bounds else None,
-                        'values': list(p.values) if p.values else None,
-                        'log': p.log
-                    }
-                    for p in self.space.parameters
-                ],
+                space_params=self.space.to_dict(),
                 direction=self.direction
             )
             tasks.append(task)
@@ -1525,16 +1530,7 @@ class RAGDAOptimizer:
                     early_stop_threshold=early_stop_threshold,
                     early_stop_patience=early_stop_patience,
                     objective=objective_wrapper.objective,
-                    space_params=[
-                        {
-                            'name': p.name,
-                            'type': p.type,
-                            'bounds': list(p.bounds) if p.bounds else None,
-                            'values': list(p.values) if p.values else None,
-                            'log': p.log
-                        }
-                        for p in self.space.parameters
-                    ],
+                    space_params=self.space.to_dict(),
                     direction=self.direction
                 )
                 tasks.append(task)
@@ -1761,16 +1757,16 @@ def ragda_optimize(
     if not isinstance(bounds, np.ndarray) or bounds.ndim != 2 or bounds.shape[1] != 2:
         raise ValueError("bounds must be ndarray of shape (n_dims, 2)")
     
-    space = [
-        {'name': f'x{i}', 'type': 'continuous', 'bounds': [float(bounds[i, 0]), float(bounds[i, 1])]}
+    space = {
+        f'x{i}': {'type': 'continuous', 'bounds': [float(bounds[i, 0]), float(bounds[i, 1])]}
         for i in range(len(bounds))
-    ]
+    }
     
     for i, (lower, upper) in enumerate(bounds):
         if lower >= upper:
             raise ValueError(f"Invalid bounds for dim {i}: lower ({lower}) >= upper ({upper})")
     
-    def objective_dict(params):
+    def objective_dict(**params):
         x = np.array([params[f'x{i}'] for i in range(len(bounds))])
         return objective(x)
     

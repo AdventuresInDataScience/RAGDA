@@ -21,9 +21,8 @@ def sphere(params, dim_names):
     return sum(params[name]**2 for name in dim_names)
 
 
-def rosenbrock_2d(params):
+def rosenbrock_2d(x, y):
     """Rosenbrock function in 2D."""
-    x, y = params['x'], params['y']
     return (1 - x)**2 + 100 * (y - x**2)**2
 
 
@@ -38,9 +37,8 @@ def rastrigin(params, dim_names):
     return total
 
 
-def ackley_2d(params):
+def ackley_2d(x, y):
     """Ackley function in 2D."""
-    x, y = params['x'], params['y']
     term1 = -20 * np.exp(-0.2 * np.sqrt(0.5 * (x**2 + y**2)))
     term2 = -np.exp(0.5 * (np.cos(2*np.pi*x) + np.cos(2*np.pi*y)))
     return term1 + term2 + np.e + 20
@@ -51,24 +49,24 @@ class TestSystemOptimization:
     
     @pytest.fixture
     def space_2d(self):
-        return [
-            {'name': 'x', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-            {'name': 'y', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-        ]
+        return {
+            'x': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            'y': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+        }
     
     @pytest.fixture
     def space_5d(self):
-        return [
-            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+        return {
+            f'x{i}': {'type': 'continuous', 'bounds': [-5.0, 5.0]}
             for i in range(5)
-        ]
+        }
     
     @pytest.mark.skip(reason="Stochastic optimization has inherent randomness even with seeds")
     @pytest.mark.parametrize("random_state", [42, 123, 456])
     def test_reproducibility(self, space_2d, random_state):
         """Test that results are reproducible with same seed (single worker)."""
-        def objective(params):
-            return params['x']**2 + params['y']**2
+        def objective(x, y):
+            return x**2 + y**2
         
         # Use n_workers=1 for true reproducibility (parallel workers have timing variations)
         opt1 = RAGDAOptimizer(space_2d, n_workers=1, random_state=random_state)
@@ -87,8 +85,8 @@ class TestSystemOptimization:
     ])
     def test_worker_trial_combinations(self, space_2d, n_workers, n_trials):
         """Test various worker/trial combinations."""
-        def objective(params):
-            return params['x']**2 + params['y']**2
+        def objective(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space_2d, n_workers=n_workers, random_state=42)
         result = opt.optimize(objective, n_trials=n_trials, verbose=False)
@@ -98,8 +96,8 @@ class TestSystemOptimization:
     @pytest.mark.parametrize("n_trials", [30, 50, 75])
     def test_different_trial_counts_system(self, space_2d, n_trials):
         """Test different trial counts at system level."""
-        def objective(params):
-            return params['x']**2 + params['y']**2
+        def objective(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space_2d, n_workers=2, random_state=42)
         result = opt.optimize(objective, n_trials=n_trials, verbose=False)
@@ -110,8 +108,8 @@ class TestSystemOptimization:
     @pytest.mark.parametrize("shrink_factor", [0.8, 0.9, 0.95, 0.99])
     def test_different_shrink_factors(self, space_2d, shrink_factor):
         """Test different shrink factors."""
-        def objective(params):
-            return params['x']**2 + params['y']**2
+        def objective(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space_2d, n_workers=2, random_state=42)
         result = opt.optimize(
@@ -144,8 +142,8 @@ class TestSystemOptimization:
         """Test on 5D Rastrigin (multimodal)."""
         dim_names = [f'x{i}' for i in range(5)]
         
-        def objective(params):
-            return rastrigin(params, dim_names)
+        def objective(**kwargs):
+            return rastrigin(kwargs, dim_names)
         
         opt = RAGDAOptimizer(space_5d, n_workers=4, random_state=42)
         result = opt.optimize(objective, n_trials=200, verbose=False)
@@ -159,20 +157,16 @@ class TestMixedSpaces:
     
     @pytest.fixture
     def mixed_space(self):
-        return [
-            {'name': 'x', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-            {'name': 'y', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-            {'name': 'method', 'type': 'categorical', 'values': ['linear', 'quadratic', 'cubic']},
-            {'name': 'scale', 'type': 'ordinal', 'values': [1, 2, 5, 10]},
-        ]
+        return {
+            'x': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            'y': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            'method': {'type': 'categorical', 'values': ['linear', 'quadratic', 'cubic']},
+            'scale': {'type': 'ordinal', 'values': [1, 2, 5, 10]},
+        }
     
     def test_mixed_optimization(self, mixed_space):
         """Test optimization with mixed variable types."""
-        def objective(params):
-            x, y = params['x'], params['y']
-            method = params['method']
-            scale = params['scale']
-            
+        def objective(x, y, method, scale):
             base = x**2 + y**2
             
             # Method affects result
@@ -198,14 +192,13 @@ class TestMixedSpaces:
     @pytest.mark.parametrize("n_categories", [2, 5, 10])
     def test_varying_category_count(self, n_categories):
         """Test with varying number of categories."""
-        space = [
-            {'name': 'x', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-            {'name': 'cat', 'type': 'categorical', 'values': [f'opt_{i}' for i in range(n_categories)]},
-        ]
+        space = {
+            'x': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            'cat': {'type': 'categorical', 'values': [f'opt_{i}' for i in range(n_categories)]},
+        }
         
-        def objective(params):
-            x = params['x']
-            cat_idx = int(params['cat'].split('_')[1])
+        def objective(x, cat):
+            cat_idx = int(cat.split('_')[1])
             return x**2 + cat_idx
         
         opt = RAGDAOptimizer(space, n_workers=2, random_state=42)
@@ -219,10 +212,10 @@ class TestMinibatchConfigurations:
     
     @pytest.fixture
     def space(self):
-        return [
-            {'name': 'w1', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-            {'name': 'w2', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-        ]
+        return {
+            'w1': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            'w2': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+        }
     
     @pytest.fixture
     def data(self):
@@ -240,8 +233,8 @@ class TestMinibatchConfigurations:
         """Test different minibatch size ranges."""
         X, y = data
         
-        def objective(params, batch_size=-1):
-            w = np.array([params['w1'], params['w2']])
+        def objective(w1, w2, batch_size=-1):
+            w = np.array([w1, w2])
             if batch_size > 0 and batch_size < len(X):
                 idx = np.random.choice(len(X), batch_size, replace=False)
                 pred = X[idx] @ w
@@ -269,16 +262,16 @@ class TestLongRunning:
     
     @pytest.fixture
     def space(self):
-        return [
-            {'name': 'x', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-            {'name': 'y', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-        ]
+        return {
+            'x': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            'y': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+        }
     
     @pytest.mark.parametrize("n_trials", [100, 200, 500])
     def test_extended_runs(self, space, n_trials):
         """Test extended optimization runs for stability."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space, n_workers=4, random_state=42)
         result = opt.optimize(sphere, n_trials=n_trials, verbose=False)
@@ -288,8 +281,8 @@ class TestLongRunning:
     
     def test_1000_iterations(self, space):
         """Test 1000 iteration run for memory stability."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space, n_workers=4, random_state=42)
         result = opt.optimize(sphere, n_trials=1000, verbose=False)
@@ -303,13 +296,13 @@ class TestHighDimensionality:
     @pytest.mark.parametrize("n_dims", [20, 50, 100])
     def test_high_dim_sphere(self, n_dims):
         """Test sphere function in high dimensions."""
-        space = [
-            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+        space = {
+            f'x{i}': {'type': 'continuous', 'bounds': [-5.0, 5.0]}
             for i in range(n_dims)
-        ]
+        }
         
-        def sphere(params):
-            return sum(params[f'x{i}']**2 for i in range(n_dims))
+        def sphere(**kwargs):
+            return sum(kwargs[f'x{i}']**2 for i in range(n_dims))
         
         opt = RAGDAOptimizer(space, n_workers=4, random_state=42)
         result = opt.optimize(sphere, n_trials=200, verbose=False)
@@ -323,13 +316,13 @@ class TestHighDimensionality:
     def test_100d_with_many_iterations(self):
         """Test 100D problem with sufficient iterations."""
         n_dims = 100
-        space = [
-            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-2.0, 2.0]}
+        space = {
+            f'x{i}': {'type': 'continuous', 'bounds': [-2.0, 2.0]}
             for i in range(n_dims)
-        ]
+        }
         
-        def sphere(params):
-            return sum(params[f'x{i}']**2 for i in range(n_dims))
+        def sphere(**kwargs):
+            return sum(kwargs[f'x{i}']**2 for i in range(n_dims))
         
         opt = RAGDAOptimizer(space, n_workers=8, random_state=42)
         result = opt.optimize(sphere, n_trials=500, verbose=False)
@@ -341,15 +334,15 @@ class TestHighDimensionality:
     def test_high_dim_with_categorical(self):
         """Test high-dim mixed space with categorical."""
         n_cont = 30
-        space = [
-            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+        space = {
+            f'x{i}': {'type': 'continuous', 'bounds': [-5.0, 5.0]}
             for i in range(n_cont)
-        ]
-        space.append({'name': 'method', 'type': 'categorical', 'values': ['A', 'B', 'C', 'D']})
+        }
+        space['method'] = {'type': 'categorical', 'values': ['A', 'B', 'C', 'D']}
         
-        def objective(params):
-            cont_sum = sum(params[f'x{i}']**2 for i in range(n_cont))
-            cat_penalty = {'A': 0, 'B': 1, 'C': 2, 'D': 3}[params['method']]
+        def objective(method, **kwargs):
+            cont_sum = sum(kwargs[f'x{i}']**2 for i in range(n_cont))
+            cat_penalty = {'A': 0, 'B': 1, 'C': 2, 'D': 3}[method]
             return cont_sum + cat_penalty
         
         opt = RAGDAOptimizer(space, n_workers=4, random_state=42)
@@ -377,14 +370,14 @@ class TestProgressiveDataSampling:
         """Test minibatch with linear schedule."""
         X, y = regression_data
         
-        space = [
-            {'name': 'w0', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-            {'name': 'w1', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-            {'name': 'w2', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-        ]
+        space = {
+            'w0': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            'w1': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            'w2': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+        }
         
-        def objective(params, batch_size=-1):
-            w = np.array([params['w0'], params['w1'], params['w2']])
+        def objective(w0, w1, w2, batch_size=-1):
+            w = np.array([w0, w1, w2])
             if batch_size > 0 and batch_size < len(X):
                 idx = np.random.choice(len(X), batch_size, replace=False)
                 pred = X[idx] @ w
@@ -414,14 +407,14 @@ class TestProgressiveDataSampling:
         """Test minibatch with exponential schedule."""
         X, y = regression_data
         
-        space = [
-            {'name': 'w0', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-            {'name': 'w1', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-            {'name': 'w2', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-        ]
+        space = {
+            'w0': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            'w1': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            'w2': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+        }
         
-        def objective(params, batch_size=-1):
-            w = np.array([params['w0'], params['w1'], params['w2']])
+        def objective(w0, w1, w2, batch_size=-1):
+            w = np.array([w0, w1, w2])
             if batch_size > 0 and batch_size < len(X):
                 idx = np.random.choice(len(X), batch_size, replace=False)
                 pred = X[idx] @ w
@@ -449,14 +442,14 @@ class TestProgressiveDataSampling:
         """Test minibatch with inverse_decay schedule."""
         X, y = regression_data
         
-        space = [
-            {'name': 'w0', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-            {'name': 'w1', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-            {'name': 'w2', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-        ]
+        space = {
+            'w0': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            'w1': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            'w2': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+        }
         
-        def objective(params, batch_size=-1):
-            w = np.array([params['w0'], params['w1'], params['w2']])
+        def objective(w0, w1, w2, batch_size=-1):
+            w = np.array([w0, w1, w2])
             if batch_size > 0 and batch_size < len(X):
                 idx = np.random.choice(len(X), batch_size, replace=False)
                 pred = X[idx] @ w
@@ -483,17 +476,20 @@ class TestProgressiveDataSampling:
         """Test that final result is re-evaluated on full dataset."""
         X, y = regression_data
         
-        space = [
-            {'name': 'w0', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-            {'name': 'w1', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-            {'name': 'w2', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-        ]
+        space = {
+            'w0': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            'w1': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            'w2': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+        }
         
         eval_sizes = []
         
-        def objective(params, batch_size=-1):
+        def objective(w0, w1, w2, batch_size=-1):
+            # Note: During parallel optimization, this runs in worker processes
+            # so eval_sizes in main process won't capture those calls.
+            # Only the final re-evaluation in main process will be captured.
             eval_sizes.append(batch_size)
-            w = np.array([params['w0'], params['w1'], params['w2']])
+            w = np.array([w0, w1, w2])
             if batch_size > 0 and batch_size < len(X):
                 idx = np.random.choice(len(X), batch_size, replace=False)
                 pred = X[idx] @ w
@@ -513,8 +509,11 @@ class TestProgressiveDataSampling:
             verbose=False
         )
         
-        # Last evaluation should be with batch_size=-1 (full sample)
-        assert eval_sizes[-1] == -1, "Final evaluation should use full dataset (batch_size=-1)"
+        # Final re-evaluation happens in main process and should use full dataset
+        # eval_sizes should contain exactly one entry: the final re-evaluation with batch_size=-1
+        assert len(eval_sizes) == 1, f"Expected 1 evaluation (final re-eval), got {len(eval_sizes)}"
+        assert eval_sizes[0] == -1, f"Final evaluation should use full dataset (batch_size=-1), got {eval_sizes[0]}"
+
     
     def test_minibatch_large_dataset(self):
         """Test minibatch with larger dataset simulating real ML scenario."""
@@ -525,13 +524,13 @@ class TestProgressiveDataSampling:
         true_weights = np.array([1.5, -2.0, 0.8, -0.3, 1.2])
         y = X @ true_weights + np.random.randn(n_samples) * 0.2
         
-        space = [
-            {'name': f'w{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+        space = {
+            f'w{i}': {'type': 'continuous', 'bounds': [-5.0, 5.0]}
             for i in range(n_features)
-        ]
+        }
         
-        def objective(params, batch_size=-1):
-            w = np.array([params[f'w{i}'] for i in range(n_features)])
+        def objective(batch_size=-1, **kwargs):
+            w = np.array([kwargs[f'w{i}'] for i in range(n_features)])
             if batch_size > 0 and batch_size < len(X):
                 idx = np.random.choice(len(X), batch_size, replace=False)
                 pred = X[idx] @ w
@@ -563,13 +562,13 @@ class TestEdgeCasesIntegration:
     
     def test_single_worker(self):
         """Test with single worker."""
-        space = [
-            {'name': 'x', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-            {'name': 'y', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-        ]
+        space = {
+            'x': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            'y': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+        }
         
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space, n_workers=1, random_state=42)
         result = opt.optimize(sphere, n_trials=100, verbose=False)
@@ -578,13 +577,13 @@ class TestEdgeCasesIntegration:
     
     def test_many_workers(self):
         """Test with many workers (16)."""
-        space = [
-            {'name': 'x', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-            {'name': 'y', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-        ]
+        space = {
+            'x': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            'y': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+        }
         
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space, n_workers=16, random_state=42)
         result = opt.optimize(sphere, n_trials=50, verbose=False)
@@ -593,13 +592,13 @@ class TestEdgeCasesIntegration:
     
     def test_very_narrow_bounds(self):
         """Test with very narrow search bounds."""
-        space = [
-            {'name': 'x', 'type': 'continuous', 'bounds': [0.99, 1.01]},
-            {'name': 'y', 'type': 'continuous', 'bounds': [0.99, 1.01]},
-        ]
+        space = {
+            'x': {'type': 'continuous', 'bounds': [0.99, 1.01]},
+            'y': {'type': 'continuous', 'bounds': [0.99, 1.01]},
+        }
         
-        def objective(params):
-            return (params['x'] - 1.0)**2 + (params['y'] - 1.0)**2
+        def objective(x, y):
+            return (x - 1.0)**2 + (y - 1.0)**2
         
         opt = RAGDAOptimizer(space, n_workers=2, random_state=42)
         result = opt.optimize(objective, n_trials=50, verbose=False)
@@ -608,13 +607,13 @@ class TestEdgeCasesIntegration:
     
     def test_very_wide_bounds(self):
         """Test with very wide search bounds."""
-        space = [
-            {'name': 'x', 'type': 'continuous', 'bounds': [-1000.0, 1000.0]},
-            {'name': 'y', 'type': 'continuous', 'bounds': [-1000.0, 1000.0]},
-        ]
+        space = {
+            'x': {'type': 'continuous', 'bounds': [-1000.0, 1000.0]},
+            'y': {'type': 'continuous', 'bounds': [-1000.0, 1000.0]},
+        }
         
-        def objective(params):
-            return (params['x'] - 500)**2 + (params['y'] + 300)**2
+        def objective(x, y):
+            return (x - 500)**2 + (y + 300)**2
         
         opt = RAGDAOptimizer(space, n_workers=4, random_state=42)
         result = opt.optimize(objective, n_trials=200, verbose=False)
@@ -625,13 +624,13 @@ class TestEdgeCasesIntegration:
     
     def test_asymmetric_bounds(self):
         """Test with asymmetric bounds."""
-        space = [
-            {'name': 'x', 'type': 'continuous', 'bounds': [0.0, 100.0]},
-            {'name': 'y', 'type': 'continuous', 'bounds': [-50.0, 0.0]},
-        ]
+        space = {
+            'x': {'type': 'continuous', 'bounds': [0.0, 100.0]},
+            'y': {'type': 'continuous', 'bounds': [-50.0, 0.0]},
+        }
         
-        def objective(params):
-            return (params['x'] - 75)**2 + (params['y'] + 25)**2
+        def objective(x, y):
+            return (x - 75)**2 + (y + 25)**2
         
         opt = RAGDAOptimizer(space, n_workers=2, random_state=42)
         result = opt.optimize(objective, n_trials=100, verbose=False)
@@ -641,14 +640,14 @@ class TestEdgeCasesIntegration:
     
     def test_many_categorical_values(self):
         """Test with many categorical values."""
-        space = [
-            {'name': 'x', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-            {'name': 'cat', 'type': 'categorical', 'values': [f'opt_{i}' for i in range(50)]},
-        ]
+        space = {
+            'x': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            'cat': {'type': 'categorical', 'values': [f'opt_{i}' for i in range(50)]},
+        }
         
-        def objective(params):
-            cat_idx = int(params['cat'].split('_')[1])
-            return params['x']**2 + (cat_idx - 25)**2  # Best at opt_25
+        def objective(x, cat):
+            cat_idx = int(cat.split('_')[1])
+            return x**2 + (cat_idx - 25)**2  # Best at opt_25
         
         opt = RAGDAOptimizer(space, n_workers=4, random_state=42)
         result = opt.optimize(objective, n_trials=150, verbose=False)
@@ -658,23 +657,23 @@ class TestEdgeCasesIntegration:
     
     def test_all_categorical(self):
         """Test with only categorical variables."""
-        space = [
-            {'name': 'cat1', 'type': 'categorical', 'values': ['A', 'B', 'C', 'D']},
-            {'name': 'cat2', 'type': 'categorical', 'values': ['X', 'Y', 'Z']},
-            {'name': 'cat3', 'type': 'categorical', 'values': ['P', 'Q']},
-        ]
+        space = {
+            'cat1': {'type': 'categorical', 'values': ['A', 'B', 'C', 'D']},
+            'cat2': {'type': 'categorical', 'values': ['X', 'Y', 'Z']},
+            'cat3': {'type': 'categorical', 'values': ['P', 'Q']},
+        }
         
-        def objective(params):
+        def objective(cat1, cat2, cat3):
             score = 0
-            if params['cat1'] == 'B':
+            if cat1 == 'B':
                 score += 0
             else:
                 score += 1
-            if params['cat2'] == 'Y':
+            if cat2 == 'Y':
                 score += 0
             else:
                 score += 1
-            if params['cat3'] == 'Q':
+            if cat3 == 'Q':
                 score += 0
             else:
                 score += 1
@@ -698,25 +697,25 @@ class TestWorkerStrategyIntegration:
     
     @pytest.fixture
     def space_2d(self):
-        return [
-            {'name': 'x', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-            {'name': 'y', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-        ]
+        return {
+            'x': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            'y': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+        }
     
     @pytest.fixture
     def space_5d(self):
-        return [
-            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+        return {
+            f'x{i}': {'type': 'continuous', 'bounds': [-5.0, 5.0]}
             for i in range(5)
-        ]
+        }
     
     @pytest.fixture
     def mixed_space(self):
-        return [
-            {'name': 'x', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-            {'name': 'y', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-            {'name': 'method', 'type': 'categorical', 'values': ['A', 'B', 'C']},
-        ]
+        return {
+            'x': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            'y': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            'method': {'type': 'categorical', 'values': ['A', 'B', 'C']},
+        }
     
     # -------------------------------------------------------------------------
     # Basic Greedy vs Dynamic Tests
@@ -724,8 +723,8 @@ class TestWorkerStrategyIntegration:
     
     def test_greedy_strategy_basic(self, space_2d):
         """Test greedy strategy works correctly."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space_2d, n_workers=4, random_state=42)
         result = opt.optimize(
@@ -741,8 +740,8 @@ class TestWorkerStrategyIntegration:
     
     def test_dynamic_strategy_basic(self, space_2d):
         """Test dynamic strategy works correctly."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space_2d, n_workers=4, random_state=42)
         result = opt.optimize(
@@ -758,8 +757,8 @@ class TestWorkerStrategyIntegration:
     
     def test_default_strategy_is_greedy(self, space_2d):
         """Test that default worker_strategy is 'greedy'."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space_2d, n_workers=4, random_state=42)
         result = opt.optimize(sphere, n_trials=50, verbose=False)
@@ -774,8 +773,8 @@ class TestWorkerStrategyIntegration:
     @pytest.mark.parametrize("n_workers", [1, 2, 4, 8, 12])
     def test_greedy_varying_workers(self, space_2d, n_workers):
         """Test greedy strategy with different worker counts."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space_2d, n_workers=n_workers, random_state=42)
         result = opt.optimize(
@@ -790,8 +789,8 @@ class TestWorkerStrategyIntegration:
     @pytest.mark.parametrize("n_workers", [1, 2, 4, 8, 12])
     def test_dynamic_varying_workers(self, space_2d, n_workers):
         """Test dynamic strategy with different worker counts."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space_2d, n_workers=n_workers, random_state=42)
         result = opt.optimize(
@@ -810,8 +809,8 @@ class TestWorkerStrategyIntegration:
     @pytest.mark.parametrize("elite_fraction", [0.1, 0.3, 0.5, 0.8, 1.0])
     def test_dynamic_elite_fractions(self, space_2d, elite_fraction):
         """Test dynamic strategy with various elite fractions."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space_2d, n_workers=8, random_state=42)
         result = opt.optimize(
@@ -832,8 +831,8 @@ class TestWorkerStrategyIntegration:
     @pytest.mark.parametrize("restart_mode", ['elite', 'random', 'adaptive'])
     def test_dynamic_restart_modes(self, space_2d, restart_mode):
         """Test dynamic strategy with different restart modes."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space_2d, n_workers=6, random_state=42)
         result = opt.optimize(
@@ -849,8 +848,8 @@ class TestWorkerStrategyIntegration:
     
     def test_adaptive_restart_probability_config(self, space_2d):
         """Test adaptive restart with custom probability settings."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space_2d, n_workers=6, random_state=42)
         result = opt.optimize(
@@ -871,8 +870,8 @@ class TestWorkerStrategyIntegration:
     
     def test_dynamic_with_worker_decay_enabled(self, space_2d):
         """Test dynamic strategy with worker decay enabled."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space_2d, n_workers=8, random_state=42)
         result = opt.optimize(
@@ -894,8 +893,8 @@ class TestWorkerStrategyIntegration:
     ])
     def test_dynamic_decay_configurations(self, space_2d, decay_rate, min_workers):
         """Test dynamic strategy with various decay configurations."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space_2d, n_workers=10, random_state=42)
         result = opt.optimize(
@@ -916,8 +915,8 @@ class TestWorkerStrategyIntegration:
     
     def test_dynamic_full_configuration(self, space_5d):
         """Test dynamic strategy with all options configured."""
-        def sphere(params):
-            return sum(params[f'x{i}']**2 for i in range(5))
+        def sphere(**kwargs):
+            return sum(kwargs[f'x{i}']**2 for i in range(5))
         
         opt = RAGDAOptimizer(space_5d, n_workers=10, random_state=42)
         result = opt.optimize(
@@ -940,8 +939,8 @@ class TestWorkerStrategyIntegration:
     
     def test_greedy_with_sync_frequency(self, space_2d):
         """Test greedy strategy respects sync_frequency."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         for sync_freq in [5, 10, 50]:
             opt = RAGDAOptimizer(space_2d, n_workers=4, random_state=42)
@@ -961,9 +960,9 @@ class TestWorkerStrategyIntegration:
     
     def test_greedy_mixed_space(self, mixed_space):
         """Test greedy strategy with mixed variable types."""
-        def objective(params):
-            penalty = {'A': 0, 'B': 1, 'C': 2}[params['method']]
-            return params['x']**2 + params['y']**2 + penalty
+        def objective(x, y, method):
+            penalty = {'A': 0, 'B': 1, 'C': 2}[method]
+            return x**2 + y**2 + penalty
         
         opt = RAGDAOptimizer(mixed_space, n_workers=4, random_state=42)
         result = opt.optimize(
@@ -978,9 +977,9 @@ class TestWorkerStrategyIntegration:
     
     def test_dynamic_mixed_space(self, mixed_space):
         """Test dynamic strategy with mixed variable types."""
-        def objective(params):
-            penalty = {'A': 0, 'B': 1, 'C': 2}[params['method']]
-            return params['x']**2 + params['y']**2 + penalty
+        def objective(x, y, method):
+            penalty = {'A': 0, 'B': 1, 'C': 2}[method]
+            return x**2 + y**2 + penalty
         
         opt = RAGDAOptimizer(mixed_space, n_workers=6, random_state=42)
         result = opt.optimize(
@@ -1001,9 +1000,8 @@ class TestWorkerStrategyIntegration:
     
     def test_greedy_rastrigin(self, space_2d):
         """Test greedy strategy on multimodal Rastrigin function."""
-        def rastrigin(params):
+        def rastrigin(x, y):
             A = 10
-            x, y = params['x'], params['y']
             return A * 2 + (x**2 - A * np.cos(2 * np.pi * x)) + (y**2 - A * np.cos(2 * np.pi * y))
         
         opt = RAGDAOptimizer(space_2d, n_workers=8, random_state=42)
@@ -1018,9 +1016,8 @@ class TestWorkerStrategyIntegration:
     
     def test_dynamic_rastrigin(self, space_2d):
         """Test dynamic strategy on multimodal Rastrigin function."""
-        def rastrigin(params):
+        def rastrigin(x, y):
             A = 10
-            x, y = params['x'], params['y']
             return A * 2 + (x**2 - A * np.cos(2 * np.pi * x)) + (y**2 - A * np.cos(2 * np.pi * y))
         
         opt = RAGDAOptimizer(space_2d, n_workers=8, random_state=42)
@@ -1041,8 +1038,8 @@ class TestWorkerStrategyIntegration:
     
     def test_both_strategies_produce_valid_results(self, space_2d):
         """Test that both strategies produce valid optimization results."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         for strategy in ['greedy', 'dynamic']:
             opt = RAGDAOptimizer(space_2d, n_workers=4, random_state=42)
@@ -1060,8 +1057,7 @@ class TestWorkerStrategyIntegration:
     
     def test_strategies_on_rosenbrock(self, space_2d):
         """Test both strategies on Rosenbrock function."""
-        def rosenbrock(params):
-            x, y = params['x'], params['y']
+        def rosenbrock(x, y):
             return (1 - x)**2 + 100 * (y - x**2)**2
         
         for strategy in ['greedy', 'dynamic']:
@@ -1081,8 +1077,8 @@ class TestWorkerStrategyIntegration:
     
     def test_dynamic_trials_less_than_workers(self, space_2d):
         """Test dynamic strategy when n_trials < n_workers."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space_2d, n_workers=10, random_state=42)
         result = opt.optimize(
@@ -1096,8 +1092,8 @@ class TestWorkerStrategyIntegration:
     
     def test_dynamic_odd_trial_numbers(self, space_2d):
         """Test dynamic strategy with odd trial numbers."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         for n_trials in [7, 13, 23, 31]:
             opt = RAGDAOptimizer(space_2d, n_workers=5, random_state=42)
@@ -1112,8 +1108,8 @@ class TestWorkerStrategyIntegration:
     
     def test_dynamic_single_worker(self, space_2d):
         """Test dynamic strategy with single worker."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space_2d, n_workers=1, random_state=42)
         result = opt.optimize(
@@ -1130,10 +1126,10 @@ class TestEarlyStopping:
     
     @pytest.fixture
     def space(self):
-        return [
-            {'name': 'x', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-            {'name': 'y', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-        ]
+        return {
+            'x': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            'y': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+        }
     
     @pytest.mark.parametrize("threshold,patience", [
         (1e-6, 20),
@@ -1142,8 +1138,8 @@ class TestEarlyStopping:
     ])
     def test_early_stop_configs(self, space, threshold, patience):
         """Test various early stopping configurations."""
-        def sphere(params):
-            return params['x']**2 + params['y']**2
+        def sphere(x, y):
+            return x**2 + y**2
         
         opt = RAGDAOptimizer(space, n_workers=2, random_state=42)
         result = opt.optimize(
@@ -1233,13 +1229,13 @@ class TestHighDimIntegration:
     
     def test_highdim_optimizer_fallback_to_standard(self):
         """Test that low-dim problems fall back to standard optimizer."""
-        space = [
-            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+        space = {
+            f'x{i}': {'type': 'continuous', 'bounds': [-5.0, 5.0]}
             for i in range(20)  # Below threshold
-        ]
+        }
         
-        def sphere(params):
-            return sum(params[f'x{i}']**2 for i in range(20))
+        def sphere(**kwargs):
+            return sum(kwargs[f'x{i}']**2 for i in range(20))
         
         optimizer = HighDimRAGDAOptimizer(
             space,
@@ -1260,14 +1256,14 @@ class TestHighDimIntegration:
         n_dims = 200
         active_dims = 10
         
-        space = [
-            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+        space = {
+            f'x{i}': {'type': 'continuous', 'bounds': [-5.0, 5.0]}
             for i in range(n_dims)
-        ]
+        }
         
-        def sparse_quadratic(params):
+        def sparse_quadratic(**kwargs):
             # Only first 10 dimensions contribute
-            return sum((params[f'x{i}'] - 1.0)**2 for i in range(active_dims))
+            return sum((kwargs[f'x{i}'] - 1.0)**2 for i in range(active_dims))
         
         optimizer = HighDimRAGDAOptimizer(
             space,
@@ -1289,13 +1285,13 @@ class TestHighDimIntegration:
         """Test high-dim optimizer with all reduction methods."""
         n_dims = 150
         
-        space = [
-            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-2.0, 2.0]}
+        space = {
+            f'x{i}': {'type': 'continuous', 'bounds': [-2.0, 2.0]}
             for i in range(n_dims)
-        ]
+        }
         
-        def sphere(params):
-            return sum(params[f'x{i}']**2 for i in range(n_dims))
+        def sphere(**kwargs):
+            return sum(kwargs[f'x{i}']**2 for i in range(n_dims))
         
         optimizer = HighDimRAGDAOptimizer(
             space,
@@ -1320,16 +1316,13 @@ class TestHighDimIntegration:
         # Create a problem with clear low-dimensional structure
         n_dims = 100
         
-        space = [
-            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-3.0, 3.0]}
+        space = {
+            f'x{i}': {'type': 'continuous', 'bounds': [-3.0, 3.0]}
             for i in range(n_dims)
-        ]
+        }
         
         # Objective that only depends on first 3 dimensions
-        def low_dim_objective(params):
-            x0 = params['x0']
-            x1 = params['x1']
-            x2 = params['x2']
+        def low_dim_objective(x0, x1, x2, **kwargs):
             return (x0 - 1)**2 + (x1 + 0.5)**2 + (x2 - 0.3)**2
         
         optimizer = HighDimRAGDAOptimizer(
@@ -1353,15 +1346,15 @@ class TestHighDimIntegration:
         """Test high-dim optimizer with mixed continuous and categorical."""
         n_cont = 80
         
-        space = [
-            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+        space = {
+            f'x{i}': {'type': 'continuous', 'bounds': [-5.0, 5.0]}
             for i in range(n_cont)
-        ]
-        space.append({'name': 'method', 'type': 'categorical', 'values': ['A', 'B', 'C']})
+        }
+        space['method'] = {'type': 'categorical', 'values': ['A', 'B', 'C']}
         
-        def objective(params):
-            cont_sum = sum(params[f'x{i}']**2 for i in range(10))  # Only first 10 matter
-            cat_penalty = {'A': 0, 'B': 5, 'C': 10}[params['method']]
+        def objective(method, **kwargs):
+            cont_sum = sum(kwargs[f'x{i}']**2 for i in range(10))  # Only first 10 matter
+            cat_penalty = {'A': 0, 'B': 5, 'C': 10}[method]
             return cont_sum + cat_penalty
         
         optimizer = HighDimRAGDAOptimizer(
@@ -1471,13 +1464,13 @@ class TestHighDimIntegration:
     ])
     def test_scaling_with_dimensions(self, n_dims, expected_max):
         """Test that optimizer handles various high dimensions."""
-        space = [
-            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-2.0, 2.0]}
+        space = {
+            f'x{i}': {'type': 'continuous', 'bounds': [-2.0, 2.0]}
             for i in range(n_dims)
-        ]
+        }
         
-        def sphere(params):
-            return sum(params[f'x{i}']**2 for i in range(n_dims))
+        def sphere(**kwargs):
+            return sum(kwargs[f'x{i}']**2 for i in range(n_dims))
         
         optimizer = HighDimRAGDAOptimizer(
             space,
@@ -1505,13 +1498,13 @@ class TestAutoHighDimDetection:
     
     def test_lowdim_uses_standard_path(self):
         """Test that low-dim problems use standard optimization path."""
-        space = [
-            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+        space = {
+            f'x{i}': {'type': 'continuous', 'bounds': [-5.0, 5.0]}
             for i in range(50)  # Below default threshold of 100
-        ]
+        }
         
-        def sphere(params):
-            return sum(params[f'x{i}']**2 for i in range(50))
+        def sphere(**kwargs):
+            return sum(kwargs[f'x{i}']**2 for i in range(50))
         
         # Default threshold is 100, so 50D should use standard path
         optimizer = RAGDAOptimizer(
@@ -1529,13 +1522,13 @@ class TestAutoHighDimDetection:
     
     def test_highdim_triggers_automatically(self):
         """Test that high-dim problems automatically trigger high-dim path."""
-        space = [
-            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+        space = {
+            f'x{i}': {'type': 'continuous', 'bounds': [-5.0, 5.0]}
             for i in range(150)  # Above default threshold of 100
-        ]
+        }
         
-        def sphere(params):
-            return sum(params[f'x{i}']**2 for i in range(150))
+        def sphere(**kwargs):
+            return sum(kwargs[f'x{i}']**2 for i in range(150))
         
         optimizer = RAGDAOptimizer(
             space,
@@ -1553,13 +1546,13 @@ class TestAutoHighDimDetection:
     
     def test_custom_highdim_threshold(self):
         """Test custom high-dim threshold."""
-        space = [
-            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+        space = {
+            f'x{i}': {'type': 'continuous', 'bounds': [-5.0, 5.0]}
             for i in range(60)
-        ]
+        }
         
-        def sphere(params):
-            return sum(params[f'x{i}']**2 for i in range(60))
+        def sphere(**kwargs):
+            return sum(kwargs[f'x{i}']**2 for i in range(60))
         
         # Set threshold to 50, so 60D should trigger high-dim
         optimizer = RAGDAOptimizer(
@@ -1577,13 +1570,13 @@ class TestAutoHighDimDetection:
     
     def test_variance_threshold_parameter(self):
         """Test variance threshold parameter is respected."""
-        space = [
-            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-3.0, 3.0]}
+        space = {
+            f'x{i}': {'type': 'continuous', 'bounds': [-3.0, 3.0]}
             for i in range(120)
-        ]
+        }
         
-        def sphere(params):
-            return sum(params[f'x{i}']**2 for i in range(120))
+        def sphere(**kwargs):
+            return sum(kwargs[f'x{i}']**2 for i in range(120))
         
         # Test with different variance thresholds
         for var_thresh in [0.80, 0.95]:
@@ -1601,13 +1594,13 @@ class TestAutoHighDimDetection:
     
     def test_reduction_method_parameter(self):
         """Test reduction method parameter is respected."""
-        space = [
-            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-3.0, 3.0]}
+        space = {
+            f'x{i}': {'type': 'continuous', 'bounds': [-3.0, 3.0]}
             for i in range(120)
-        ]
+        }
         
-        def sphere(params):
-            return sum(params[f'x{i}']**2 for i in range(120))
+        def sphere(**kwargs):
+            return sum(kwargs[f'x{i}']**2 for i in range(120))
         
         for method in ['auto', 'kernel_pca', 'random_projection']:
             optimizer = RAGDAOptimizer(
@@ -1624,13 +1617,13 @@ class TestAutoHighDimDetection:
     
     def test_disable_highdim_with_high_threshold(self):
         """Test that high-dim can be effectively disabled with very high threshold."""
-        space = [
-            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+        space = {
+            f'x{i}': {'type': 'continuous', 'bounds': [-5.0, 5.0]}
             for i in range(200)
-        ]
+        }
         
-        def sphere(params):
-            return sum(params[f'x{i}']**2 for i in range(200))
+        def sphere(**kwargs):
+            return sum(kwargs[f'x{i}']**2 for i in range(200))
         
         # Set threshold very high to disable high-dim
         optimizer = RAGDAOptimizer(
@@ -1651,15 +1644,15 @@ class TestAutoHighDimDetection:
         """Test automatic high-dim with mixed parameter types."""
         n_cont = 120
         
-        space = [
-            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+        space = {
+            f'x{i}': {'type': 'continuous', 'bounds': [-5.0, 5.0]}
             for i in range(n_cont)
-        ]
-        space.append({'name': 'cat', 'type': 'categorical', 'values': ['a', 'b', 'c']})
+        }
+        space['cat'] = {'type': 'categorical', 'values': ['a', 'b', 'c']}
         
-        def objective(params):
-            cont_sum = sum(params[f'x{i}']**2 for i in range(n_cont))
-            cat_penalty = {'a': 0, 'b': 5, 'c': 10}[params['cat']]
+        def objective(cat, **kwargs):
+            cont_sum = sum(kwargs[f'x{i}']**2 for i in range(n_cont))
+            cat_penalty = {'a': 0, 'b': 5, 'c': 10}[cat]
             return cont_sum + cat_penalty
         
         optimizer = RAGDAOptimizer(
@@ -1681,13 +1674,13 @@ class TestAutoHighDimDetection:
     
     def test_maximize_direction_highdim(self):
         """Test maximize direction works with high-dim."""
-        space = [
-            {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+        space = {
+            f'x{i}': {'type': 'continuous', 'bounds': [-5.0, 5.0]}
             for i in range(120)
-        ]
+        }
         
-        def neg_sphere(params):
-            return -sum(params[f'x{i}']**2 for i in range(120))
+        def neg_sphere(**kwargs):
+            return -sum(kwargs[f'x{i}']**2 for i in range(120))
         
         optimizer = RAGDAOptimizer(
             space,

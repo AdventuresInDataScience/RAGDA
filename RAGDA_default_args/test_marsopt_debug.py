@@ -45,13 +45,13 @@ sys.stdout.flush()
 # Quick test with a simple problem
 from ragda import RAGDAOptimizer
 
-space = [
-    {'name': 'x0', 'type': 'continuous', 'bounds': [-5, 5]},
-    {'name': 'x1', 'type': 'continuous', 'bounds': [-5, 5]},
-]
+space = {
+    'x0': {'type': 'continuous', 'bounds': [-5, 5]},
+    'x1': {'type': 'continuous', 'bounds': [-5, 5]},
+}
 
-def sphere(params):
-    return params['x0']**2 + params['x1']**2
+def sphere(x0, x1):
+    return x0**2 + x1**2
 
 optimizer = RAGDAOptimizer(space=space, direction='minimize', random_state=42)
 result = optimizer.optimize(sphere, n_trials=30, verbose=False)

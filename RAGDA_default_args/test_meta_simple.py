@@ -34,16 +34,15 @@ from ragda_parameter_space import (
 # Simple Test Problems
 # =============================================================================
 
-def sphere_5d(params):
+def sphere_5d(**params):
     """Simple 5D sphere - optimal at origin."""
     return sum(v**2 for v in params.values())
 
-def rosenbrock_2d(params):
+def rosenbrock_2d(x0, x1):
     """2D Rosenbrock - optimal at (1,1)."""
-    x, y = params['x0'], params['x1']
-    return (1 - x)**2 + 100 * (y - x**2)**2
+    return (1 - x0)**2 + 100 * (x1 - x0**2)**2
 
-def rastrigin_3d(params):
+def rastrigin_3d(**params):
     """3D Rastrigin - multimodal, optimal at origin."""
     A = 10
     vals = [params[f'x{i}'] for i in range(3)]
@@ -54,24 +53,24 @@ TEST_PROBLEMS = [
     {
         'name': 'Sphere-5D',
         'func': sphere_5d,
-        'space': [{'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]} for i in range(5)],
+        'space': {f'x{i}': {'type': 'continuous', 'bounds': [-5.0, 5.0]} for i in range(5)},
         'optimal': 0.0,
         'good_threshold': 0.1,
     },
     {
         'name': 'Rosenbrock-2D',
         'func': rosenbrock_2d,
-        'space': [
-            {'name': 'x0', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-            {'name': 'x1', 'type': 'continuous', 'bounds': [-5.0, 5.0]},
-        ],
+        'space': {
+            'x0': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+            'x1': {'type': 'continuous', 'bounds': [-5.0, 5.0]},
+        },
         'optimal': 0.0,
         'good_threshold': 0.1,
     },
     {
         'name': 'Rastrigin-3D',
         'func': rastrigin_3d,
-        'space': [{'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.12, 5.12]} for i in range(3)],
+        'space': {f'x{i}': {'type': 'continuous', 'bounds': [-5.12, 5.12]} for i in range(3)},
         'optimal': 0.0,
         'good_threshold': 1.0,
     },

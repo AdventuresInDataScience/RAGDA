@@ -49,24 +49,25 @@ RAGDA automatically installs these dependencies:
 from ragda import RAGDAOptimizer
 import numpy as np
 
-# Define search space
-space = [
-    {'name': 'learning_rate', 'type': 'continuous', 'bounds': [1e-5, 1e-1]},
-    {'name': 'dropout', 'type': 'continuous', 'bounds': [0.0, 0.5]},
-    {'name': 'optimizer', 'type': 'categorical', 'values': ['adam', 'sgd', 'rmsprop']},
-    {'name': 'layers', 'type': 'ordinal', 'values': [1, 2, 3, 4, 5]},
-]
+# Define search space (dict-based)
+space = {
+    'learning_rate': {'type': 'continuous', 'bounds': [1e-5, 1e-1]},
+    'dropout': {'type': 'continuous', 'bounds': [0.0, 0.5]},
+    'optimizer': {'type': 'categorical', 'values': ['adam', 'sgd', 'rmsprop']},
+    'layers': {'type': 'ordinal', 'values': [1, 2, 3, 4, 5]},
+}
 
-# Define objective function
-def objective(params):
+# Define objective function (parameters passed as kwargs)
+def objective(learning_rate, dropout, optimizer, layers):
     # Your model training/evaluation code here
+    # Parameters are passed directly - no dict access needed!
     # Return the metric to minimize (e.g., validation loss)
     return some_loss
 
 # Optimize - works for ANY number of dimensions!
 # High-dimensional optimization (100+ dims) is AUTOMATIC
-optimizer = RAGDAOptimizer(space, n_workers=4, random_state=42)
-result = optimizer.optimize(objective, n_trials=100)
+opt = RAGDAOptimizer(space=space, n_workers=4, random_state=42)
+result = opt.optimize(objective, n_trials=100)
 
 print(f"Best params: {result.best_params}")
 print(f"Best value: {result.best_value}")
@@ -74,20 +75,23 @@ print(f"Best value: {result.best_value}")
 
 ### Scipy-Style Interface
 
-For simple continuous optimization:
+For simple continuous optimization (array-based):
 
 ```python
-from ragda import ragda_optimize
+from ragda import minimize
 import numpy as np
 
 def rosenbrock(x):
     return (1 - x[0])**2 + 100 * (x[1] - x[0]**2)**2
 
-bounds = np.array([[-2, 2], [-2, 2]], dtype=np.float64)
-x_best, f_best, info = ragda_optimize(rosenbrock, bounds, n_trials=100)
+result = minimize(
+    rosenbrock,
+    bounds=[(-2, 2), (-2, 2)],
+    options={'maxiter': 100, 'random_state': 42}
+)
 
-print(f"Best x: {x_best}")
-print(f"Best f: {f_best}")
+print(f"Best x: {result.x}")
+print(f"Best f: {result.fun}")
 ```
 
 ### High-Dimensional Optimization
@@ -100,18 +104,18 @@ import numpy as np
 
 # Define a 500-dimensional search space
 n_dims = 500
-space = [
-    {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+space = {
+    f'x{i}': {'type': 'continuous', 'bounds': [-5.0, 5.0]}
     for i in range(n_dims)
-]
+}
 
-def high_dim_objective(params):
+def high_dim_objective(**params):
     # Only first 10 dimensions matter (common in practice)
     return sum((params[f'x{i}'] - 1.0)**2 for i in range(10))
 
 # Just use RAGDAOptimizer - high-dim handling is automatic!
 optimizer = RAGDAOptimizer(
-    space,
+    space=space,
     direction='minimize',
     n_workers=4,
     random_state=42,
@@ -135,16 +139,16 @@ import numpy as np
 
 # Define a 500-dimensional search space
 n_dims = 500
-space = [
-    {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.0, 5.0]}
+space = {
+    f'x{i}': {'type': 'continuous', 'bounds': [-5.0, 5.0]}
     for i in range(n_dims)
-]
+}
 
-def high_dim_objective(params):
+def high_dim_objective(**params):
     return sum((params[f'x{i}'] - 1.0)**2 for i in range(10))
 
 optimizer = HighDimRAGDAOptimizer(
-    space,
+    space=space,
     direction='minimize',
     dim_threshold=100,          # Use high-dim methods for 100+ dimensions
     variance_threshold=0.95,    # Capture 95% of variance
@@ -166,21 +170,20 @@ print(f"Best value: {result.best_value}")
 #### Scipy-Style High-Dim Interface
 
 ```python
-from ragda import highdim_ragda_optimize
+from ragda import minimize
 import numpy as np
 
 def sphere(x):
     return np.sum(x**2)
 
-bounds = np.array([[-5, 5]] * 200, dtype=np.float64)  # 200 dimensions
-
-x_best, f_best, info = highdim_ragda_optimize(
+result = minimize(
     sphere,
-    bounds,
-    n_trials=200,
-    reduction_method='kernel_pca',
-    variance_threshold=0.90,
-    verbose=True
+    bounds=[(-5, 5)] * 200,  # 200 dimensions
+    options={
+        'maxiter': 200,
+        'random_state': 42,
+        'verbose': True
+    }
 )
 ```
 
@@ -216,7 +219,7 @@ import numpy as np
 # Your training data
 X_train, y_train = load_data()  # 10,000 samples
 
-def ml_objective(params, batch_size=-1):
+def ml_objective(learning_rate, weight_decay, *, batch_size=-1):
     """
     When batch_size > 0, evaluate on a random subset.
     When batch_size = -1, evaluate on full dataset.
@@ -228,15 +231,15 @@ def ml_objective(params, batch_size=-1):
         X, y = X_train, y_train
     
     # Train and evaluate model
-    model = train_model(X, y, **params)
+    model = train_model(X, y, learning_rate=learning_rate, weight_decay=weight_decay)
     return evaluate_model(model, X, y)
 
-space = [
-    {'name': 'learning_rate', 'type': 'continuous', 'bounds': [1e-5, 1e-1]},
-    {'name': 'weight_decay', 'type': 'continuous', 'bounds': [1e-6, 1e-2]},
-]
+space = {
+    'learning_rate': {'type': 'continuous', 'bounds': [1e-5, 1e-1]},
+    'weight_decay': {'type': 'continuous', 'bounds': [1e-6, 1e-2]},
+}
 
-optimizer = RAGDAOptimizer(space, n_workers=4, random_state=42)
+optimizer = RAGDAOptimizer(space=space, n_workers=4, random_state=42)
 result = optimizer.optimize(
     ml_objective,
     n_trials=100,
@@ -261,17 +264,18 @@ from ragda import RAGDAOptimizer
 import numpy as np
 
 # Rastrigin function - highly multi-modal with many local minima
-def rastrigin(params):
+def rastrigin(**params):
+    # Extract x0, x1, ..., x9
     x = np.array([params[f'x{i}'] for i in range(10)])
     return 10 * len(x) + np.sum(x**2 - 10 * np.cos(2 * np.pi * x))
 
-space = [
-    {'name': f'x{i}', 'type': 'continuous', 'bounds': [-5.12, 5.12]}
+space = {
+    f'x{i}': {'type': 'continuous', 'bounds': [-5.12, 5.12]}
     for i in range(10)
-]
+}
 
 optimizer = RAGDAOptimizer(
-    space, 
+    space=space, 
     n_workers=8,
     random_state=42
 )
@@ -345,7 +349,7 @@ The main optimizer class - handles both standard and high-dimensional problems a
 
 ```python
 RAGDAOptimizer(
-    space: List[Dict],              # Search space definition
+    space: Dict[str, Dict],         # Search space definition (dict-based)
     direction: str = 'minimize',    # 'minimize' or 'maximize'
     n_workers: int = None,          # Number of parallel workers (default: CPU count // 2)
     random_state: int = None,       # Random seed for reproducibility
@@ -434,7 +438,7 @@ For advanced control over high-dimensional optimization (typically you don't nee
 
 ```python
 HighDimRAGDAOptimizer(
-    space: List[Dict],                  # Search space definition
+    space: Dict[str, Dict],             # Search space definition (dict-based)
     direction: str = 'minimize',        # 'minimize' or 'maximize'
     dim_threshold: int = 100,           # Use high-dim methods above this
     variance_threshold: float = 0.95,   # Variance to capture (0.7-0.99)
@@ -455,19 +459,36 @@ HighDimRAGDAOptimizer(
 
 ## Search Space Definition
 
+RAGDA uses a **dict-based** space definition where keys are parameter names:
+
 ### Continuous Parameters
 ```python
-{'name': 'param_name', 'type': 'continuous', 'bounds': [lower, upper]}
+'param_name': {'type': 'continuous', 'bounds': [lower, upper]}
 ```
 
 ### Categorical Parameters
 ```python
-{'name': 'param_name', 'type': 'categorical', 'values': ['a', 'b', 'c']}
+'param_name': {'type': 'categorical', 'values': ['a', 'b', 'c']}
 ```
 
 ### Ordinal Parameters
 ```python
-{'name': 'param_name', 'type': 'ordinal', 'values': [1, 2, 3, 4, 5]}
+'param_name': {'type': 'ordinal', 'values': [1, 2, 3, 4, 5]}
+```
+
+### Log-Scale Parameters
+```python
+'learning_rate': {'type': 'continuous', 'bounds': [1e-5, 1e-1], 'log': True}
+```
+
+### Complete Example
+```python
+space = {
+    'learning_rate': {'type': 'continuous', 'bounds': [1e-5, 1e-1], 'log': True},
+    'dropout': {'type': 'continuous', 'bounds': [0.0, 0.5]},
+    'batch_size': {'type': 'ordinal', 'values': [16, 32, 64, 128]},
+    'optimizer': {'type': 'categorical', 'values': ['adam', 'sgd', 'rmsprop']},
+}
 ```
 
 ## How It Works
@@ -566,22 +587,85 @@ python -m pytest tests/ -v -m "not slow"
 10. **Tune elite_fraction** - higher (0.6-0.8) for rugged landscapes, lower (0.3-0.5) for smoother ones
 11. **Use adaptive restart** (`restart_mode='adaptive'`) for best balance of exploration and exploitation
 
+## Alternative APIs
+
+RAGDA supports multiple API styles for compatibility with existing code:
+
+### Optuna-Style API
+
+```python
+from ragda import create_study
+
+def objective(trial):
+    x = trial.suggest_float('x', -5, 5)
+    y = trial.suggest_float('y', -5, 5)
+    lr = trial.suggest_float('lr', 1e-5, 1e-1, log=True)
+    optimizer = trial.suggest_categorical('optimizer', ['adam', 'sgd'])
+    return (x - 1)**2 + (y - 2)**2
+
+study = create_study(direction='minimize')
+study.optimize(objective, n_trials=100)
+
+print(f"Best value: {study.best_value}")
+print(f"Best params: {study.best_params}")
+```
+
+### Scipy-Style API
+
+```python
+from ragda import minimize, maximize
+import numpy as np
+
+# Minimize
+def rosenbrock(x):
+    return (1 - x[0])**2 + 100 * (x[1] - x[0]**2)**2
+
+result = minimize(rosenbrock, bounds=[(-2, 2), (-2, 2)])
+print(f"Minimum: {result.fun} at {result.x}")
+
+# Maximize
+def neg_sphere(x):
+    return -np.sum(x**2)
+
+result = maximize(neg_sphere, bounds=[(-5, 5), (-5, 5)])
+print(f"Maximum: {result.fun} at {result.x}")
+```
+
+### Native RAGDA API (Most Flexible)
+
+```python
+from ragda import RAGDAOptimizer
+
+space = {
+    'x': {'type': 'continuous', 'bounds': [-5, 5]},
+    'y': {'type': 'continuous', 'bounds': [-5, 5]},
+    'optimizer': {'type': 'categorical', 'values': ['adam', 'sgd']},
+}
+
+def objective(x, y, optimizer):
+    return (x - 1)**2 + (y - 2)**2
+
+opt = RAGDAOptimizer(space=space, direction='minimize')
+result = opt.optimize(objective, n_trials=100)
+```
+
+---
+
 ## Verifying Installation
 
 ```python
 import ragda
 print(f"RAGDA version: {ragda.__version__}")
 
-# Quick verification
-from ragda import ragda_optimize
+# Quick verification with Scipy-style API
+from ragda import minimize
 import numpy as np
 
 def sphere(x):
     return np.sum(x**2)
 
-bounds = np.array([[-5, 5]] * 3, dtype=np.float64)
-x_best, f_best, info = ragda_optimize(sphere, bounds, n_trials=50)
-print(f"Test optimization: f_best = {f_best:.6f} (should be near 0)")
+result = minimize(sphere, bounds=[(-5, 5)] * 3, options={'maxiter': 50})
+print(f"Test optimization: f = {result.fun:.6f} (should be near 0)")
 
 # Check high-dim module
 if ragda.HIGHDIM_AVAILABLE:
