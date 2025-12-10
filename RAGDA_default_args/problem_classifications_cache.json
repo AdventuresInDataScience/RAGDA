@@ -1,0 +1,1402 @@
+{
+  "sphere_2d": {
+    "problem_name": "sphere_2d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 2,
+    "avg_eval_time_ms": 1.3841400388628244,
+    "ruggedness_score": 0.7256684864543175
+  },
+  "sphere_5d": {
+    "problem_name": "sphere_5d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 5,
+    "avg_eval_time_ms": 0.014140037819743156,
+    "ruggedness_score": 0.39035804310718664
+  },
+  "sphere_10d": {
+    "problem_name": "sphere_10d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 10,
+    "avg_eval_time_ms": 0.021020136773586273,
+    "ruggedness_score": 0.24819277218120447
+  },
+  "sphere_20d": {
+    "problem_name": "sphere_20d",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "medium_cheap_moderate",
+    "actual_dimension": 20,
+    "avg_eval_time_ms": 0.03847004845738411,
+    "ruggedness_score": 0.24793650464513156
+  },
+  "sphere_50d": {
+    "problem_name": "sphere_50d",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "medium_cheap_moderate",
+    "actual_dimension": 50,
+    "avg_eval_time_ms": 0.08970997296273708,
+    "ruggedness_score": 0.11128281963091047
+  },
+  "sphere_100d": {
+    "problem_name": "sphere_100d",
+    "dimension_level": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "high_cheap_smooth",
+    "actual_dimension": 100,
+    "avg_eval_time_ms": 0.1723400317132473,
+    "ruggedness_score": 0.07436563209838387
+  },
+  "sum_squares_2d": {
+    "problem_name": "sum_squares_2d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 2,
+    "avg_eval_time_ms": 0.010490044951438904,
+    "ruggedness_score": 0.6062930384868581
+  },
+  "sum_squares_5d": {
+    "problem_name": "sum_squares_5d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 5,
+    "avg_eval_time_ms": 0.014070002362132072,
+    "ruggedness_score": 0.4024667462484231
+  },
+  "sum_squares_10d": {
+    "problem_name": "sum_squares_10d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 10,
+    "avg_eval_time_ms": 0.022560078650712967,
+    "ruggedness_score": 0.2598391084370214
+  },
+  "sum_squares_20d": {
+    "problem_name": "sum_squares_20d",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "medium_cheap_moderate",
+    "actual_dimension": 20,
+    "avg_eval_time_ms": 0.03921007737517357,
+    "ruggedness_score": 0.24006558144307244
+  },
+  "sum_squares_50d": {
+    "problem_name": "sum_squares_50d",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "medium_cheap_moderate",
+    "actual_dimension": 50,
+    "avg_eval_time_ms": 0.09602000936865807,
+    "ruggedness_score": 0.11603718380718642
+  },
+  "sum_squares_100d": {
+    "problem_name": "sum_squares_100d",
+    "dimension_level": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "high_cheap_smooth",
+    "actual_dimension": 100,
+    "avg_eval_time_ms": 0.18185004591941833,
+    "ruggedness_score": 0.09398700449525305
+  },
+  "ackley_2d": {
+    "problem_name": "ackley_2d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "low_cheap_smooth",
+    "actual_dimension": 2,
+    "avg_eval_time_ms": 0.014060037210583687,
+    "ruggedness_score": 0.04041044348996951
+  },
+  "ackley_5d": {
+    "problem_name": "ackley_5d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "low_cheap_smooth",
+    "actual_dimension": 5,
+    "avg_eval_time_ms": 0.01805000938475132,
+    "ruggedness_score": 0.021368690465676247
+  },
+  "ackley_10d": {
+    "problem_name": "ackley_10d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "low_cheap_smooth",
+    "actual_dimension": 10,
+    "avg_eval_time_ms": 0.026740040630102158,
+    "ruggedness_score": 0.01341759980455309
+  },
+  "ackley_20d": {
+    "problem_name": "ackley_20d",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "medium_cheap_smooth",
+    "actual_dimension": 20,
+    "avg_eval_time_ms": 0.043320003896951675,
+    "ruggedness_score": 0.009936980658166667
+  },
+  "ackley_50d": {
+    "problem_name": "ackley_50d",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "medium_cheap_smooth",
+    "actual_dimension": 50,
+    "avg_eval_time_ms": 0.09589004330337048,
+    "ruggedness_score": 0.007335480948171413
+  },
+  "rastrigin_2d": {
+    "problem_name": "rastrigin_2d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 2,
+    "avg_eval_time_ms": 0.010789977386593819,
+    "ruggedness_score": 0.4293687509511944
+  },
+  "rastrigin_5d": {
+    "problem_name": "rastrigin_5d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 5,
+    "avg_eval_time_ms": 0.014880020171403885,
+    "ruggedness_score": 0.26759036489050425
+  },
+  "rastrigin_10d": {
+    "problem_name": "rastrigin_10d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 10,
+    "avg_eval_time_ms": 0.024159951135516167,
+    "ruggedness_score": 0.1667204274022897
+  },
+  "rastrigin_20d": {
+    "problem_name": "rastrigin_20d",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "medium_cheap_moderate",
+    "actual_dimension": 20,
+    "avg_eval_time_ms": 0.043979985639452934,
+    "ruggedness_score": 0.11912547873909035
+  },
+  "rastrigin_50d": {
+    "problem_name": "rastrigin_50d",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "medium_cheap_smooth",
+    "actual_dimension": 50,
+    "avg_eval_time_ms": 0.09298003278672695,
+    "ruggedness_score": 0.060557442014587036
+  },
+  "schwefel_2d": {
+    "problem_name": "schwefel_2d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 2,
+    "avg_eval_time_ms": 0.010479940101504326,
+    "ruggedness_score": 0.27696472178836773
+  },
+  "schwefel_5d": {
+    "problem_name": "schwefel_5d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 5,
+    "avg_eval_time_ms": 0.013720011338591576,
+    "ruggedness_score": 0.16588391041440653
+  },
+  "schwefel_10d": {
+    "problem_name": "schwefel_10d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 10,
+    "avg_eval_time_ms": 0.022540008649230003,
+    "ruggedness_score": 0.1526042625533098
+  },
+  "schwefel_20d": {
+    "problem_name": "schwefel_20d",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "medium_cheap_smooth",
+    "actual_dimension": 20,
+    "avg_eval_time_ms": 0.039979955181479454,
+    "ruggedness_score": 0.09213692948677404
+  },
+  "schwefel_50d": {
+    "problem_name": "schwefel_50d",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "medium_cheap_smooth",
+    "actual_dimension": 50,
+    "avg_eval_time_ms": 0.09310995228588581,
+    "ruggedness_score": 0.06287040845937067
+  },
+  "griewank_2d": {
+    "problem_name": "griewank_2d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 2,
+    "avg_eval_time_ms": 0.013680104166269302,
+    "ruggedness_score": 0.7835491863783992
+  },
+  "griewank_5d": {
+    "problem_name": "griewank_5d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 5,
+    "avg_eval_time_ms": 0.01718001440167427,
+    "ruggedness_score": 0.41790902237247185
+  },
+  "griewank_10d": {
+    "problem_name": "griewank_10d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 10,
+    "avg_eval_time_ms": 0.0256500206887722,
+    "ruggedness_score": 0.23338938392765557
+  },
+  "griewank_20d": {
+    "problem_name": "griewank_20d",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "medium_cheap_moderate",
+    "actual_dimension": 20,
+    "avg_eval_time_ms": 0.04595993086695671,
+    "ruggedness_score": 0.19879296243485672
+  },
+  "griewank_50d": {
+    "problem_name": "griewank_50d",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "medium_cheap_moderate",
+    "actual_dimension": 50,
+    "avg_eval_time_ms": 0.09385999292135239,
+    "ruggedness_score": 0.10536517838224757
+  },
+  "levy_2d": {
+    "problem_name": "levy_2d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 2,
+    "avg_eval_time_ms": 0.018670037388801575,
+    "ruggedness_score": 0.7951946604699185
+  },
+  "levy_5d": {
+    "problem_name": "levy_5d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 5,
+    "avg_eval_time_ms": 0.02159993164241314,
+    "ruggedness_score": 0.7303933133258549
+  },
+  "levy_10d": {
+    "problem_name": "levy_10d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 10,
+    "avg_eval_time_ms": 0.031120097264647484,
+    "ruggedness_score": 0.400483180828162
+  },
+  "levy_20d": {
+    "problem_name": "levy_20d",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "medium_cheap_moderate",
+    "actual_dimension": 20,
+    "avg_eval_time_ms": 0.047850003466010094,
+    "ruggedness_score": 0.21088470697322081
+  },
+  "levy_50d": {
+    "problem_name": "levy_50d",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "medium_cheap_moderate",
+    "actual_dimension": 50,
+    "avg_eval_time_ms": 0.10034996084868908,
+    "ruggedness_score": 0.24021881649105692
+  },
+  "styblinski_tang_2d": {
+    "problem_name": "styblinski_tang_2d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "category_key": "low_cheap_rugged",
+    "actual_dimension": 2,
+    "avg_eval_time_ms": 0.010789977386593819,
+    "ruggedness_score": 1.5828927113516418
+  },
+  "styblinski_tang_5d": {
+    "problem_name": "styblinski_tang_5d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "category_key": "low_cheap_rugged",
+    "actual_dimension": 5,
+    "avg_eval_time_ms": 0.015849946066737175,
+    "ruggedness_score": 1.1014025836930648
+  },
+  "styblinski_tang_10d": {
+    "problem_name": "styblinski_tang_10d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "category_key": "low_cheap_rugged",
+    "actual_dimension": 10,
+    "avg_eval_time_ms": 0.02422994002699852,
+    "ruggedness_score": 1.1525560723585717
+  },
+  "styblinski_tang_20d": {
+    "problem_name": "styblinski_tang_20d",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "medium_cheap_moderate",
+    "actual_dimension": 20,
+    "avg_eval_time_ms": 0.04501990042626858,
+    "ruggedness_score": 0.8959432882880753
+  },
+  "styblinski_tang_50d": {
+    "problem_name": "styblinski_tang_50d",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "category_key": "medium_cheap_rugged",
+    "actual_dimension": 50,
+    "avg_eval_time_ms": 0.09421999566257,
+    "ruggedness_score": 1.2299588159268269
+  },
+  "styblinski_tang_100d": {
+    "problem_name": "styblinski_tang_100d",
+    "dimension_level": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "high_cheap_moderate",
+    "actual_dimension": 100,
+    "avg_eval_time_ms": 0.18504005856812,
+    "ruggedness_score": 0.7752890421738855
+  },
+  "beale_2d": {
+    "problem_name": "beale_2d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 2,
+    "avg_eval_time_ms": 0.006189988926053047,
+    "ruggedness_score": 0.9952065663480582
+  },
+  "branin_2d": {
+    "problem_name": "branin_2d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 2,
+    "avg_eval_time_ms": 0.007370114326477051,
+    "ruggedness_score": 0.7726714631217098
+  },
+  "goldstein_price_2d": {
+    "problem_name": "goldstein_price_2d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 2,
+    "avg_eval_time_ms": 0.0076200347393751144,
+    "ruggedness_score": 0.9988775627698654
+  },
+  "eggholder_2d": {
+    "problem_name": "eggholder_2d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "category_key": "low_cheap_rugged",
+    "actual_dimension": 2,
+    "avg_eval_time_ms": 0.009440071880817413,
+    "ruggedness_score": 1.4910110933309146
+  },
+  "holder_table_2d": {
+    "problem_name": "holder_table_2d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 2,
+    "avg_eval_time_ms": 0.009220000356435776,
+    "ruggedness_score": 0.7338226090552138
+  },
+  "hartmann_3d": {
+    "problem_name": "hartmann_3d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 3,
+    "avg_eval_time_ms": 0.02913009375333786,
+    "ruggedness_score": 0.781137974277142
+  },
+  "shekel_4d": {
+    "problem_name": "shekel_4d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 4,
+    "avg_eval_time_ms": 0.0463300384581089,
+    "ruggedness_score": 0.3697305560673607
+  },
+  "hartmann_6d": {
+    "problem_name": "hartmann_6d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 6,
+    "avg_eval_time_ms": 0.04396005533635616,
+    "ruggedness_score": 0.967272990346554
+  },
+  "rosenbrock_2d": {
+    "problem_name": "rosenbrock_2d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 2,
+    "avg_eval_time_ms": 0.011770008131861687,
+    "ruggedness_score": 0.9984914203702163
+  },
+  "rosenbrock_5d": {
+    "problem_name": "rosenbrock_5d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 5,
+    "avg_eval_time_ms": 0.016219913959503174,
+    "ruggedness_score": 0.8470948970107532
+  },
+  "rosenbrock_10d": {
+    "problem_name": "rosenbrock_10d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 10,
+    "avg_eval_time_ms": 0.024279998615384102,
+    "ruggedness_score": 0.47596354689784004
+  },
+  "rosenbrock_20d": {
+    "problem_name": "rosenbrock_20d",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "medium_cheap_moderate",
+    "actual_dimension": 20,
+    "avg_eval_time_ms": 0.04229000769555569,
+    "ruggedness_score": 0.37827513254513023
+  },
+  "rosenbrock_50d": {
+    "problem_name": "rosenbrock_50d",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "medium_cheap_moderate",
+    "actual_dimension": 50,
+    "avg_eval_time_ms": 0.09379000402987003,
+    "ruggedness_score": 0.1596710646585327
+  },
+  "rosenbrock_100d": {
+    "problem_name": "rosenbrock_100d",
+    "dimension_level": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "high_cheap_moderate",
+    "actual_dimension": 100,
+    "avg_eval_time_ms": 0.17589004710316658,
+    "ruggedness_score": 0.17877068744598235
+  },
+  "dixon_price_2d": {
+    "problem_name": "dixon_price_2d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 2,
+    "avg_eval_time_ms": 0.012170057743787766,
+    "ruggedness_score": 0.9983373842078223
+  },
+  "dixon_price_5d": {
+    "problem_name": "dixon_price_5d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 5,
+    "avg_eval_time_ms": 0.016610044986009598,
+    "ruggedness_score": 0.7365175542154037
+  },
+  "dixon_price_10d": {
+    "problem_name": "dixon_price_10d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 10,
+    "avg_eval_time_ms": 0.025320006534457207,
+    "ruggedness_score": 0.5213517005532435
+  },
+  "dixon_price_20d": {
+    "problem_name": "dixon_price_20d",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "medium_cheap_moderate",
+    "actual_dimension": 20,
+    "avg_eval_time_ms": 0.04650000482797623,
+    "ruggedness_score": 0.2960648645891406
+  },
+  "dixon_price_50d": {
+    "problem_name": "dixon_price_50d",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "medium_cheap_moderate",
+    "actual_dimension": 50,
+    "avg_eval_time_ms": 0.09285002015531063,
+    "ruggedness_score": 0.19432506954251252
+  },
+  "dixon_price_100d": {
+    "problem_name": "dixon_price_100d",
+    "dimension_level": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "high_cheap_moderate",
+    "actual_dimension": 100,
+    "avg_eval_time_ms": 0.17850995063781738,
+    "ruggedness_score": 0.15285146867193475
+  },
+  "six_hump_camel_2d": {
+    "problem_name": "six_hump_camel_2d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 2,
+    "avg_eval_time_ms": 0.006029987707734108,
+    "ruggedness_score": 0.9324742742872432
+  },
+  "powell_4d": {
+    "problem_name": "powell_4d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 4,
+    "avg_eval_time_ms": 0.009689992293715477,
+    "ruggedness_score": 0.9855164720649637
+  },
+  "powell_8d": {
+    "problem_name": "powell_8d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 8,
+    "avg_eval_time_ms": 0.017319992184638977,
+    "ruggedness_score": 0.7278458849877936
+  },
+  "powell_12d": {
+    "problem_name": "powell_12d",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "medium_cheap_moderate",
+    "actual_dimension": 12,
+    "avg_eval_time_ms": 0.025699986144900322,
+    "ruggedness_score": 0.5469840349009267
+  },
+  "powell_20d": {
+    "problem_name": "powell_20d",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "medium_cheap_moderate",
+    "actual_dimension": 20,
+    "avg_eval_time_ms": 0.04210011102259159,
+    "ruggedness_score": 0.6190807022433542
+  },
+  "powell_40d": {
+    "problem_name": "powell_40d",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "medium_cheap_moderate",
+    "actual_dimension": 40,
+    "avg_eval_time_ms": 0.08337991312146187,
+    "ruggedness_score": 0.4396598368093289
+  },
+  "colville_4d": {
+    "problem_name": "colville_4d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 4,
+    "avg_eval_time_ms": 0.010199891403317451,
+    "ruggedness_score": 0.8751333182526628
+  },
+  "zakharov_2d": {
+    "problem_name": "zakharov_2d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 2,
+    "avg_eval_time_ms": 0.025789998471736908,
+    "ruggedness_score": 0.991831086181453
+  },
+  "zakharov_5d": {
+    "problem_name": "zakharov_5d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 5,
+    "avg_eval_time_ms": 0.016800034791231155,
+    "ruggedness_score": 0.9998405152826348
+  },
+  "zakharov_10d": {
+    "problem_name": "zakharov_10d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 10,
+    "avg_eval_time_ms": 0.025200005620718002,
+    "ruggedness_score": 0.9992414728392522
+  },
+  "zakharov_20d": {
+    "problem_name": "zakharov_20d",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "medium_cheap_moderate",
+    "actual_dimension": 20,
+    "avg_eval_time_ms": 0.0422800425440073,
+    "ruggedness_score": 0.9973793706063172
+  },
+  "zakharov_50d": {
+    "problem_name": "zakharov_50d",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "medium_cheap_moderate",
+    "actual_dimension": 50,
+    "avg_eval_time_ms": 0.09303991682827473,
+    "ruggedness_score": 0.9656652672234316
+  },
+  "zakharov_100d": {
+    "problem_name": "zakharov_100d",
+    "dimension_level": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "high_cheap_moderate",
+    "actual_dimension": 100,
+    "avg_eval_time_ms": 0.1873299479484558,
+    "ruggedness_score": 0.5069728674580913
+  },
+  "booth_2d": {
+    "problem_name": "booth_2d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 2,
+    "avg_eval_time_ms": 0.0054200179874897,
+    "ruggedness_score": 0.863264867244926
+  },
+  "easom_2d": {
+    "problem_name": "easom_2d",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "low_cheap_smooth",
+    "actual_dimension": 2,
+    "avg_eval_time_ms": 0.009449990466237068,
+    "ruggedness_score": 0.0
+  },
+  "MackeyGlass-4D": {
+    "problem_name": "MackeyGlass-4D",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 4,
+    "avg_eval_time_ms": 0.9990500286221504,
+    "ruggedness_score": 0.8577301499114232
+  },
+  "Lorenz-3D": {
+    "problem_name": "Lorenz-3D",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 3,
+    "avg_eval_time_ms": 2.174469968304038,
+    "ruggedness_score": 0.9109217795947702
+  },
+  "Henon-2D": {
+    "problem_name": "Henon-2D",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 2,
+    "avg_eval_time_ms": 0.8139700628817081,
+    "ruggedness_score": 0.9999999999980613
+  },
+  "Rossler-3D": {
+    "problem_name": "Rossler-3D",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 3,
+    "avg_eval_time_ms": 2.1066900342702866,
+    "ruggedness_score": 0.999999999828501
+  },
+  "LogisticMap-1D": {
+    "problem_name": "LogisticMap-1D",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 1,
+    "avg_eval_time_ms": 0.8731199894100428,
+    "ruggedness_score": 0.36058784376736064
+  },
+  "CoupledLogistic-10D": {
+    "problem_name": "CoupledLogistic-10D",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 10,
+    "avg_eval_time_ms": 5.322280013933778,
+    "ruggedness_score": 0.7881053694980342
+  },
+  "RabinovichFabrikant-2D": {
+    "problem_name": "RabinovichFabrikant-2D",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "low_cheap_smooth",
+    "actual_dimension": 2,
+    "avg_eval_time_ms": 0.9395599365234375,
+    "ruggedness_score": 0.0
+  },
+  "Duffing-5D": {
+    "problem_name": "Duffing-5D",
+    "dimension_level": "low",
+    "cost_level": "moderate",
+    "ruggedness_level": "moderate",
+    "category_key": "low_moderate_moderate",
+    "actual_dimension": 5,
+    "avg_eval_time_ms": 11.694810073822737,
+    "ruggedness_score": 0.9055608894618421
+  },
+  "DoublePendulum-4D": {
+    "problem_name": "DoublePendulum-4D",
+    "dimension_level": "low",
+    "cost_level": "moderate",
+    "ruggedness_level": "moderate",
+    "category_key": "low_moderate_moderate",
+    "actual_dimension": 4,
+    "avg_eval_time_ms": 10.93402006663382,
+    "ruggedness_score": 0.8596630503232895
+  },
+  "Lorenz96-20D": {
+    "problem_name": "Lorenz96-20D",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "medium_cheap_smooth",
+    "actual_dimension": 20,
+    "avg_eval_time_ms": 8.297510026022792,
+    "ruggedness_score": 0.07969233783080491
+  },
+  "Lorenz96Extended-60D": {
+    "problem_name": "Lorenz96Extended-60D",
+    "dimension_level": "high",
+    "cost_level": "moderate",
+    "ruggedness_level": "smooth",
+    "category_key": "high_moderate_smooth",
+    "actual_dimension": 60,
+    "avg_eval_time_ms": 10.906599974259734,
+    "ruggedness_score": 0.05715660179155949
+  },
+  "CoupledMapLattice-64D": {
+    "problem_name": "CoupledMapLattice-64D",
+    "dimension_level": "high",
+    "cost_level": "moderate",
+    "ruggedness_level": "moderate",
+    "category_key": "high_moderate_moderate",
+    "actual_dimension": 64,
+    "avg_eval_time_ms": 10.523659968748689,
+    "ruggedness_score": 0.508238608120865
+  },
+  "HenonExtended-20D": {
+    "problem_name": "HenonExtended-20D",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "medium_cheap_smooth",
+    "actual_dimension": 20,
+    "avg_eval_time_ms": 0.14982004649937153,
+    "ruggedness_score": 0.0
+  },
+  "CoupledLogisticMaps-100D": {
+    "problem_name": "CoupledLogisticMaps-100D",
+    "dimension_level": "high",
+    "cost_level": "moderate",
+    "ruggedness_level": "smooth",
+    "category_key": "high_moderate_smooth",
+    "actual_dimension": 100,
+    "avg_eval_time_ms": 11.709210090339184,
+    "ruggedness_score": 0.05622660778549863
+  },
+  "SpatiotemporalChaos-60D": {
+    "problem_name": "SpatiotemporalChaos-60D",
+    "dimension_level": "high",
+    "cost_level": "moderate",
+    "ruggedness_level": "moderate",
+    "category_key": "high_moderate_moderate",
+    "actual_dimension": 60,
+    "avg_eval_time_ms": 17.09374012425542,
+    "ruggedness_score": 0.44349168617223084
+  },
+  "StandardMapChain-30D": {
+    "problem_name": "StandardMapChain-30D",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "medium_cheap_moderate",
+    "actual_dimension": 30,
+    "avg_eval_time_ms": 7.844559988006949,
+    "ruggedness_score": 0.10513258395092215
+  },
+  "LotkaVolterra-4D": {
+    "problem_name": "LotkaVolterra-4D",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 4,
+    "avg_eval_time_ms": 2.857010066509247,
+    "ruggedness_score": 0.848699094454937
+  },
+  "LotkaVolterra4Species-8D": {
+    "problem_name": "LotkaVolterra4Species-8D",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 8,
+    "avg_eval_time_ms": 8.604309940710664,
+    "ruggedness_score": 0.4550870850418418
+  },
+  "VanDerPol-1D": {
+    "problem_name": "VanDerPol-1D",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "low_cheap_smooth",
+    "actual_dimension": 1,
+    "avg_eval_time_ms": 2.748359926044941,
+    "ruggedness_score": 0.02418174421808078
+  },
+  "CoupledOscillators-15D": {
+    "problem_name": "CoupledOscillators-15D",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "medium_cheap_moderate",
+    "actual_dimension": 15,
+    "avg_eval_time_ms": 8.199189929291606,
+    "ruggedness_score": 0.5490265270494101
+  },
+  "KuramotoOscillators-20D": {
+    "problem_name": "KuramotoOscillators-20D",
+    "dimension_level": "medium",
+    "cost_level": "moderate",
+    "ruggedness_level": "rugged",
+    "category_key": "medium_moderate_rugged",
+    "actual_dimension": 20,
+    "avg_eval_time_ms": 21.630910085514188,
+    "ruggedness_score": 4.328620214743654
+  },
+  "NeuralField-70D": {
+    "problem_name": "NeuralField-70D",
+    "dimension_level": "high",
+    "cost_level": "moderate",
+    "ruggedness_level": "moderate",
+    "category_key": "high_moderate_moderate",
+    "actual_dimension": 70,
+    "avg_eval_time_ms": 23.856979981064796,
+    "ruggedness_score": 0.749311098341807
+  },
+  "NN-XOR-17D": {
+    "problem_name": "NN-XOR-17D",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "medium_cheap_moderate",
+    "actual_dimension": 17,
+    "avg_eval_time_ms": 0.0736599788069725,
+    "ruggedness_score": 0.41985816919845265
+  },
+  "NN-Regression-89D": {
+    "problem_name": "NN-Regression-89D",
+    "dimension_level": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "high_cheap_moderate",
+    "actual_dimension": 89,
+    "avg_eval_time_ms": 0.20942999981343746,
+    "ruggedness_score": 0.615761890060103
+  },
+  "NN-MNIST-1074D": {
+    "problem_name": "NN-MNIST-1074D",
+    "dimension_level": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "high_cheap_smooth",
+    "actual_dimension": 1074,
+    "avg_eval_time_ms": 2.129850024357438,
+    "ruggedness_score": 0.08627764920990166
+  },
+  "NN-Large-1377D": {
+    "problem_name": "NN-Large-1377D",
+    "dimension_level": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "category_key": "high_cheap_rugged",
+    "actual_dimension": 1377,
+    "avg_eval_time_ms": 2.7213599532842636,
+    "ruggedness_score": 4.859833994124957
+  },
+  "NN-Medium-20D": {
+    "problem_name": "NN-Medium-20D",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "medium_cheap_moderate",
+    "actual_dimension": 20,
+    "avg_eval_time_ms": 0.07851002737879753,
+    "ruggedness_score": 0.3783435766373469
+  },
+  "NN-Deep-100D": {
+    "problem_name": "NN-Deep-100D",
+    "dimension_level": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "category_key": "high_cheap_rugged",
+    "actual_dimension": 100,
+    "avg_eval_time_ms": 0.2756000030785799,
+    "ruggedness_score": 5.227413481896512
+  },
+  "Autoencoder-80D": {
+    "problem_name": "Autoencoder-80D",
+    "dimension_level": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "high_cheap_smooth",
+    "actual_dimension": 80,
+    "avg_eval_time_ms": 0.4200600553303957,
+    "ruggedness_score": 0.006773531183964349
+  },
+  "RBM-60D": {
+    "problem_name": "RBM-60D",
+    "dimension_level": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "high_cheap_moderate",
+    "actual_dimension": 60,
+    "avg_eval_time_ms": 0.15679006464779377,
+    "ruggedness_score": 0.286097642704026
+  },
+  "WordEmbedding-75D": {
+    "problem_name": "WordEmbedding-75D",
+    "dimension_level": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "high_cheap_moderate",
+    "actual_dimension": 75,
+    "avg_eval_time_ms": 0.16871998086571693,
+    "ruggedness_score": 0.2599260645707666
+  },
+  "Hopfield-64D": {
+    "problem_name": "Hopfield-64D",
+    "dimension_level": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "high_cheap_moderate",
+    "actual_dimension": 64,
+    "avg_eval_time_ms": 0.22381995804607868,
+    "ruggedness_score": 0.21428571428571427
+  },
+  "SparseAutoencoder-100D": {
+    "problem_name": "SparseAutoencoder-100D",
+    "dimension_level": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "high_cheap_moderate",
+    "actual_dimension": 100,
+    "avg_eval_time_ms": 0.24990993551909924,
+    "ruggedness_score": 0.14690162519872121
+  },
+  "VAE-90D": {
+    "problem_name": "VAE-90D",
+    "dimension_level": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "high_cheap_moderate",
+    "actual_dimension": 90,
+    "avg_eval_time_ms": 0.21494003012776375,
+    "ruggedness_score": 0.20276322045682307
+  },
+  "DenoisingAE-80D": {
+    "problem_name": "DenoisingAE-80D",
+    "dimension_level": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "high_cheap_moderate",
+    "actual_dimension": 80,
+    "avg_eval_time_ms": 0.2128399908542633,
+    "ruggedness_score": 0.45756270720325215
+  },
+  "ContrastiveLearning-70D": {
+    "problem_name": "ContrastiveLearning-70D",
+    "dimension_level": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "high_cheap_smooth",
+    "actual_dimension": 70,
+    "avg_eval_time_ms": 0.19290996715426445,
+    "ruggedness_score": 0.005267875330857632
+  },
+  "NeuralHessian-80D": {
+    "problem_name": "NeuralHessian-80D",
+    "dimension_level": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "high_cheap_moderate",
+    "actual_dimension": 80,
+    "avg_eval_time_ms": 0.22322009317576885,
+    "ruggedness_score": 0.8492001087809276
+  },
+  "NeuralHessian-100D": {
+    "problem_name": "NeuralHessian-100D",
+    "dimension_level": "high",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "high_cheap_moderate",
+    "actual_dimension": 100,
+    "avg_eval_time_ms": 0.265709962695837,
+    "ruggedness_score": 0.4632914933815832
+  },
+  "SVM-CV-2D": {
+    "problem_name": "SVM-CV-2D",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "low_cheap_smooth",
+    "actual_dimension": 2,
+    "avg_eval_time_ms": 0.2134199719876051,
+    "ruggedness_score": 0.0
+  },
+  "RF-CV-4D": {
+    "problem_name": "RF-CV-4D",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "low_cheap_smooth",
+    "actual_dimension": 4,
+    "avg_eval_time_ms": 0.1796999480575323,
+    "ruggedness_score": 0.0
+  },
+  "Ridge-CV-1D": {
+    "problem_name": "Ridge-CV-1D",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "low_cheap_smooth",
+    "actual_dimension": 1,
+    "avg_eval_time_ms": 0.17582993023097515,
+    "ruggedness_score": 0.0
+  },
+  "Lasso-CV-1D": {
+    "problem_name": "Lasso-CV-1D",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "low_cheap_smooth",
+    "actual_dimension": 1,
+    "avg_eval_time_ms": 0.1715799793601036,
+    "ruggedness_score": 0.0
+  },
+  "ElasticNet-CV-2D": {
+    "problem_name": "ElasticNet-CV-2D",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "low_cheap_smooth",
+    "actual_dimension": 2,
+    "avg_eval_time_ms": 0.18154997378587723,
+    "ruggedness_score": 0.0
+  },
+  "LogisticReg-CV-1D": {
+    "problem_name": "LogisticReg-CV-1D",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "low_cheap_smooth",
+    "actual_dimension": 1,
+    "avg_eval_time_ms": 0.1736899372190237,
+    "ruggedness_score": 0.0
+  },
+  "KNN-CV-3D": {
+    "problem_name": "KNN-CV-3D",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "low_cheap_smooth",
+    "actual_dimension": 3,
+    "avg_eval_time_ms": 0.17587002366781235,
+    "ruggedness_score": 0.0
+  },
+  "DecisionTree-CV-3D": {
+    "problem_name": "DecisionTree-CV-3D",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "low_cheap_smooth",
+    "actual_dimension": 3,
+    "avg_eval_time_ms": 0.18108999356627464,
+    "ruggedness_score": 0.0
+  },
+  "AdaBoost-CV-2D": {
+    "problem_name": "AdaBoost-CV-2D",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "low_cheap_smooth",
+    "actual_dimension": 2,
+    "avg_eval_time_ms": 0.17501995898783207,
+    "ruggedness_score": 0.0
+  },
+  "SVM-Large-CV-2D": {
+    "problem_name": "SVM-Large-CV-2D",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "low_cheap_smooth",
+    "actual_dimension": 2,
+    "avg_eval_time_ms": 0.17377999611198902,
+    "ruggedness_score": 0.0
+  },
+  "Bagging-CV-3D": {
+    "problem_name": "Bagging-CV-3D",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "low_cheap_smooth",
+    "actual_dimension": 3,
+    "avg_eval_time_ms": 0.1760200597345829,
+    "ruggedness_score": 0.0
+  },
+  "GradientBoost-CV-3D": {
+    "problem_name": "GradientBoost-CV-3D",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "low_cheap_smooth",
+    "actual_dimension": 3,
+    "avg_eval_time_ms": 0.17645996995270252,
+    "ruggedness_score": 0.0
+  },
+  "MLP-Regressor-CV-3D": {
+    "problem_name": "MLP-Regressor-CV-3D",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "low_cheap_smooth",
+    "actual_dimension": 3,
+    "avg_eval_time_ms": 0.17579998821020126,
+    "ruggedness_score": 0.0
+  },
+  "NestedCV-5D": {
+    "problem_name": "NestedCV-5D",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "moderate",
+    "category_key": "low_cheap_moderate",
+    "actual_dimension": 5,
+    "avg_eval_time_ms": 0.22984999231994152,
+    "ruggedness_score": 0.12319960044479761
+  },
+  "BayesianAcquisition-6D": {
+    "problem_name": "BayesianAcquisition-6D",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "rugged",
+    "category_key": "low_cheap_rugged",
+    "actual_dimension": 6,
+    "avg_eval_time_ms": 0.15895990654826164,
+    "ruggedness_score": 1.0336859726386183
+  },
+  "NeuralNet-Dropout-20D": {
+    "problem_name": "NeuralNet-Dropout-20D",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "medium_cheap_smooth",
+    "actual_dimension": 20,
+    "avg_eval_time_ms": 0.22625988349318504,
+    "ruggedness_score": 0.0
+  },
+  "LightGBM-CV-4D": {
+    "problem_name": "LightGBM-CV-4D",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "low_cheap_smooth",
+    "actual_dimension": 4,
+    "avg_eval_time_ms": 0.17789006233215332,
+    "ruggedness_score": 0.0
+  },
+  "XGBoost-CV-4D": {
+    "problem_name": "XGBoost-CV-4D",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "low_cheap_smooth",
+    "actual_dimension": 4,
+    "avg_eval_time_ms": 0.18147006630897522,
+    "ruggedness_score": 0.0
+  },
+  "CatBoost-CV-4D": {
+    "problem_name": "CatBoost-CV-4D",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "low_cheap_smooth",
+    "actual_dimension": 4,
+    "avg_eval_time_ms": 0.1762500498443842,
+    "ruggedness_score": 0.0
+  },
+  "ExtraTrees-CV-4D": {
+    "problem_name": "ExtraTrees-CV-4D",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "low_cheap_smooth",
+    "actual_dimension": 4,
+    "avg_eval_time_ms": 0.1763900276273489,
+    "ruggedness_score": 0.0
+  },
+  "StackingEnsemble-15D": {
+    "problem_name": "StackingEnsemble-15D",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "medium_cheap_smooth",
+    "actual_dimension": 15,
+    "avg_eval_time_ms": 0.2507999073714018,
+    "ruggedness_score": 0.0
+  },
+  "VotingEnsemble-10D": {
+    "problem_name": "VotingEnsemble-10D",
+    "dimension_level": "low",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "low_cheap_smooth",
+    "actual_dimension": 10,
+    "avg_eval_time_ms": 0.18983003683388233,
+    "ruggedness_score": 0.0
+  },
+  "FeatureSelection-RFE-20D": {
+    "problem_name": "FeatureSelection-RFE-20D",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "medium_cheap_smooth",
+    "actual_dimension": 20,
+    "avg_eval_time_ms": 0.2129200380295515,
+    "ruggedness_score": 0.0
+  },
+  "FeatureSelection-MI-15D": {
+    "problem_name": "FeatureSelection-MI-15D",
+    "dimension_level": "medium",
+    "cost_level": "cheap",
+    "ruggedness_level": "smooth",
+    "category_key": "medium_cheap_smooth",
+    "actual_dimension": 15,
+    "avg_eval_time_ms": 0.20803995430469513,
+    "ruggedness_score": 0.0
+  }
+}

@@ -1927,9 +1927,9 @@ class TestMLProblems:
     """Tests for ML hyperparameter tuning problems."""
     
     def test_ml_problems_count(self):
-        """Verify we have 19 ML problems."""
+        """Verify we have 34 ML problems (19 original + 15 expensive ensemble)."""
         from RAGDA_default_args.benchmark_ml_problems import ALL_ML_PROBLEMS
-        assert len(ALL_ML_PROBLEMS) == 19, f"Expected 19 ML problems, got {len(ALL_ML_PROBLEMS)}"
+        assert len(ALL_ML_PROBLEMS) == 34, f"Expected 34 ML problems, got {len(ALL_ML_PROBLEMS)}"
     
     def test_ml_tuning_category_count(self):
         """Verify ML tuning category count."""
@@ -2034,6 +2034,284 @@ class TestMLProblems:
             assert isinstance(result, float), f"{name} didn't return float"
             assert not np.isnan(result), f"{name} returned NaN"
             assert not np.isinf(result), f"{name} returned Inf"
+
+
+# =============================================================================
+# Chunk 3.4.1: Expensive High-Dimensional ML Problems (15 functions)
+# =============================================================================
+
+class TestExpensiveHighDimMLProblems:
+    """Tests for expensive high-dimensional ML ensemble problems."""
+    
+    def test_expensive_ml_problems_count(self):
+        """Verify we have 15 new expensive ML problems."""
+        from RAGDA_default_args.benchmark_ml_problems import ALL_ML_PROBLEMS
+        expensive_problems = [p for p in ALL_ML_PROBLEMS.keys() if 'Multi-' in p]
+        assert len(expensive_problems) == 15, \
+            f"Expected 15 Multi-* expensive problems, got {len(expensive_problems)}"
+    
+    def test_expensive_ml_total_count(self):
+        """Verify total ML problems is now 34 (19 + 15)."""
+        from RAGDA_default_args.benchmark_ml_problems import ALL_ML_PROBLEMS
+        assert len(ALL_ML_PROBLEMS) == 34, \
+            f"Expected 34 total ML problems (19 + 15), got {len(ALL_ML_PROBLEMS)}"
+    
+    def test_expensive_category_assignment(self):
+        """Verify all expensive problems have ml_tuning_expensive category."""
+        from RAGDA_default_args.benchmark_ml_problems import ALL_ML_PROBLEMS
+        expensive_problems = [p for p in ALL_ML_PROBLEMS.values() if 'Multi-' in p.name]
+        for prob in expensive_problems:
+            assert prob.category == 'ml_tuning_expensive', \
+                f"{prob.name} has wrong category: {prob.category}"
+    
+    def test_expensive_dimensions_high(self):
+        """Verify all expensive problems are high-dimensional (51D+)."""
+        from RAGDA_default_args.benchmark_ml_problems import ALL_ML_PROBLEMS
+        expensive_problems = [p for p in ALL_ML_PROBLEMS.values() if 'Multi-' in p.name]
+        
+        for prob in expensive_problems:
+            assert prob.dimension >= 51, \
+                f"{prob.name} should be ≥51D, got {prob.dimension}D"
+    
+    def test_multi_rf_expensive_60d(self):
+        """Test Multi-RF-Expensive-60D problem."""
+        from RAGDA_default_args.benchmark_ml_problems import get_problem
+        
+        class MockTrial:
+            def suggest_float(self, name, low, high):
+                return 0.5
+        
+        problem = get_problem('Multi-RF-Expensive-60D')
+        assert problem.dimension == 60
+        assert problem.category == 'ml_tuning_expensive'
+        assert '10 RandomForests' in problem.description
+        
+        result = problem.objective(MockTrial())
+        assert isinstance(result, float)
+        assert 0 <= result <= 1
+    
+    def test_multi_rf_expensive_80d(self):
+        """Test Multi-RF-Expensive-80D problem."""
+        from RAGDA_default_args.benchmark_ml_problems import get_problem
+        
+        class MockTrial:
+            def suggest_float(self, name, low, high):
+                return 0.5
+        
+        problem = get_problem('Multi-RF-Expensive-80D')
+        assert problem.dimension == 80
+        assert '20 RandomForests' in problem.description
+    
+    def test_multi_gbr_expensive_70d(self):
+        """Test Multi-GBR-Expensive-70D problem."""
+        from RAGDA_default_args.benchmark_ml_problems import get_problem
+        
+        class MockTrial:
+            def suggest_float(self, name, low, high):
+                return 0.5
+        
+        problem = get_problem('Multi-GBR-Expensive-70D')
+        assert problem.dimension == 70
+        assert 'GradientBoosting' in problem.description
+        
+        result = problem.objective(MockTrial())
+        assert isinstance(result, float)
+        assert result >= 0  # MSE should be non-negative
+    
+    def test_multi_rf_expensive_100d(self):
+        """Test Multi-RF-Expensive-100D problem (highest dimension)."""
+        from RAGDA_default_args.benchmark_ml_problems import get_problem
+        
+        class MockTrial:
+            def suggest_float(self, name, low, high):
+                return 0.5
+        
+        problem = get_problem('Multi-RF-Expensive-100D')
+        assert problem.dimension == 100
+        assert '25 RandomForests' in problem.description
+    
+    def test_multi_svm_expensive_60d(self):
+        """Test Multi-SVM-Expensive-60D problem (moderate ruggedness)."""
+        from RAGDA_default_args.benchmark_ml_problems import get_problem
+        
+        class MockTrial:
+            def suggest_float(self, name, low, high):
+                return 0.5
+        
+        problem = get_problem('Multi-SVM-Expensive-60D')
+        assert problem.dimension == 60
+        assert '30 SVMs' in problem.description
+        assert 'moderate' in problem.description.lower()
+    
+    def test_multi_svm_expensive_80d(self):
+        """Test Multi-SVM-Expensive-80D problem."""
+        from RAGDA_default_args.benchmark_ml_problems import get_problem
+        
+        class MockTrial:
+            def suggest_float(self, name, low, high):
+                return 0.5
+        
+        problem = get_problem('Multi-SVM-Expensive-80D')
+        assert problem.dimension == 80
+        assert '40 SVMs' in problem.description
+    
+    def test_multi_gbr_nonlinear_70d(self):
+        """Test Multi-GBR-Nonlinear-70D problem."""
+        from RAGDA_default_args.benchmark_ml_problems import get_problem
+        
+        class MockTrial:
+            def suggest_float(self, name, low, high):
+                return 0.5
+        
+        problem = get_problem('Multi-GBR-Nonlinear-70D')
+        assert problem.dimension == 70
+        assert 'nonlinear' in problem.description.lower()
+    
+    def test_multi_rf_multiclass_60d(self):
+        """Test Multi-RF-Multiclass-60D problem."""
+        from RAGDA_default_args.benchmark_ml_problems import get_problem
+        
+        class MockTrial:
+            def suggest_float(self, name, low, high):
+                return 0.5
+        
+        problem = get_problem('Multi-RF-Multiclass-60D')
+        assert problem.dimension == 60
+        assert '10-class' in problem.description or 'multiclass' in problem.description.lower()
+    
+    def test_multi_gbr_complex_80d(self):
+        """Test Multi-GBR-Complex-80D problem."""
+        from RAGDA_default_args.benchmark_ml_problems import get_problem
+        
+        class MockTrial:
+            def suggest_float(self, name, low, high):
+                return 0.5
+        
+        problem = get_problem('Multi-GBR-Complex-80D')
+        assert problem.dimension == 80
+        assert 'complex' in problem.description.lower()
+    
+    def test_multi_mlp_expensive_60d(self):
+        """Test Multi-MLP-Expensive-60D problem (rugged)."""
+        from RAGDA_default_args.benchmark_ml_problems import get_problem
+        
+        class MockTrial:
+            def suggest_float(self, name, low, high):
+                return 0.5
+        
+        problem = get_problem('Multi-MLP-Expensive-60D')
+        assert problem.dimension == 60
+        assert '10 MLPs' in problem.description
+        assert 'rugged' in problem.description.lower()
+    
+    def test_multi_mlp_expensive_80d(self):
+        """Test Multi-MLP-Expensive-80D problem."""
+        from RAGDA_default_args.benchmark_ml_problems import get_problem
+        
+        class MockTrial:
+            def suggest_float(self, name, low, high):
+                return 0.5
+        
+        problem = get_problem('Multi-MLP-Expensive-80D')
+        assert problem.dimension == 80
+        assert '20 MLPs' in problem.description
+    
+    def test_multi_mlp_regression_70d(self):
+        """Test Multi-MLP-Regression-70D problem."""
+        from RAGDA_default_args.benchmark_ml_problems import get_problem
+        
+        class MockTrial:
+            def suggest_float(self, name, low, high):
+                return 0.5
+        
+        problem = get_problem('Multi-MLP-Regression-70D')
+        assert problem.dimension == 70
+        assert 'regressors' in problem.description.lower()
+    
+    def test_multi_mlp_complex_90d(self):
+        """Test Multi-MLP-Complex-90D problem."""
+        from RAGDA_default_args.benchmark_ml_problems import get_problem
+        
+        class MockTrial:
+            def suggest_float(self, name, low, high):
+                return 0.5
+        
+        problem = get_problem('Multi-MLP-Complex-90D')
+        assert problem.dimension == 90
+        assert '15 MLPs' in problem.description
+    
+    def test_multi_svm_grid_100d(self):
+        """Test Multi-SVM-Grid-100D problem (highest dimension rugged)."""
+        from RAGDA_default_args.benchmark_ml_problems import get_problem
+        
+        class MockTrial:
+            def suggest_float(self, name, low, high):
+                return 0.5
+        
+        problem = get_problem('Multi-SVM-Grid-100D')
+        assert problem.dimension == 100
+        assert '50 SVMs' in problem.description
+        assert 'rugged' in problem.description.lower()
+    
+    def test_all_expensive_problems_callable(self):
+        """Verify all expensive problems are callable and return valid results."""
+        from RAGDA_default_args.benchmark_ml_problems import ALL_ML_PROBLEMS
+        
+        class MockTrial:
+            def suggest_float(self, name, low, high):
+                return np.random.uniform(low, high)
+        
+        expensive_problems = {k: v for k, v in ALL_ML_PROBLEMS.items() if 'Multi-' in k}
+        
+        for name, problem in expensive_problems.items():
+            assert callable(problem.objective), f"{name} objective not callable"
+            assert problem.dimension >= 51, f"{name} should be ≥51D"
+            assert len(problem.bounds) == problem.dimension, f"{name} bounds mismatch"
+            
+            # Test execution (Note: these are expensive, so we just verify they run)
+            result = problem.objective(MockTrial())
+            assert isinstance(result, float), f"{name} didn't return float"
+            assert not np.isnan(result), f"{name} returned NaN"
+            assert not np.isinf(result), f"{name} returned Inf"
+    
+    def test_expensive_problems_smooth_rugged_split(self):
+        """Verify we have reasonable distribution across smooth/moderate/rugged."""
+        from RAGDA_default_args.benchmark_ml_problems import ALL_ML_PROBLEMS
+        
+        expensive_problems = {k: v for k, v in ALL_ML_PROBLEMS.items() if 'Multi-' in k}
+        
+        # Verify we have 15 total
+        assert len(expensive_problems) == 15
+        
+        # Count by model type (simpler than parsing descriptions)
+        rf_count = len([p for p in expensive_problems.keys() if 'RF' in p])
+        gbr_count = len([p for p in expensive_problems.keys() if 'GBR' in p])
+        svm_count = len([p for p in expensive_problems.keys() if 'SVM' in p])
+        mlp_count = len([p for p in expensive_problems.keys() if 'MLP' in p])
+        
+        # Should have 4 RF, 4 GBR, 3 SVM, 4 MLP = 15 total (different ruggedness profiles)
+        # RFs/GBRs tend to be smoother, SVMs moderate, MLPs most rugged
+        assert rf_count == 4, f"Expected 4 RF problems, got {rf_count}"
+        assert gbr_count == 4, f"Expected 4 GBR problems, got {gbr_count}"
+        assert svm_count == 3, f"Expected 3 SVM problems, got {svm_count}"
+        assert mlp_count == 4, f"Expected 4 MLP problems, got {mlp_count}"
+    
+    def test_expensive_problems_dimension_coverage(self):
+        """Verify we have good coverage across 60D, 70D, 80D, 90D, 100D."""
+        from RAGDA_default_args.benchmark_ml_problems import ALL_ML_PROBLEMS
+        
+        expensive_problems = [p for p in ALL_ML_PROBLEMS.values() if 'Multi-' in p.name]
+        dimensions = [p.dimension for p in expensive_problems]
+        
+        # Should have multiple problems at each dimension level
+        assert 60 in dimensions, "Missing 60D problems"
+        assert 70 in dimensions, "Missing 70D problems"
+        assert 80 in dimensions, "Missing 80D problems"
+        assert 90 in dimensions, "Missing 90D problems"
+        assert 100 in dimensions, "Missing 100D problems"
+        
+        # All should be high-dimensional (51D+)
+        assert all(d >= 51 for d in dimensions), "All should be ≥51D"
 
 
 # =============================================================================

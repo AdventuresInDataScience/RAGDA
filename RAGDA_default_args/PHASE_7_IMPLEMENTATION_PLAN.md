@@ -620,9 +620,66 @@ class TestBenchmarkFunctions:
 
 ## Step 3: Problem Classification System
 
-**STATUS**: ⏳ PENDING
+**STATUS**: ✅ IMPLEMENTED (Classification reveals gaps - see Step 4)
 
-**Purpose**: Classify all 234 problems into 27 categories (3×3×3 dimensions).
+**Purpose**: Classify all 230 problems into 27 categories (3×3×3 dimensions).
+
+**COMPLETED WORK**:
+1. ✅ Created `problem_classifier.py` with full classification system
+2. ✅ Created `classify_all_problems.py` with caching and resume support
+3. ✅ Classified all 230 existing problems
+4. ✅ Generated `problem_classifications_cache.json` with measurements
+5. ✅ Identified distribution gaps across 27 categories
+
+**CLASSIFICATION RESULTS**:
+- **230 problems classified** into 27 categories (3×3×3):
+  - **Dimensionality**: low (1-10D), medium (11-50D), high (51D+)
+  - **Cost**: cheap (<10ms), moderate (10-100ms), expensive (100ms+)
+  - **Ruggedness**: smooth, moderate, rugged (based on local sensitivity)
+
+**CURRENT DISTRIBUTION**:
+```
+Categories with ≥5 problems: 8/27
+  ✅ high_cheap_moderate      : 40 problems
+  ✅ low_cheap_moderate       : 50 problems
+  ✅ low_cheap_rugged         :  7 problems
+  ✅ low_cheap_smooth         : 48 problems
+  ✅ medium_cheap_moderate    : 30 problems
+  ✅ medium_cheap_smooth      : 27 problems
+  ✅ high_cheap_smooth        :  6 problems
+  ✅ medium_moderate_moderate :  6 problems
+
+Categories with <5 problems: 19/27 (NEED 79 MORE PROBLEMS)
+  ❌ high_cheap_rugged        :  4 (need 1 more)
+  ❌ high_moderate_moderate   :  2 (need 3 more)
+  ❌ high_moderate_smooth     :  2 (need 3 more)
+  ❌ low_expensive_moderate   :  1 (need 4 more)
+  ❌ low_moderate_moderate    :  3 (need 2 more)
+  ❌ medium_cheap_rugged      :  1 (need 4 more)
+  ❌ medium_expensive_smooth  :  2 (need 3 more)
+  ❌ medium_moderate_rugged   :  1 (need 4 more)
+  
+  ZERO problems in 11 categories:
+  ❌ high_expensive_moderate   : 0 (need 5)
+  ❌ high_expensive_rugged     : 0 (need 5)
+  ❌ high_expensive_smooth     : 0 (need 5)
+  ❌ high_moderate_rugged      : 0 (need 5)
+  ❌ low_expensive_rugged      : 0 (need 5)
+  ❌ low_expensive_smooth      : 0 (need 5)
+  ❌ low_moderate_rugged       : 0 (need 5)
+  ❌ low_moderate_smooth       : 0 (need 5)
+  ❌ medium_expensive_moderate : 0 (need 5)
+  ❌ medium_expensive_rugged   : 0 (need 5)
+  ❌ medium_moderate_smooth    : 0 (need 5)
+```
+
+**KEY INSIGHTS**:
+- Most problems are **CHEAP** (fast execution <10ms)
+- Very few **EXPENSIVE** problems (only 3 total, need 15 per expense level)
+- Very few **MODERATE** cost problems (need more 10-100ms range)
+- High-dimensional problems are mostly cheap (need expensive/moderate variants)
+
+**REQUIREMENT**: Each of 27 categories needs **≥5 problems** → Need **135 minimum total** → Currently have **230** but poorly distributed → **Need 79 more problems** strategically placed
 
 ### 3.1 Problem Classifier Module
 
@@ -851,11 +908,78 @@ class TestProblemClassification:
 - All 27 categories have at least 1 problem
 - Distribution looks reasonable (not all in one category)
 
+### 3.4 Fill Category Gaps (Add 79 Strategic Problems)
+
+**STATUS**: ⏳ NEXT - START HERE
+
+**Purpose**: Add 79 real benchmark problems to ensure all 27 categories have ≥5 problems.
+
+**CURRENT STATE** (After Step 3.1-3.3 classification):
+- ✅ 230 problems implemented (Step 2)
+- ✅ Classification system implemented (Step 3.1-3.3)
+- ✅ All 230 problems classified into 3x3x3 categories
+- ❌ Only 8/27 categories have ≥5 problems
+- ❌ 19/27 categories under threshold (need 79 more problems)
+
+**STRATEGY**: Focus on **REAL** problems, not artificial dimension inflation:
+1. **ML Hyperparameter Tuning** → Naturally EXPENSIVE/MODERATE cost (cross-validation)
+2. **High-Dimensional ML** → Real high-feature datasets (gene expression, text, images)
+3. **Model Selection** → Control cost via model choice (RandomForest=expensive, LightGBM=cheap)
+4. **Expensive Mathematical Functions** → Complex PDEs, integrals, differential equations
+5. **Moderate Cost Problems** → Medium-complexity simulations, dynamical systems
+
+**DESIGN PRINCIPLES**:
+- ✅ Use REAL benchmark problems from literature/datasets
+- ✅ ML tuning is naturally expensive (CV loops)
+- ✅ High dimensions from real data (not artificial padding)
+- ✅ Model selection controls cost (RF vs LightGBM vs XGBoost)
+- ❌ NO artificial dimension inflation (e.g., Sphere-1000D)
+- ❌ NO fake problems just to fill categories
+
+**IMPLEMENTATION CHUNKS**: Add 79 problems across 5 chunks
+
+#### Chunk 3.4.1: Expensive High-Dim ML (15 problems) ⏳ NEXT
+Target: `high_expensive_*` categories (0→5 each)
+Files: `benchmark_ml_problems.py`
+
+Problems (RandomForest/SVM/DeepNN on real datasets):
+- 5 for high_expensive_smooth (GradientBoosting on large datasets)
+- 5 for high_expensive_moderate (RandomForest tuning)
+- 5 for high_expensive_rugged (Deep NN tuning)
+
+#### Chunk 3.4.2: Expensive Low/Med ML (20 problems)
+Target: `*_expensive_*` for low/medium dimensions
+Files: `benchmark_ml_problems.py`
+
+#### Chunk 3.4.3: Moderate High-Dim (11 problems)  
+Target: `high_moderate_*` categories
+Files: `benchmark_realworld_problems.py`, `benchmark_ml_problems.py`
+
+#### Chunk 3.4.4: Moderate Low/Med (29 problems)
+Target: Remaining `*_moderate_*` categories
+Files: Multiple files
+
+#### Chunk 3.4.5: Cheap Rugged (5 problems)
+Target: Fill `*_cheap_rugged` gaps
+Files: `benchmark_mathematical_problems.py`
+
+**VALIDATION AFTER EACH CHUNK**:
+```bash
+python classify_all_problems.py --no-resume
+python check_categories.py
+```
+
+**SUCCESS CRITERIA**:
+- ✅ All 27 categories have ≥5 problems
+- ✅ Total: 309 problems (230 + 79)
+- ✅ All problems are REAL (no artificial inflation)
+- ✅ All tests passing
+
 ---
 
 ## Step 4: RAGDA Parameter Space Definition
 
-**STATUS**: ⏳ PENDING
+**STATUS**: ⏳ PENDING (After Step 3.4 complete)
 
 **Purpose**: Define all 34 tunable RAGDA parameters for meta-optimization.
 
